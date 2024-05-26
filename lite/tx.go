@@ -88,13 +88,13 @@ func (c *Client) CalculateGas(txf tx.Factory, messages ...sdk.Msg) (gas uint64, 
 	return gas, nil
 }
 
-func (c *Client) PrepareTxFactory(messages ...sdk.Msg) (txf tx.Factory, err error) {
+func (c *Client) prepareTxFactory(remote string, messages ...sdk.Msg) (txf tx.Factory, err error) {
 	defer func() {
 		if err != nil {
 			c.log.Error("failed to prepare the transaction", "error", err)
 		}
 	}()
-
+	
 	acc, err := c.QueryAccount(c.FromAddress())
 	if err != nil {
 		return txf, err
@@ -114,6 +114,26 @@ func (c *Client) PrepareTxFactory(messages ...sdk.Msg) (txf tx.Factory, err erro
 	}
 
 	return txf, nil
+		
+}
+
+func (c *Client) PrepareTxFactory(messages ...sdk.Msg) (txf tx.Factory, err error) {
+	
+	
+	for i := 0; i < len(c.remotes); i++ {
+		txf, err = c.prepareTxFactory(c.remotes[i], messages...)
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	return txf, nil
+
+	
 }
 
 func (c *Client) tx(messages ...sdk.Msg) (res *sdk.TxResponse, err error) {
