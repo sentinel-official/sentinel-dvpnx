@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/cosmos/cosmos-sdk v0.47.12
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240731205358-f6457a9b6f91
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240801195330-d08830679f1f
 	github.com/spf13/cobra v1.8.1
 )
 
