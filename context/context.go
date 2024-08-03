@@ -1,7 +1,10 @@
 package context
 
 import (
+	"sync"
+
 	"github.com/sentinel-official/sentinel-go-sdk/client"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"gorm.io/gorm"
 )
@@ -10,6 +13,9 @@ type Context struct {
 	client  *client.Client
 	db      *gorm.DB
 	service types.ServerService
+
+	location *geoip.Location
+	rw       sync.RWMutex
 }
 
 func New() *Context {
@@ -26,4 +32,19 @@ func (c *Context) DB() *gorm.DB {
 
 func (c *Context) Service() types.ServerService {
 	return c.service
+}
+
+func (c *Context) Location() *geoip.Location {
+	c.rw.RLock()
+	defer c.rw.RUnlock()
+
+	return c.location
+}
+
+func (c *Context) SetLocation(v *geoip.Location) error {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+
+	c.location = v
+	return nil
 }

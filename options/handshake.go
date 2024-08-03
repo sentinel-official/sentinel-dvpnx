@@ -15,8 +15,7 @@ type HandshakeOptions struct {
 // NewDefaultHandshake creates a new HandshakeOptions instance with default values.
 func NewDefaultHandshake() *HandshakeOptions {
 	return &HandshakeOptions{
-		Enable: flags.DefaultHandshakeEnable,
-		Peers:  flags.DefaultHandshakePeers,
+		Peers: flags.DefaultHandshakePeers,
 	}
 }
 
