@@ -5,7 +5,7 @@ go 1.22.5
 require (
 	cosmossdk.io/math v1.3.0
 	github.com/gin-gonic/gin v1.8.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240801195330-d08830679f1f
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240803005417-ba9e83955f73
 	github.com/spf13/cobra v1.8.1
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.11

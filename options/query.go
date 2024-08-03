@@ -3,7 +3,7 @@ package options
 import (
 	"time"
 
-	"github.com/sentinel-official/sentinel-go-sdk/client/options"
+	"github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -14,12 +14,12 @@ type QueryOptions struct {
 	Timeout    time.Duration `json:"timeout" toml:"timeout"`         // Timeout is the maximum duration for the query to be executed.
 }
 
-// NewDefaultQueryOptions creates a new QueryOptions instance with default values.
-func NewDefaultQueryOptions() *QueryOptions {
+// NewDefaultQuery creates a new QueryOptions instance with default values.
+func NewDefaultQuery() *QueryOptions {
 	return &QueryOptions{
-		MaxRetries: options.DefaultQueryMaxRetries,
-		RPCAddr:    options.DefaultQueryRPCAddr,
-		Timeout:    options.DefaultQueryTimeout,
+		MaxRetries: flags.DefaultQueryMaxRetries,
+		RPCAddr:    flags.DefaultQueryRPCAddr,
+		Timeout:    flags.DefaultQueryTimeout,
 	}
 }
 
@@ -43,24 +43,27 @@ func (q *QueryOptions) WithTimeout(v time.Duration) *QueryOptions {
 
 // AddQueryFlagsToCmd adds query-related flags to the given cobra command.
 func AddQueryFlagsToCmd(cmd *cobra.Command) {
-	options.SetFlagQueryMaxRetries(cmd)
-	options.SetFlagQueryRPCAddr(cmd)
-	options.SetFlagQueryTimeout(cmd)
+	flags.SetFlagQueryMaxRetries(cmd)
+	flags.SetFlagQueryRPCAddr(cmd)
+	flags.SetFlagQueryTimeout(cmd)
 }
 
 // NewQueryOptionsFromCmd creates and returns QueryOptions from the given cobra command's flags.
 func NewQueryOptionsFromCmd(cmd *cobra.Command) (*QueryOptions, error) {
-	maxRetries, err := options.GetQueryMaxRetriesFromCmd(cmd)
+	// Retrieve the max retries flag value from the command.
+	maxRetries, err := flags.GetQueryMaxRetriesFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	rpcAddr, err := options.GetQueryRPCAddrFromCmd(cmd)
+	// Retrieve the RPC address flag value from the command.
+	rpcAddr, err := flags.GetQueryRPCAddrFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	timeout, err := options.GetQueryTimeoutFromCmd(cmd)
+	// Retrieve the timeout flag value from the command.
+	timeout, err := flags.GetQueryTimeoutFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 package options
 
 import (
-	"github.com/sentinel-official/sentinel-go-sdk/client/options"
+	"github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -16,14 +16,14 @@ type TxOptions struct {
 	SimulateAndExecute bool    `json:"simulate_and_execute" toml:"simulate_and_execute"` // SimulateAndExecute indicates whether to simulate the transaction before execution.
 }
 
-// NewDefaultTxOptions creates a new TxOptions instance with default values.
-func NewDefaultTxOptions() *TxOptions {
+// NewDefaultTx creates a new TxOptions instance with default values.
+func NewDefaultTx() *TxOptions {
 	return &TxOptions{
-		ChainID:            options.DefaultTxChainID,
-		Gas:                options.DefaultTxGas,
-		GasAdjustment:      options.DefaultTxGasAdjustment,
-		GasPrices:          options.DefaultTxGasPrices,
-		SimulateAndExecute: options.DefaultTxSimulateAndExecute,
+		ChainID:            flags.DefaultTxChainID,
+		Gas:                flags.DefaultTxGas,
+		GasAdjustment:      flags.DefaultTxGasAdjustment,
+		GasPrices:          flags.DefaultTxGasPrices,
+		SimulateAndExecute: flags.DefaultTxSimulateAndExecute,
 	}
 }
 
@@ -71,48 +71,55 @@ func (t *TxOptions) WithSimulateAndExecute(v bool) *TxOptions {
 
 // AddTxFlagsToCmd configures all transaction-related flags for the given command.
 func AddTxFlagsToCmd(cmd *cobra.Command) {
-	options.SetFlagTxChainID(cmd)
-	options.SetFlagTxFeeGranterAddr(cmd)
-	options.SetFlagTxFromName(cmd)
-	options.SetFlagTxGas(cmd)
-	options.SetFlagTxGasAdjustment(cmd)
-	options.SetFlagTxGasPrices(cmd)
-	options.SetFlagTxSimulateAndExecute(cmd)
+	flags.SetFlagTxChainID(cmd)
+	flags.SetFlagTxFeeGranterAddr(cmd)
+	flags.SetFlagTxFromName(cmd)
+	flags.SetFlagTxGas(cmd)
+	flags.SetFlagTxGasAdjustment(cmd)
+	flags.SetFlagTxGasPrices(cmd)
+	flags.SetFlagTxSimulateAndExecute(cmd)
 }
 
 // NewTxOptionsFromCmd creates and returns TxOptions from the given cobra command's flags.
 func NewTxOptionsFromCmd(cmd *cobra.Command) (*TxOptions, error) {
-	chainID, err := options.GetTxChainIDFromCmd(cmd)
+	// Retrieve the chain ID flag value from the command.
+	chainID, err := flags.GetTxChainIDFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	feeGranterAddr, err := options.GetTxFeeGranterAddrFromCmd(cmd)
+	// Retrieve the fee granter address flag value from the command.
+	feeGranterAddr, err := flags.GetTxFeeGranterAddrFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	fromName, err := options.GetTxFromNameFromCmd(cmd)
+	// Retrieve the from name flag value from the command.
+	fromName, err := flags.GetTxFromNameFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	gas, err := options.GetTxGasFromCmd(cmd)
+	// Retrieve the gas flag value from the command.
+	gas, err := flags.GetTxGasFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	gasAdjustment, err := options.GetTxGasAdjustmentFromCmd(cmd)
+	// Retrieve the gas adjustment flag value from the command.
+	gasAdjustment, err := flags.GetTxGasAdjustmentFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	gasPrices, err := options.GetTxGasPricesFromCmd(cmd)
+	// Retrieve the gas prices flag value from the command.
+	gasPrices, err := flags.GetTxGasPricesFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	simulateAndExecute, err := options.GetTxSimulateAndExecuteFromCmd(cmd)
+	// Retrieve the simulate and execute flag value from the command.
+	simulateAndExecute, err := flags.GetTxSimulateAndExecuteFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}

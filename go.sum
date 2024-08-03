@@ -419,8 +419,8 @@ github.com/sasha-s/go-deadlock v0.3.1 h1:sqv7fDNShgjcaxkO0JNcOAlr8B9+cV5Ey/OB71e
 github.com/sasha-s/go-deadlock v0.3.1/go.mod h1:F73l+cr82YSh10GxyRI6qZiCgK64VaZjwesgfQ1/iLM=
 github.com/sentinel-official/hub/v12 v12.0.0-rc5 h1:LXW6dULDWaCTxVaXrHkudhim+xGIIhIy1CUhBEi90Ko=
 github.com/sentinel-official/hub/v12 v12.0.0-rc5/go.mod h1:mr9BnXVpEjyFSI/X8LObsE2LNusJAtaTDMcOYoR2DHE=
-github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240801195330-d08830679f1f h1:AmGr2IeKb9dKm6pJPuTShCihHPdca3tKmRdlkqzXnIM=
-github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240801195330-d08830679f1f/go.mod h1:P1IVHNuaALkKQrDESnqFtUwunk5axW/JuWsVIuq5gNo=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240803005417-ba9e83955f73 h1:vVIZf7xx0SYbAuZEfR0ah+PN1wUAxzJDRX12af7ABw8=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240803005417-ba9e83955f73/go.mod h1:P1IVHNuaALkKQrDESnqFtUwunk5axW/JuWsVIuq5gNo=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
