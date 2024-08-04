@@ -16,9 +16,7 @@ func handleSpeedtest(ctx *context.Context) func() error {
 		}
 
 		// Set the speed test results in the context
-		if err := ctx.SetSpeedtestResults(dlSpeed, ulSpeed); err != nil {
-			return err
-		}
+		ctx.SetSpeedtestResults(dlSpeed, ulSpeed)
 
 		return nil
 	}

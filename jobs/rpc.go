@@ -64,9 +64,7 @@ func handleBestRPCEndpoint(ctx *context.Context, endpoints []string) func() erro
 		wg.Wait()
 
 		// Set the best RPC address in the context
-		if err := ctx.SetRPCAddr(bestEndpoint); err != nil {
-			return err
-		}
+		ctx.SetRPCAddr(bestEndpoint)
 
 		return nil
 	}

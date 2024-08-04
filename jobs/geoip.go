@@ -16,9 +16,7 @@ func handleGeoIPLocation(ctx *context.Context, client geoip.Client) func() error
 		}
 
 		// Set the fetched location in the context.
-		if err := ctx.SetLocation(location); err != nil {
-			return err
-		}
+		ctx.SetLocation(location)
 
 		return nil
 	}
