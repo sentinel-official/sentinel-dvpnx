@@ -15,6 +15,7 @@ type Context struct {
 	service types.ServerService
 
 	location *geoip.Location
+	rpcAddr  string
 	rw       sync.RWMutex
 }
 
@@ -41,10 +42,25 @@ func (c *Context) Location() *geoip.Location {
 	return c.location
 }
 
+func (c *Context) RPCAddr() string {
+	c.rw.RLock()
+	defer c.rw.RUnlock()
+
+	return c.rpcAddr
+}
+
 func (c *Context) SetLocation(v *geoip.Location) error {
 	c.rw.Lock()
 	defer c.rw.Unlock()
 
 	c.location = v
+	return nil
+}
+
+func (c *Context) SetRPCAddr(v string) error {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+
+	c.rpcAddr = v
 	return nil
 }
