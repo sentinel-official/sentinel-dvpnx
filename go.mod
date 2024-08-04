@@ -6,7 +6,7 @@ require (
 	cosmossdk.io/math v1.3.0
 	github.com/cosmos/cosmos-sdk v0.47.12
 	github.com/gin-gonic/gin v1.8.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804130732-9c3dc4efb401
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151503-d390ac91288c
 	github.com/spf13/cobra v1.8.1
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.11
@@ -112,6 +112,7 @@ require (
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/sentinel-official/hub/v12 v12.0.0-rc5 // indirect
+	github.com/showwin/speedtest-go v1.7.8 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect

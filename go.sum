@@ -419,8 +419,14 @@ github.com/sasha-s/go-deadlock v0.3.1 h1:sqv7fDNShgjcaxkO0JNcOAlr8B9+cV5Ey/OB71e
 github.com/sasha-s/go-deadlock v0.3.1/go.mod h1:F73l+cr82YSh10GxyRI6qZiCgK64VaZjwesgfQ1/iLM=
 github.com/sentinel-official/hub/v12 v12.0.0-rc5 h1:LXW6dULDWaCTxVaXrHkudhim+xGIIhIy1CUhBEi90Ko=
 github.com/sentinel-official/hub/v12 v12.0.0-rc5/go.mod h1:mr9BnXVpEjyFSI/X8LObsE2LNusJAtaTDMcOYoR2DHE=
-github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804130732-9c3dc4efb401 h1:yUH98Fp6M8UkB5JUys4C/1xu/R1ZhOB1/rAYU3h5pwA=
-github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804130732-9c3dc4efb401/go.mod h1:5xcZbFod2Nw80HPv9J86yuXrQvPbLQvDCB8Vm9+McWQ=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804145103-ec6eb433254b h1:65fpUep+7Pfagoemhrp1WFVE3xfZN6uRtRmAKRMrLRs=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804145103-ec6eb433254b/go.mod h1:tzqDUMBkFjyC3FVCsm/lB9iYaXJK+eMPRtGgTi2iFMI=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151119-df10a2d6b1a3 h1:rRJGUbJAKxd++GXQ0YCTgt7YQW2yjLFaXHjcCNcarXw=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151119-df10a2d6b1a3/go.mod h1:tzqDUMBkFjyC3FVCsm/lB9iYaXJK+eMPRtGgTi2iFMI=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151503-d390ac91288c h1:9j9fdCgXyeiQ4WPGKHWo4dlSKjXWL0cMQqEfP6umG6o=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151503-d390ac91288c/go.mod h1:tzqDUMBkFjyC3FVCsm/lB9iYaXJK+eMPRtGgTi2iFMI=
+github.com/showwin/speedtest-go v1.7.8 h1:UZbFQ/ArVgPvkR03egSeTM2FXBd6qJsLp8lzt9aeod0=
+github.com/showwin/speedtest-go v1.7.8/go.mod h1:uLgdWCNarXxlYsL2E5TOZpCIwpgSWnEANZp7gfHXHu0=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=

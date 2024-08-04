@@ -3,6 +3,7 @@ package context
 import (
 	"sync"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/sentinel-official/sentinel-go-sdk/client"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
@@ -16,6 +17,8 @@ type Context struct {
 
 	location *geoip.Location
 	rpcAddr  string
+	dlSpeed  sdkmath.Int
+	ulSpeed  sdkmath.Int
 	rw       sync.RWMutex
 }
 
@@ -35,6 +38,13 @@ func (c *Context) Service() types.ServerService {
 	return c.service
 }
 
+func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed sdkmath.Int) {
+	c.rw.RLock()
+	defer c.rw.RUnlock()
+
+	return c.dlSpeed, c.ulSpeed
+}
+
 func (c *Context) Location() *geoip.Location {
 	c.rw.RLock()
 	defer c.rw.RUnlock()
@@ -47,6 +57,15 @@ func (c *Context) RPCAddr() string {
 	defer c.rw.RUnlock()
 
 	return c.rpcAddr
+}
+
+func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed sdkmath.Int) error {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+
+	c.dlSpeed = dlSpeed
+	c.ulSpeed = ulSpeed
+	return nil
 }
 
 func (c *Context) SetLocation(v *geoip.Location) error {
