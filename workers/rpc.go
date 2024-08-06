@@ -1,4 +1,4 @@
-package jobs
+package workers
 
 import (
 	"net/http"

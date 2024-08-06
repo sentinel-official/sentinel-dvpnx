@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/math v1.3.0
 	github.com/cosmos/cosmos-sdk v0.47.12
 	github.com/gin-gonic/gin v1.8.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151503-d390ac91288c
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240806085114-671d473c418b
 	github.com/spf13/cobra v1.8.1
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.11

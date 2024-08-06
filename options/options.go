@@ -1,17 +1,19 @@
 package options
 
 import (
+	"github.com/sentinel-official/sentinel-go-sdk/client/options"
 	"github.com/spf13/cobra"
 )
 
 // Options aggregates all the individual option structs.
 type Options struct {
-	*HandshakeOptions `json:"handshake" toml:"handshake"` // Options related to key creation.
-	*KeyringOptions   `json:"keyring" toml:"keyring"`     // Options related to keyring configuration.
-	*NodeOptions      `json:"node" toml:"node"`           // Options related to pagination.
-	*QOSOptions       `json:"qos" toml:"qos"`             // Options related to quality of service (QOS).
-	*QueryOptions     `json:"query" toml:"query"`         // Options related to querying.
-	*TxOptions        `json:"tx" toml:"tx"`               // Options related to transactions.
+	*HandshakeOptions   `json:"handshake" toml:"handshake"` // Options related to key creation.
+	*KeyringOptions     `json:"keyring" toml:"keyring"`     // Options related to keyring configuration.
+	*options.LogOptions `json:"log" toml:"log"`             // Options related to logging.
+	*NodeOptions        `json:"node" toml:"node"`           // Options related to pagination.
+	*QOSOptions         `json:"qos" toml:"qos"`             // Options related to quality of service (QOS).
+	*QueryOptions       `json:"query" toml:"query"`         // Options related to querying.
+	*TxOptions          `json:"tx" toml:"tx"`               // Options related to transactions.
 }
 
 // New creates and returns a new instance of Options with all fields initialized to nil.
@@ -22,12 +24,13 @@ func New() *Options {
 // NewDefault creates and returns a new instance of Options with default values.
 func NewDefault() *Options {
 	return &Options{
-		HandshakeOptions: NewDefaultHandshake(), // Initializes with default HandshakeOptions.
-		KeyringOptions:   NewDefaultKeyring(),   // Initializes with default KeyringOptions.
-		NodeOptions:      NewDefaultNode(),      // Initializes with default NodeOptions.
-		QOSOptions:       NewDefaultQOS(),       // Initializes with default QOSOptions.
-		QueryOptions:     NewDefaultQuery(),     // Initializes with default QueryOptions.
-		TxOptions:        NewDefaultTx(),        // Initializes with default TxOptions.
+		HandshakeOptions: NewDefaultHandshake(),   // Initializes with default HandshakeOptions.
+		KeyringOptions:   NewDefaultKeyring(),     // Initializes with default KeyringOptions.
+		LogOptions:       options.NewDefaultLog(), // Initializes with default LogOptions.
+		NodeOptions:      NewDefaultNode(),        // Initializes with default NodeOptions.
+		QOSOptions:       NewDefaultQOS(),         // Initializes with default QOSOptions.
+		QueryOptions:     NewDefaultQuery(),       // Initializes with default QueryOptions.
+		TxOptions:        NewDefaultTx(),          // Initializes with default TxOptions.
 	}
 }
 
@@ -40,6 +43,12 @@ func (o *Options) WithHandshakeOptions(v *HandshakeOptions) *Options {
 // WithKeyringOptions sets the KeyringOptions for the Options and returns the updated Options.
 func (o *Options) WithKeyringOptions(v *KeyringOptions) *Options {
 	o.KeyringOptions = v
+	return o
+}
+
+// WithLogOptions sets the LogOptions for the Options and returns the updated Options.
+func (o *Options) WithLogOptions(v *options.LogOptions) *Options {
+	o.LogOptions = v
 	return o
 }
 
@@ -85,6 +94,16 @@ func (o *Options) WithKeyringOptionsFromCmd(cmd *cobra.Command) (*Options, error
 	}
 
 	return o.WithKeyringOptions(opts), nil
+}
+
+// WithLogOptionsFromCmd updates LogOptions in the Options from the given command's flags.
+func (o *Options) WithLogOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := options.NewLogOptionsFromCmd(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return o.WithLogOptions(opts), nil
 }
 
 // WithNodeOptionsFromCmd updates NodeOptions in the Options from the given command's flags.
@@ -141,6 +160,12 @@ func NewOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
 		return nil, err
 	}
 
+	// Retrieves LogOptions from command flags.
+	logOpts, err := options.NewLogOptionsFromCmd(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	// Retrieves NodeOptions from command flags.
 	pageOpts, err := NewNodeOptionsFromCmd(cmd)
 	if err != nil {
@@ -169,6 +194,7 @@ func NewOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
 	return &Options{
 		HandshakeOptions: keyOpts,
 		KeyringOptions:   keyringOpts,
+		LogOptions:       logOpts,
 		NodeOptions:      pageOpts,
 		QOSOptions:       qosOpts,
 		QueryOptions:     queryOpts,

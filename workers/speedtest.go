@@ -1,4 +1,4 @@
-package jobs
+package workers
 
 import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/speedtest"

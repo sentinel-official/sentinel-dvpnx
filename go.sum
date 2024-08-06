@@ -424,8 +424,8 @@ github.com/sasha-s/go-deadlock v0.3.1 h1:sqv7fDNShgjcaxkO0JNcOAlr8B9+cV5Ey/OB71e
 github.com/sasha-s/go-deadlock v0.3.1/go.mod h1:F73l+cr82YSh10GxyRI6qZiCgK64VaZjwesgfQ1/iLM=
 github.com/sentinel-official/hub/v12 v12.0.0-rc5 h1:LXW6dULDWaCTxVaXrHkudhim+xGIIhIy1CUhBEi90Ko=
 github.com/sentinel-official/hub/v12 v12.0.0-rc5/go.mod h1:mr9BnXVpEjyFSI/X8LObsE2LNusJAtaTDMcOYoR2DHE=
-github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151503-d390ac91288c h1:9j9fdCgXyeiQ4WPGKHWo4dlSKjXWL0cMQqEfP6umG6o=
-github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240804151503-d390ac91288c/go.mod h1:tzqDUMBkFjyC3FVCsm/lB9iYaXJK+eMPRtGgTi2iFMI=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240806085114-671d473c418b h1:F/qyRnzH0SqYDpnngkhguU+3R2k5fqyyEojCc1bRpzY=
+github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240806085114-671d473c418b/go.mod h1:Z0/z2iEjshZJ47Ird0F4v8syuUoIqUdGr+TvIe/4TMU=
 github.com/showwin/speedtest-go v1.7.8 h1:UZbFQ/ArVgPvkR03egSeTM2FXBd6qJsLp8lzt9aeod0=
 github.com/showwin/speedtest-go v1.7.8/go.mod h1:uLgdWCNarXxlYsL2E5TOZpCIwpgSWnEANZp7gfHXHu0=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
