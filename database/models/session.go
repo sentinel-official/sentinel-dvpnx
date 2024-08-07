@@ -5,20 +5,21 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"gorm.io/gorm"
 )
 
 type Session struct {
-	CreatedAt time.Time `gorm:"autoCreateTime"` // Timestamp when the record was created
-	UpdatedAt time.Time `gorm:"autoUpdateTime"` // Timestamp when the record was last updated
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"` // Timestamp when the record was created
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"` // Timestamp when the record was last updated
 
-	ID            uint64 `gorm:"primaryKey"`           // Unique identifier for the session
-	AccAddress    string `gorm:"not null"`             // Account address, cannot be null
-	DownloadBytes string `gorm:"not null"`             // Download bytes represented as a string
-	UploadBytes   string `gorm:"not null"`             // Upload bytes represented as a string
-	MaxBytes      string `gorm:"not null"`             // Maximum bytes represented as a string
-	Duration      int64  `gorm:"not null"`             // Duration of the session in seconds
-	MaxDuration   int64  `gorm:"not null"`             // Maximum allowed duration for the session in seconds
-	PeerKey       string `gorm:"not null;uniqueIndex"` // Unique key for the peer, indexed and cannot be null
+	ID            uint64 `gorm:"column:id;not null;primaryKey"`        // Unique identifier for the session
+	AccAddress    string `gorm:"column:acc_address;not null"`          // Account address, cannot be null
+	DownloadBytes string `gorm:"column:download_bytes;not null"`       // Download bytes represented as a string
+	UploadBytes   string `gorm:"column:upload_bytes;not null"`         // Upload bytes represented as a string
+	MaxBytes      string `gorm:"column:max_bytes;not null"`            // Maximum bytes represented as a string
+	Duration      int64  `gorm:"column:duration;not null"`             // Duration of the session in nanoseconds
+	MaxDuration   int64  `gorm:"column:max_duration;not null"`         // Maximum allowed duration for the session in nanoseconds
+	PeerKey       string `gorm:"column:peer_key;not null;uniqueIndex"` // Unique key for the peer, indexed and cannot be null
 }
 
 // NewSession creates and returns a new instance of the Session struct with default values.
@@ -122,4 +123,18 @@ func (s *Session) GetDuration() time.Duration {
 // GetMaxDuration returns the MaxDuration field as time.Duration
 func (s *Session) GetMaxDuration() time.Duration {
 	return time.Duration(s.MaxDuration)
+}
+
+// BeforeUpdate is a GORM hook that updates the Duration field if relevant fields change.
+func (s *Session) BeforeUpdate(db *gorm.DB) (err error) {
+	if s.ID == 0 {
+		return nil
+	}
+
+	if db.Statement.Changed("download_bytes", "upload_bytes") {
+		duration := time.Since(s.CreatedAt).Nanoseconds()
+		db.Statement.SetColumn("duration", duration)
+	}
+
+	return nil
 }
