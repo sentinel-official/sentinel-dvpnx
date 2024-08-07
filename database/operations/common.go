@@ -4,15 +4,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// applyConditions applies conditions to a GORM query.
-func applyConditions(query *gorm.DB, conditions map[string]interface{}) *gorm.DB {
-	if len(conditions) > 0 {
-		for key, value := range conditions {
-			query = query.Where(key+" = ?", value)
-		}
-	} else {
-		query = query.Where("1 = 1")
+// applyQuery applies the given query to the GORM DB instance.
+func applyQuery(db *gorm.DB, query map[string]interface{}) *gorm.DB {
+	if len(query) > 0 {
+		return db.Where(query)
 	}
 
-	return query
+	return db.Where("1 = 1")
 }
