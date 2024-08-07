@@ -1,7 +1,7 @@
 package options
 
 import (
-	"github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
+	sdkflags "github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -19,11 +19,11 @@ type TxOptions struct {
 // NewDefaultTx creates a new TxOptions instance with default values.
 func NewDefaultTx() *TxOptions {
 	return &TxOptions{
-		ChainID:            flags.DefaultTxChainID,
-		Gas:                flags.DefaultTxGas,
-		GasAdjustment:      flags.DefaultTxGasAdjustment,
-		GasPrices:          flags.DefaultTxGasPrices,
-		SimulateAndExecute: flags.DefaultTxSimulateAndExecute,
+		ChainID:            sdkflags.DefaultTxChainID,
+		Gas:                sdkflags.DefaultTxGas,
+		GasAdjustment:      sdkflags.DefaultTxGasAdjustment,
+		GasPrices:          sdkflags.DefaultTxGasPrices,
+		SimulateAndExecute: sdkflags.DefaultTxSimulateAndExecute,
 	}
 }
 
@@ -71,55 +71,55 @@ func (t *TxOptions) WithSimulateAndExecute(v bool) *TxOptions {
 
 // AddTxFlagsToCmd configures all transaction-related flags for the given command.
 func AddTxFlagsToCmd(cmd *cobra.Command) {
-	flags.SetFlagTxChainID(cmd)
-	flags.SetFlagTxFeeGranterAddr(cmd)
-	flags.SetFlagTxFromName(cmd)
-	flags.SetFlagTxGas(cmd)
-	flags.SetFlagTxGasAdjustment(cmd)
-	flags.SetFlagTxGasPrices(cmd)
-	flags.SetFlagTxSimulateAndExecute(cmd)
+	sdkflags.SetFlagTxChainID(cmd)
+	sdkflags.SetFlagTxFeeGranterAddr(cmd)
+	sdkflags.SetFlagTxFromName(cmd)
+	sdkflags.SetFlagTxGas(cmd)
+	sdkflags.SetFlagTxGasAdjustment(cmd)
+	sdkflags.SetFlagTxGasPrices(cmd)
+	sdkflags.SetFlagTxSimulateAndExecute(cmd)
 }
 
 // NewTxOptionsFromCmd creates and returns TxOptions from the given cobra command's flags.
 func NewTxOptionsFromCmd(cmd *cobra.Command) (*TxOptions, error) {
 	// Retrieve the chain ID flag value from the command.
-	chainID, err := flags.GetTxChainIDFromCmd(cmd)
+	chainID, err := sdkflags.GetTxChainIDFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the fee granter address flag value from the command.
-	feeGranterAddr, err := flags.GetTxFeeGranterAddrFromCmd(cmd)
+	feeGranterAddr, err := sdkflags.GetTxFeeGranterAddrFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the from name flag value from the command.
-	fromName, err := flags.GetTxFromNameFromCmd(cmd)
+	fromName, err := sdkflags.GetTxFromNameFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the gas flag value from the command.
-	gas, err := flags.GetTxGasFromCmd(cmd)
+	gas, err := sdkflags.GetTxGasFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the gas adjustment flag value from the command.
-	gasAdjustment, err := flags.GetTxGasAdjustmentFromCmd(cmd)
+	gasAdjustment, err := sdkflags.GetTxGasAdjustmentFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the gas prices flag value from the command.
-	gasPrices, err := flags.GetTxGasPricesFromCmd(cmd)
+	gasPrices, err := sdkflags.GetTxGasPricesFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the simulate and execute flag value from the command.
-	simulateAndExecute, err := flags.GetTxSimulateAndExecuteFromCmd(cmd)
+	simulateAndExecute, err := sdkflags.GetTxSimulateAndExecuteFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}

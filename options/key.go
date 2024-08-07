@@ -1,7 +1,7 @@
 package options
 
 import (
-	"github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
+	sdkflags "github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +14,7 @@ type KeyringOptions struct {
 // NewDefaultKeyring creates a new KeyringOptions instance with default values.
 func NewDefaultKeyring() *KeyringOptions {
 	return &KeyringOptions{
-		Backend: flags.DefaultKeyringBackend,
+		Backend: sdkflags.DefaultKeyringBackend,
 	}
 }
 
@@ -32,20 +32,20 @@ func (k *KeyringOptions) WithHomeDir(v string) *KeyringOptions {
 
 // AddKeyringFlagsToCmd adds keyring-related flags to the given cobra command.
 func AddKeyringFlagsToCmd(cmd *cobra.Command) {
-	flags.SetFlagKeyringBackend(cmd)
-	flags.SetFlagKeyringHomeDir(cmd)
+	sdkflags.SetFlagKeyringBackend(cmd)
+	sdkflags.SetFlagKeyringHomeDir(cmd)
 }
 
 // NewKeyringOptionsFromCmd creates and returns KeyringOptions from the given cobra command's flags.
 func NewKeyringOptionsFromCmd(cmd *cobra.Command) (*KeyringOptions, error) {
 	// Retrieve the backend flag value from the command.
-	backend, err := flags.GetKeyringBackendFromCmd(cmd)
+	backend, err := sdkflags.GetKeyringBackendFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the home directory flag value from the command.
-	homeDir, err := flags.GetKeyringHomeDirFromCmd(cmd)
+	homeDir, err := sdkflags.GetKeyringHomeDirFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
