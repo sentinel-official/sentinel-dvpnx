@@ -30,8 +30,9 @@ func New(filepath string, cfg *gorm.Config) (*gorm.DB, error) {
 func NewDefault(filepath string) (*gorm.DB, error) {
 	// Define default GORM configuration settings.
 	cfg := gorm.Config{
-		Logger:      logger.Discard,
-		PrepareStmt: false,
+		Logger:         logger.Default.LogMode(logger.Info),
+		PrepareStmt:    false,
+		TranslateError: true,
 	}
 
 	// Call New with the default configuration.

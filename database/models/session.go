@@ -85,6 +85,14 @@ func (s *Session) GetAccAddress() string {
 	return s.AccAddress
 }
 
+// GetBytes returns the total number of bytes (download + upload) as sdkmath.Int.
+func (s *Session) GetBytes() sdkmath.Int {
+	downloadBytes := s.GetDownloadBytes()
+	uploadBytes := s.GetUploadBytes()
+
+	return downloadBytes.Add(uploadBytes)
+}
+
 // GetDownloadBytes returns the DownloadBytes field as sdkmath.Int
 func (s *Session) GetDownloadBytes() sdkmath.Int {
 	v, ok := sdkmath.NewIntFromString(s.DownloadBytes)
