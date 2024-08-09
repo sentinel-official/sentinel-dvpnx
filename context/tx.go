@@ -33,15 +33,10 @@ func (c *Context) BroadcastTx(ctx context.Context, messages ...sdk.Msg) (*corety
 		// Broadcast the transaction
 		resp, err = c.Client().BroadcastTx(ctx, messages, opts)
 		if err != nil {
-			// If the error is not related to the transaction being already in the cache, return the error.
+			// Return the error if the error is not TxInMempoolCacheError.
 			if !isTxInMempoolCacheError(err) {
 				return err
 			}
-		}
-
-		// Check if the transaction was successful.
-		if resp.Code != abci.CodeTypeOK {
-			return errors.New(resp.Log)
 		}
 
 		return nil
@@ -50,6 +45,11 @@ func (c *Context) BroadcastTx(ctx context.Context, messages ...sdk.Msg) (*corety
 	// Retry broadcasting the transaction.
 	if err := retry.Timed(5, 6000).On(broadcastTxFunc); err != nil {
 		return nil, err
+	}
+
+	// Check if the transaction was successful.
+	if resp.Code != abci.CodeTypeOK {
+		return nil, errors.New(resp.Log)
 	}
 
 	// Define a function for fetching the transaction result with retry logic.

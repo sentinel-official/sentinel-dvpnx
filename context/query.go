@@ -15,7 +15,7 @@ func (c *Context) QuerySession(ctx context.Context, id uint64) (sessiontypes.Ses
 	var err error
 	var session sessiontypes.Session
 
-	// Define the function that performs the session query.
+	// Define the function that performs the session query with retry logic.
 	querySessionFunc := func() error {
 		session, err = c.Client().Session(ctx, id, opts)
 		if err != nil {
