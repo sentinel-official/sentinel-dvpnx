@@ -21,11 +21,3 @@ func handleGeoIPLocation(ctx *context.Context, client geoip.Client) func() error
 		return nil
 	}
 }
-
-// onErrorBestRPCEndpoint returns a function to handle errors.
-func onErrorGeoIPLocation(_ *context.Context) func(error) bool {
-	return func(err error) bool {
-		// Do nothing on error
-		return false
-	}
-}

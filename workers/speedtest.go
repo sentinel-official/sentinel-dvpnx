@@ -21,11 +21,3 @@ func handleSpeedtest(ctx *context.Context) func() error {
 		return nil
 	}
 }
-
-// onErrorSpeedtest returns a function to handle errors.
-func onErrorSpeedtest(_ *context.Context) func(error) bool {
-	return func(err error) bool {
-		// Do nothing on error
-		return false
-	}
-}

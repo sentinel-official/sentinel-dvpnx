@@ -69,11 +69,3 @@ func handleBestRPCEndpoint(ctx *context.Context, endpoints []string) func() erro
 		return nil
 	}
 }
-
-// onErrorBestRPCEndpoint returns a function to handle errors.
-func onErrorBestRPCEndpoint(_ *context.Context) func(error) bool {
-	return func(err error) bool {
-		// Do nothing on error
-		return false
-	}
-}

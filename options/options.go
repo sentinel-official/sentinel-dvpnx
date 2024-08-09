@@ -167,7 +167,7 @@ func NewOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
 	}
 
 	// Retrieves NodeOptions from command flags.
-	pageOpts, err := NewNodeOptionsFromCmd(cmd)
+	nodeOpts, err := NewNodeOptionsFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func NewOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
 		HandshakeOptions: keyOpts,
 		KeyringOptions:   keyringOpts,
 		LogOptions:       logOpts,
-		NodeOptions:      pageOpts,
+		NodeOptions:      nodeOpts,
 		QOSOptions:       qosOpts,
 		QueryOptions:     queryOpts,
 		TxOptions:        txOpts,

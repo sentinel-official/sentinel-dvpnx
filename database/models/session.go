@@ -1,25 +1,34 @@
 package models
 
 import (
+	"encoding/base64"
 	"fmt"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sentinelhub "github.com/sentinel-official/hub/v12/types"
+	sessiontypes "github.com/sentinel-official/hub/v12/x/session/types/v3"
+	sentinelsdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"gorm.io/gorm"
 )
 
+// Session represents a session record in the database.
 type Session struct {
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"` // Timestamp when the record was created
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"` // Timestamp when the record was last updated
 
 	ID            uint64 `gorm:"column:id;not null;primaryKey"`        // Unique identifier for the session
-	AccAddress    string `gorm:"column:acc_address;not null"`          // Account address, cannot be null
+	AccAddr       string `gorm:"column:acc_addr;not null"`             // Account address, cannot be null
+	NodeAddr      string `gorm:"column:node_addr;not null"`            // Address of the node associated with the session
 	DownloadBytes string `gorm:"column:download_bytes;not null"`       // Download bytes represented as a string
 	UploadBytes   string `gorm:"column:upload_bytes;not null"`         // Upload bytes represented as a string
 	MaxBytes      string `gorm:"column:max_bytes;not null"`            // Maximum bytes represented as a string
 	Duration      int64  `gorm:"column:duration;not null"`             // Duration of the session in nanoseconds
 	MaxDuration   int64  `gorm:"column:max_duration;not null"`         // Maximum allowed duration for the session in nanoseconds
+	Signature     string `gorm:"column:signature;not null"`            // Signature associated with the session
 	PeerKey       string `gorm:"column:peer_key;not null;uniqueIndex"` // Unique key for the peer, indexed and cannot be null
+	ServiceType   string `gorm:"column:service_type;not null"`         // Type of service for the session
 }
 
 // NewSession creates and returns a new instance of the Session struct with default values.
@@ -27,62 +36,95 @@ func NewSession() *Session {
 	return &Session{}
 }
 
-// WithID sets the ID field and returns the updated Session instance
+// WithID sets the ID field and returns the updated Session instance.
 func (s *Session) WithID(v uint64) *Session {
 	s.ID = v
 	return s
 }
 
-// WithAccAddress sets the AccAddress field and returns the updated Session instance
-func (s *Session) WithAccAddress(v string) *Session {
-	s.AccAddress = v
+// WithAccAddr sets the AccAddr field and returns the updated Session instance.
+func (s *Session) WithAccAddr(v sdk.AccAddress) *Session {
+	s.AccAddr = v.String()
 	return s
 }
 
-// WithDownloadBytes sets the DownloadBytes field from sdkmath.Int and returns the updated Session instance
+// WithNodeAddr sets the NodeAddr field and returns the updated Session instance.
+func (s *Session) WithNodeAddr(v sentinelhub.NodeAddress) *Session {
+	s.NodeAddr = v.String()
+	return s
+}
+
+// WithDownloadBytes sets the DownloadBytes field from sdkmath.Int and returns the updated Session instance.
 func (s *Session) WithDownloadBytes(v sdkmath.Int) *Session {
 	s.DownloadBytes = v.String()
 	return s
 }
 
-// WithUploadBytes sets the UploadBytes field from sdkmath.Int and returns the updated Session instance
+// WithUploadBytes sets the UploadBytes field from sdkmath.Int and returns the updated Session instance.
 func (s *Session) WithUploadBytes(v sdkmath.Int) *Session {
 	s.UploadBytes = v.String()
 	return s
 }
 
-// WithMaxBytes sets the MaxBytes field from sdkmath.Int and returns the updated Session instance
+// WithMaxBytes sets the MaxBytes field from sdkmath.Int and returns the updated Session instance.
 func (s *Session) WithMaxBytes(v sdkmath.Int) *Session {
 	s.MaxBytes = v.String()
 	return s
 }
 
-// WithDuration sets the Duration field from time.Duration and returns the updated Session instance
+// WithDuration sets the Duration field from time.Duration and returns the updated Session instance.
 func (s *Session) WithDuration(v time.Duration) *Session {
 	s.Duration = v.Nanoseconds()
 	return s
 }
 
-// WithMaxDuration sets the MaxDuration field from time.Duration and returns the updated Session instance
+// WithMaxDuration sets the MaxDuration field from time.Duration and returns the updated Session instance.
 func (s *Session) WithMaxDuration(v time.Duration) *Session {
 	s.MaxDuration = v.Nanoseconds()
 	return s
 }
 
-// WithPeerKey sets the PeerKey field and returns the updated Session instance
+// WithSignature sets the Signature field and returns the updated Session instance.
+func (s *Session) WithSignature(v []byte) *Session {
+	s.Signature = base64.StdEncoding.EncodeToString(v)
+	return s
+}
+
+// WithPeerKey sets the PeerKey field and returns the updated Session instance.
 func (s *Session) WithPeerKey(v string) *Session {
 	s.PeerKey = v
 	return s
 }
 
-// GetID returns the ID field
+// WithServiceType sets the ServiceType field and returns the updated Session instance.
+func (s *Session) WithServiceType(v sentinelsdk.ServiceType) *Session {
+	s.ServiceType = v.String()
+	return s
+}
+
+// GetID returns the ID field.
 func (s *Session) GetID() uint64 {
 	return s.ID
 }
 
-// GetAccAddress returns the AccAddress field
-func (s *Session) GetAccAddress() string {
-	return s.AccAddress
+// GetAccAddr returns the AccAddr field as sdk.AccAddress.
+func (s *Session) GetAccAddr() sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(s.AccAddr)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
+}
+
+// GetNodeAddr returns the NodeAddr field as sentinelhub.NodeAddress.
+func (s *Session) GetNodeAddr() sentinelhub.NodeAddress {
+	addr, err := sentinelhub.NodeAddressFromBech32(s.NodeAddr)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
 }
 
 // GetBytes returns the total number of bytes (download + upload) as sdkmath.Int.
@@ -93,7 +135,7 @@ func (s *Session) GetBytes() sdkmath.Int {
 	return downloadBytes.Add(uploadBytes)
 }
 
-// GetDownloadBytes returns the DownloadBytes field as sdkmath.Int
+// GetDownloadBytes returns the DownloadBytes field as sdkmath.Int.
 func (s *Session) GetDownloadBytes() sdkmath.Int {
 	v, ok := sdkmath.NewIntFromString(s.DownloadBytes)
 	if !ok {
@@ -103,7 +145,7 @@ func (s *Session) GetDownloadBytes() sdkmath.Int {
 	return v
 }
 
-// GetUploadBytes returns the UploadBytes field as sdkmath.Int
+// GetUploadBytes returns the UploadBytes field as sdkmath.Int.
 func (s *Session) GetUploadBytes() sdkmath.Int {
 	v, ok := sdkmath.NewIntFromString(s.UploadBytes)
 	if !ok {
@@ -113,7 +155,7 @@ func (s *Session) GetUploadBytes() sdkmath.Int {
 	return v
 }
 
-// GetMaxBytes returns the MaxBytes field as sdkmath.Int
+// GetMaxBytes returns the MaxBytes field as sdkmath.Int.
 func (s *Session) GetMaxBytes() sdkmath.Int {
 	v, ok := sdkmath.NewIntFromString(s.MaxBytes)
 	if !ok {
@@ -123,14 +165,34 @@ func (s *Session) GetMaxBytes() sdkmath.Int {
 	return v
 }
 
-// GetDuration returns the Duration field as time.Duration
+// GetDuration returns the Duration field as time.Duration.
 func (s *Session) GetDuration() time.Duration {
 	return time.Duration(s.Duration)
 }
 
-// GetMaxDuration returns the MaxDuration field as time.Duration
+// GetMaxDuration returns the MaxDuration field as time.Duration.
 func (s *Session) GetMaxDuration() time.Duration {
 	return time.Duration(s.MaxDuration)
+}
+
+// GetSignature returns the Signature field as a byte slice.
+func (s *Session) GetSignature() []byte {
+	buf, err := base64.StdEncoding.DecodeString(s.Signature)
+	if err != nil {
+		panic(err)
+	}
+
+	return buf
+}
+
+// GetPeerKey returns the PeerKey field.
+func (s *Session) GetPeerKey() string {
+	return s.PeerKey
+}
+
+// GetServiceType returns the ServiceType field as sentinelsdk.ServiceType.
+func (s *Session) GetServiceType() sentinelsdk.ServiceType {
+	return sentinelsdk.ServiceTypeFromString(s.ServiceType)
 }
 
 // BeforeUpdate is a GORM hook that updates the Duration field if relevant fields change.
@@ -145,4 +207,16 @@ func (s *Session) BeforeUpdate(db *gorm.DB) (err error) {
 	}
 
 	return nil
+}
+
+// MsgUpdateSessionRequest creates a MsgUpdateSessionRequest for the session.
+func (s *Session) MsgUpdateSessionRequest() *sessiontypes.MsgUpdateSessionRequest {
+	return sessiontypes.NewMsgUpdateSessionRequest(
+		s.GetNodeAddr(),
+		s.GetID(),
+		s.GetDownloadBytes(),
+		s.GetUploadBytes(),
+		s.GetDuration(),
+		s.GetSignature(),
+	)
 }
