@@ -21,7 +21,7 @@ func (c *Context) BroadcastTx(ctx context.Context, messages ...sdk.Msg) (*corety
 	c.Client().Lock()
 	defer c.Client().Unlock()
 
-	// Get options for broadcasting and querying transactions.
+	// Get client options for broadcasting and querying transactions.
 	opts := c.ClientOptions()
 
 	var err error
