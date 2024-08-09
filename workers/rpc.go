@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 )
 
 // handleBestRPCEndpoint determines the best RPC endpoint based on latency.
-func handleBestRPCEndpoint(ctx *context.Context, endpoints []string) func() error {
+func handleBestRPCEndpoint(ctx *nodecontext.Context, endpoints []string) func() error {
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}

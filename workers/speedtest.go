@@ -3,11 +3,11 @@ package workers
 import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/speedtest"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 )
 
 // handleSpeedtest returns a function that performs a speed test and sets the results in the context.
-func handleSpeedtest(ctx *context.Context) func() error {
+func handleSpeedtest(ctx *nodecontext.Context) func() error {
 	return func() error {
 		// Run the speed test and get the download and upload speeds
 		dlSpeed, ulSpeed, err := speedtest.Run()

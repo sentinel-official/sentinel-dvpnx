@@ -1,37 +1,38 @@
 package workers
 
 import (
-	gocontext "context"
+	"context"
 	"errors"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	v1sentinelhub "github.com/sentinel-official/hub/v12/types/v1"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/database/operations"
 )
 
-// handleSyncSessionUsageWithDB returns a function that synchronizes peer session usage statistics with the database.
-func handleSyncSessionUsageWithDB(ctx *context.Context) func() error {
+// handleSyncSessionUsageWithDB returns a function that updates session usage statistics in the database.
+func handleSyncSessionUsageWithDB(ctx *nodecontext.Context) func() error {
 	return func() error {
-		// Retrieve peer statistics from the service.
-		statistics, err := ctx.Service().PeerStatistics(gocontext.TODO())
+		// Fetch peer statistics from the service.
+		items, err := ctx.Service().PeerStatistics(context.TODO())
 		if err != nil {
 			return err
 		}
 
-		// Iterate over each peer statistic.
-		for _, s := range statistics {
+		// Iterate through each peer statistic and update the database.
+		for _, item := range items {
 			// Convert download and upload bytes to strings for database storage.
-			downloadBytes := sdkmath.NewInt(s.DownloadBytes).String()
-			uploadBytes := sdkmath.NewInt(s.UploadBytes).String()
+			downloadBytes := sdkmath.NewInt(item.DownloadBytes).String()
+			uploadBytes := sdkmath.NewInt(item.UploadBytes).String()
 
-			// Define the query to find the relevant session by peer_key.
+			// Query to find the session by peer_key.
 			query := map[string]interface{}{
-				"peer_key": s.Key,
+				"peer_key": item.Key,
 			}
 
-			// Define the updates to be applied to the found session.
+			// Define the updates to apply to the session.
 			updates := map[string]interface{}{
 				"download_bytes": downloadBytes,
 				"upload_bytes":   uploadBytes,
@@ -48,37 +49,36 @@ func handleSyncSessionUsageWithDB(ctx *context.Context) func() error {
 	}
 }
 
-// handleValidateSessionUsage returns a function that validates session usage and removes peers if necessary.
-func handleValidateSessionUsage(ctx *context.Context) func() error {
+// handleValidateSessionUsage returns a function that checks session usage and removes peers if they exceed limits.
+func handleValidateSessionUsage(ctx *nodecontext.Context) func() error {
 	return func() error {
-		// Retrieve sessions from the database.
-		sessions, err := operations.SessionFind(ctx.DB(), nil)
+		// Retrieve all sessions from the database.
+		items, err := operations.SessionFind(ctx.DB(), nil)
 		if err != nil {
 			return err
 		}
 
-		// Iterate over each session.
-		for _, s := range sessions {
-			// Determine if the peer should be removed based on session limits.
+		// Iterate through each session to validate usage.
+		for _, item := range items {
 			removePeer := false
 
 			// Check if the session has exceeded its byte limit.
-			if s.GetBytes().GTE(s.GetMaxBytes()) {
+			if item.GetBytes().GTE(item.GetMaxBytes()) {
 				removePeer = true
 			}
 
 			// Check if the session has exceeded its duration limit.
-			if s.GetDuration() >= s.GetMaxDuration() {
+			if item.GetDuration() >= item.GetMaxDuration() {
 				removePeer = true
 			}
 
-			// If the peer should not be removed, skip to the next session.
+			// Skip to the next session if the peer should not be removed.
 			if !removePeer {
 				continue
 			}
 
 			// Attempt to remove the peer identified by session.PeerKey.
-			if err := ctx.RemovePeerIfExistsForKey(gocontext.TODO(), s.PeerKey); err != nil {
+			if err := ctx.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
 				return err
 			}
 		}
@@ -87,28 +87,78 @@ func handleValidateSessionUsage(ctx *context.Context) func() error {
 	}
 }
 
-// handleSyncSessionUsageWithBlockchain returns a function that syncs session usage with the blockchain.
-func handleSyncSessionUsageWithBlockchain(ctx *context.Context) func() error {
+// handleSyncSessionUsageWithBlockchain returns a function that synchronizes session usage with the blockchain.
+func handleSyncSessionUsageWithBlockchain(ctx *nodecontext.Context) func() error {
 	return func() error {
-		// Retrieve sessions from the database.
-		sessions, err := operations.SessionFind(ctx.DB(), nil)
+		// Retrieve all sessions from the database.
+		items, err := operations.SessionFind(ctx.DB(), nil)
 		if err != nil {
 			return err
 		}
 
-		// Prepare a slice of transaction messages for session updates.
+		// Prepare a list of transaction messages for session updates.
 		var messages []sdk.Msg
-		for _, s := range sessions {
-			messages = append(messages, s.MsgUpdateSessionRequest())
+		for _, item := range items {
+			// Query session details from the blockchain.
+			session, err := ctx.QuerySession(context.TODO(), item.GetID())
+			if err != nil {
+				return err
+			}
+			if session == nil {
+				continue
+			}
+
+			// Create a message to update the session and add it to the list of messages.
+			msg := item.MsgUpdateSessionRequest()
+			messages = append(messages, msg)
 		}
 
 		// Broadcast the transaction messages to the blockchain.
-		res, err := ctx.BroadcastTx(gocontext.TODO(), messages...)
+		res, err := ctx.BroadcastTx(context.TODO(), messages...)
 		if err != nil {
 			return err
 		}
 		if !res.TxResult.IsOK() {
 			return errors.New(res.TxResult.GetLog())
+		}
+
+		return nil
+	}
+}
+
+// handleValidateSessions returns a function that verifies sessions and removes peers if necessary.
+func handleValidateSessions(ctx *nodecontext.Context) func() error {
+	return func() error {
+		// Retrieve all sessions from the database.
+		items, err := operations.SessionFind(ctx.DB(), nil)
+		if err != nil {
+			return err
+		}
+
+		// Iterate through each session to check its status.
+		for _, item := range items {
+			removePeer := false
+
+			// Query session details from the blockchain.
+			session, err := ctx.QuerySession(context.TODO(), item.GetID())
+			if err != nil {
+				return err
+			}
+
+			// Mark the peer for removal if the session is not found or is not active.
+			if session == nil || !session.GetStatus().Equal(v1sentinelhub.StatusActive) {
+				removePeer = true
+			}
+
+			// Skip to the next session if the peer should not be removed.
+			if !removePeer {
+				continue
+			}
+
+			// Attempt to remove the peer identified by session.PeerKey.
+			if err := ctx.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
+				return err
+			}
 		}
 
 		return nil

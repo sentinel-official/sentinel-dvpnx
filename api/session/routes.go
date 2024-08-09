@@ -3,9 +3,9 @@ package session
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 )
 
-func RegisterRoutes(ctx *context.Context, r gin.IRouter) {
+func RegisterRoutes(ctx *nodecontext.Context, r gin.IRouter) {
 	r.GET("/accounts/:acc_address/sessions/:id", HandlerAddSession(ctx))
 }
