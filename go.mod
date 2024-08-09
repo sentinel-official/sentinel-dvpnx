@@ -5,10 +5,13 @@ go 1.22.5
 require (
 	cosmossdk.io/log v1.4.0
 	cosmossdk.io/math v1.3.0
+	github.com/cometbft/cometbft v0.37.7
 	github.com/cosmos/cosmos-sdk v0.47.12
 	github.com/gin-gonic/gin v1.8.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240808070532-9b5214595f16
+	github.com/sentinel-official/hub/v12 v12.0.0-rc5
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240809145936-5e7db4aaab6e
 	github.com/spf13/cobra v1.8.1
+	github.com/v2fly/v2ray-core/v5 v5.16.1
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.11
 )
@@ -34,7 +37,6 @@ require (
 	github.com/cockroachdb/pebble v1.1.0 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
-	github.com/cometbft/cometbft v0.37.7 // indirect
 	github.com/cometbft/cometbft-db v0.12.0 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
@@ -123,7 +125,6 @@ require (
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb // indirect
-	github.com/sentinel-official/hub/v12 v12.0.0-rc5 // indirect
 	github.com/shirou/gopsutil/v4 v4.24.7 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/showwin/speedtest-go v1.7.8 // indirect
@@ -141,7 +142,6 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e // indirect
-	github.com/v2fly/v2ray-core/v5 v5.16.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zondax/hid v0.9.2 // indirect
 	github.com/zondax/ledger-go v0.14.3 // indirect
