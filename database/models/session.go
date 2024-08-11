@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sentinelhub "github.com/sentinel-official/hub/v12/types"
+	cosmossdkmath "cosmossdk.io/math"
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
+	base "github.com/sentinel-official/hub/v12/types"
 	sessiontypes "github.com/sentinel-official/hub/v12/x/session/types/v3"
-	sentinelsdk "github.com/sentinel-official/sentinel-go-sdk/types"
+	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"gorm.io/gorm"
 )
 
@@ -43,31 +43,31 @@ func (s *Session) WithID(v uint64) *Session {
 }
 
 // WithAccAddr sets the AccAddr field and returns the updated Session instance.
-func (s *Session) WithAccAddr(v sdk.AccAddress) *Session {
+func (s *Session) WithAccAddr(v cosmossdk.AccAddress) *Session {
 	s.AccAddr = v.String()
 	return s
 }
 
 // WithNodeAddr sets the NodeAddr field and returns the updated Session instance.
-func (s *Session) WithNodeAddr(v sentinelhub.NodeAddress) *Session {
+func (s *Session) WithNodeAddr(v base.NodeAddress) *Session {
 	s.NodeAddr = v.String()
 	return s
 }
 
-// WithDownloadBytes sets the DownloadBytes field from sdkmath.Int and returns the updated Session instance.
-func (s *Session) WithDownloadBytes(v sdkmath.Int) *Session {
+// WithDownloadBytes sets the DownloadBytes field from cosmossdkmath.Int and returns the updated Session instance.
+func (s *Session) WithDownloadBytes(v cosmossdkmath.Int) *Session {
 	s.DownloadBytes = v.String()
 	return s
 }
 
-// WithUploadBytes sets the UploadBytes field from sdkmath.Int and returns the updated Session instance.
-func (s *Session) WithUploadBytes(v sdkmath.Int) *Session {
+// WithUploadBytes sets the UploadBytes field from cosmossdkmath.Int and returns the updated Session instance.
+func (s *Session) WithUploadBytes(v cosmossdkmath.Int) *Session {
 	s.UploadBytes = v.String()
 	return s
 }
 
-// WithMaxBytes sets the MaxBytes field from sdkmath.Int and returns the updated Session instance.
-func (s *Session) WithMaxBytes(v sdkmath.Int) *Session {
+// WithMaxBytes sets the MaxBytes field from cosmossdkmath.Int and returns the updated Session instance.
+func (s *Session) WithMaxBytes(v cosmossdkmath.Int) *Session {
 	s.MaxBytes = v.String()
 	return s
 }
@@ -97,7 +97,7 @@ func (s *Session) WithPeerKey(v string) *Session {
 }
 
 // WithServiceType sets the ServiceType field and returns the updated Session instance.
-func (s *Session) WithServiceType(v sentinelsdk.ServiceType) *Session {
+func (s *Session) WithServiceType(v sdk.ServiceType) *Session {
 	s.ServiceType = v.String()
 	return s
 }
@@ -107,9 +107,9 @@ func (s *Session) GetID() uint64 {
 	return s.ID
 }
 
-// GetAccAddr returns the AccAddr field as sdk.AccAddress.
-func (s *Session) GetAccAddr() sdk.AccAddress {
-	addr, err := sdk.AccAddressFromBech32(s.AccAddr)
+// GetAccAddr returns the AccAddr field as cosmossdk.AccAddress.
+func (s *Session) GetAccAddr() cosmossdk.AccAddress {
+	addr, err := cosmossdk.AccAddressFromBech32(s.AccAddr)
 	if err != nil {
 		panic(err)
 	}
@@ -117,9 +117,9 @@ func (s *Session) GetAccAddr() sdk.AccAddress {
 	return addr
 }
 
-// GetNodeAddr returns the NodeAddr field as sentinelhub.NodeAddress.
-func (s *Session) GetNodeAddr() sentinelhub.NodeAddress {
-	addr, err := sentinelhub.NodeAddressFromBech32(s.NodeAddr)
+// GetNodeAddr returns the NodeAddr field as base.NodeAddress.
+func (s *Session) GetNodeAddr() base.NodeAddress {
+	addr, err := base.NodeAddressFromBech32(s.NodeAddr)
 	if err != nil {
 		panic(err)
 	}
@@ -127,17 +127,17 @@ func (s *Session) GetNodeAddr() sentinelhub.NodeAddress {
 	return addr
 }
 
-// GetBytes returns the total number of bytes (download + upload) as sdkmath.Int.
-func (s *Session) GetBytes() sdkmath.Int {
+// GetBytes returns the total number of bytes (download + upload) as cosmossdkmath.Int.
+func (s *Session) GetBytes() cosmossdkmath.Int {
 	downloadBytes := s.GetDownloadBytes()
 	uploadBytes := s.GetUploadBytes()
 
 	return downloadBytes.Add(uploadBytes)
 }
 
-// GetDownloadBytes returns the DownloadBytes field as sdkmath.Int.
-func (s *Session) GetDownloadBytes() sdkmath.Int {
-	v, ok := sdkmath.NewIntFromString(s.DownloadBytes)
+// GetDownloadBytes returns the DownloadBytes field as cosmossdkmath.Int.
+func (s *Session) GetDownloadBytes() cosmossdkmath.Int {
+	v, ok := cosmossdkmath.NewIntFromString(s.DownloadBytes)
 	if !ok {
 		panic(fmt.Errorf("invalid download_bytes: %s", s.DownloadBytes))
 	}
@@ -145,9 +145,9 @@ func (s *Session) GetDownloadBytes() sdkmath.Int {
 	return v
 }
 
-// GetUploadBytes returns the UploadBytes field as sdkmath.Int.
-func (s *Session) GetUploadBytes() sdkmath.Int {
-	v, ok := sdkmath.NewIntFromString(s.UploadBytes)
+// GetUploadBytes returns the UploadBytes field as cosmossdkmath.Int.
+func (s *Session) GetUploadBytes() cosmossdkmath.Int {
+	v, ok := cosmossdkmath.NewIntFromString(s.UploadBytes)
 	if !ok {
 		panic(fmt.Errorf("invalid upload_bytes: %s", s.UploadBytes))
 	}
@@ -155,9 +155,9 @@ func (s *Session) GetUploadBytes() sdkmath.Int {
 	return v
 }
 
-// GetMaxBytes returns the MaxBytes field as sdkmath.Int.
-func (s *Session) GetMaxBytes() sdkmath.Int {
-	v, ok := sdkmath.NewIntFromString(s.MaxBytes)
+// GetMaxBytes returns the MaxBytes field as cosmossdkmath.Int.
+func (s *Session) GetMaxBytes() cosmossdkmath.Int {
+	v, ok := cosmossdkmath.NewIntFromString(s.MaxBytes)
 	if !ok {
 		panic(fmt.Errorf("invalid max_bytes: %s", s.MaxBytes))
 	}
@@ -190,9 +190,9 @@ func (s *Session) GetPeerKey() string {
 	return s.PeerKey
 }
 
-// GetServiceType returns the ServiceType field as sentinelsdk.ServiceType.
-func (s *Session) GetServiceType() sentinelsdk.ServiceType {
-	return sentinelsdk.ServiceTypeFromString(s.ServiceType)
+// GetServiceType returns the ServiceType field as sdk.ServiceType.
+func (s *Session) GetServiceType() sdk.ServiceType {
+	return sdk.ServiceTypeFromString(s.ServiceType)
 }
 
 // BeforeUpdate is a GORM hook that updates the Duration field if relevant fields change.

@@ -7,7 +7,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/v2fly/v2ray-core/v5/common/retry"
 )
 
@@ -17,7 +17,7 @@ func isTxInMempoolCacheError(err error) bool {
 }
 
 // BroadcastTx broadcasts a transaction to the network and returns the transaction result.
-func (c *Context) BroadcastTx(ctx context.Context, messages ...sdk.Msg) (*coretypes.ResultTx, error) {
+func (c *Context) BroadcastTx(ctx context.Context, messages ...cosmossdk.Msg) (*coretypes.ResultTx, error) {
 	c.Client().Lock()
 	defer c.Client().Unlock()
 

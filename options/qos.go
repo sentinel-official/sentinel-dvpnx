@@ -6,20 +6,20 @@ import (
 	"github.com/sentinel-official/dvpn-node/cmd/flags"
 )
 
-// QOSOptions represents options for configuring Quality of Service (QOS).
-type QOSOptions struct {
+// QOS represents options for configuring Quality of Service (QOS).
+type QOS struct {
 	MaxPeers int `json:"max_peers" toml:"max_peers"` // MaxPeers specifies the maximum number of peers for Node.
 }
 
-// NewDefaultQOS creates a new QOSOptions instance with default values.
-func NewDefaultQOS() *QOSOptions {
-	return &QOSOptions{
+// NewQOS creates a new QOS instance with default values.
+func NewQOS() *QOS {
+	return &QOS{
 		MaxPeers: flags.DefaultQOSMaxPeers,
 	}
 }
 
-// WithMaxPeers sets the MaxPeers field and returns the modified QOSOptions instance.
-func (q *QOSOptions) WithMaxPeers(v int) *QOSOptions {
+// WithMaxPeers sets the MaxPeers field and returns the modified QOS instance.
+func (q *QOS) WithMaxPeers(v int) *QOS {
 	q.MaxPeers = v
 	return q
 }
@@ -29,16 +29,16 @@ func AddQOSFlagsToCmd(cmd *cobra.Command) {
 	flags.SetFlagQOSMaxPeers(cmd)
 }
 
-// NewQOSOptionsFromCmd creates and returns QOSOptions from the given Cobra command's flags.
-func NewQOSOptionsFromCmd(cmd *cobra.Command) (*QOSOptions, error) {
+// NewQOSFromCmd creates and returns QOS from the given Cobra command's flags.
+func NewQOSFromCmd(cmd *cobra.Command) (*QOS, error) {
 	// Retrieve the max peers flag value from the command.
 	maxPeers, err := flags.GetQOSMaxPeersFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return a new QOSOptions instance populated with the retrieved flag value.
-	return &QOSOptions{
+	// Return a new QOS instance populated with the retrieved flag value.
+	return &QOS{
 		MaxPeers: maxPeers,
 	}, nil
 }

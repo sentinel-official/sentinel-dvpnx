@@ -9,36 +9,36 @@ import (
 	"github.com/sentinel-official/dvpn-node/cmd/flags"
 )
 
-// QueryOptions represents options for making queries.
-type QueryOptions struct {
+// Query represents options for making queries.
+type Query struct {
 	MaxRetries int           `json:"max_retries" toml:"max_retries"` // MaxRetries is the maximum number of retries for the query.
 	RPCAddrs   []string      `json:"rpc_addrs" toml:"rpc_addrs"`     // RPCAddrs is a slice of addresses of the RPC servers.
 	Timeout    time.Duration `json:"timeout" toml:"timeout"`         // Timeout is the maximum duration for the query to be executed.
 }
 
-// NewDefaultQuery creates a new QueryOptions instance with default values.
-func NewDefaultQuery() *QueryOptions {
-	return &QueryOptions{
+// NewQuery creates a new Query instance with default values.
+func NewQuery() *Query {
+	return &Query{
 		MaxRetries: sdkflags.DefaultQueryMaxRetries,
 		RPCAddrs:   flags.DefaultQueryRPCAddrs,
 		Timeout:    sdkflags.DefaultQueryTimeout,
 	}
 }
 
-// WithMaxRetries sets the MaxRetries field and returns the modified QueryOptions instance.
-func (q *QueryOptions) WithMaxRetries(v int) *QueryOptions {
+// WithMaxRetries sets the MaxRetries field and returns the modified Query instance.
+func (q *Query) WithMaxRetries(v int) *Query {
 	q.MaxRetries = v
 	return q
 }
 
-// WithRPCAddrs sets the RPCAddrs field and returns the modified QueryOptions instance.
-func (q *QueryOptions) WithRPCAddrs(v ...string) *QueryOptions {
+// WithRPCAddrs sets the RPCAddrs field and returns the modified Query instance.
+func (q *Query) WithRPCAddrs(v ...string) *Query {
 	q.RPCAddrs = v
 	return q
 }
 
-// WithTimeout sets the Timeout field and returns the modified QueryOptions instance.
-func (q *QueryOptions) WithTimeout(v time.Duration) *QueryOptions {
+// WithTimeout sets the Timeout field and returns the modified Query instance.
+func (q *Query) WithTimeout(v time.Duration) *Query {
 	q.Timeout = v
 	return q
 }
@@ -50,8 +50,8 @@ func AddQueryFlagsToCmd(cmd *cobra.Command) {
 	sdkflags.SetFlagQueryTimeout(cmd)
 }
 
-// NewQueryOptionsFromCmd creates and returns QueryOptions from the given cobra command's sdkflags.
-func NewQueryOptionsFromCmd(cmd *cobra.Command) (*QueryOptions, error) {
+// NewQueryFromCmd creates and returns Query from the given cobra command's sdkflags.
+func NewQueryFromCmd(cmd *cobra.Command) (*Query, error) {
 	// Retrieve the max retries flag value from the command.
 	maxRetries, err := sdkflags.GetQueryMaxRetriesFromCmd(cmd)
 	if err != nil {
@@ -70,8 +70,8 @@ func NewQueryOptionsFromCmd(cmd *cobra.Command) (*QueryOptions, error) {
 		return nil, err
 	}
 
-	// Return a new QueryOptions instance populated with the retrieved flag values.
-	return &QueryOptions{
+	// Return a new Query instance populated with the retrieved flag values.
+	return &Query{
 		MaxRetries: maxRetries,
 		RPCAddrs:   rpcAddrs,
 		Timeout:    timeout,

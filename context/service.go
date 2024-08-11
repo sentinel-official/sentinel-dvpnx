@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sentinel-official/sentinel-go-sdk/types"
+	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
 	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 )
@@ -14,7 +14,7 @@ func (c *Context) HasPeerForKey(ctx context.Context, s string) (bool, error) {
 	t := c.Service().Type()
 
 	switch t {
-	case types.ServiceTypeV2Ray:
+	case sdk.ServiceTypeV2Ray:
 		req, err := v2ray.NewHasPeerRequestFromKey(s)
 		if err != nil {
 			return false, err
@@ -22,7 +22,7 @@ func (c *Context) HasPeerForKey(ctx context.Context, s string) (bool, error) {
 
 		// Check if the peer exists for V2Ray service
 		return c.Service().HasPeer(ctx, req)
-	case types.ServiceTypeWireGuard:
+	case sdk.ServiceTypeWireGuard:
 		req, err := wireguard.NewHasPeerRequestFromKey(s)
 		if err != nil {
 			return false, err
@@ -40,7 +40,7 @@ func (c *Context) RemovePeerForKey(ctx context.Context, s string) error {
 	t := c.Service().Type()
 
 	switch t {
-	case types.ServiceTypeV2Ray:
+	case sdk.ServiceTypeV2Ray:
 		req, err := v2ray.NewRemovePeerRequestFromKey(s)
 		if err != nil {
 			return err
@@ -48,7 +48,7 @@ func (c *Context) RemovePeerForKey(ctx context.Context, s string) error {
 
 		// Remove the peer for V2Ray service
 		return c.Service().RemovePeer(ctx, req)
-	case types.ServiceTypeWireGuard:
+	case sdk.ServiceTypeWireGuard:
 		req, err := wireguard.NewRemovePeerRequestFromKey(s)
 		if err != nil {
 			return err

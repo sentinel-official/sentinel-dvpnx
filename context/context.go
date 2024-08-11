@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmossdkmath "cosmossdk.io/math"
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/client"
 	"github.com/sentinel-official/sentinel-go-sdk/client/options"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
-	sentinelsdk "github.com/sentinel-official/sentinel-go-sdk/types"
+	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"gorm.io/gorm"
 )
 
@@ -18,27 +18,27 @@ type Context struct {
 	client  *client.Client
 	db      *gorm.DB
 	log     log.Logger
-	service sentinelsdk.ServerService
+	service sdk.ServerService
 
-	nodeGigabytePrices   sdk.Coins
-	nodeHourlyPrices     sdk.Coins
+	nodeGigabytePrices   cosmossdk.Coins
+	nodeHourlyPrices     cosmossdk.Coins
 	nodeRemoteURL        string
 	queryMaxRetries      int
 	queryTimeout         time.Duration
 	txChainID            string
-	txFeeGranterAddr     sdk.AccAddress
-	txFromAddr           sdk.AccAddress
+	txFeeGranterAddr     cosmossdk.AccAddress
+	txFromAddr           cosmossdk.AccAddress
 	txFromName           string
 	txGas                uint64
 	txGasAdjustment      float64
-	txGasPrices          sdk.DecCoins
+	txGasPrices          cosmossdk.DecCoins
 	txSimulateAndExecute bool
 
 	rw       sync.RWMutex
 	location *geoip.Location
 	rpcAddr  string
-	dlSpeed  sdkmath.Int
-	ulSpeed  sdkmath.Int
+	dlSpeed  cosmossdkmath.Int
+	ulSpeed  cosmossdkmath.Int
 
 	sealed bool
 }
@@ -46,8 +46,8 @@ type Context struct {
 // New creates a new Context instance with default values.
 func New() *Context {
 	return &Context{
-		dlSpeed: sdkmath.ZeroInt(),
-		ulSpeed: sdkmath.ZeroInt(),
+		dlSpeed: cosmossdkmath.ZeroInt(),
+		ulSpeed: cosmossdkmath.ZeroInt(),
 	}
 }
 
@@ -77,29 +77,29 @@ func (c *Context) WithDB(db *gorm.DB) *Context {
 	return c
 }
 
-// WithLog sets the logger in the context and returns the updated context.
-func (c *Context) WithLog(log log.Logger) *Context {
+// WithLogger sets the logger in the context and returns the updated context.
+func (c *Context) WithLogger(log log.Logger) *Context {
 	c.checkSealed()
 	c.log = log
 	return c
 }
 
 // WithService sets the server service in the context and returns the updated context.
-func (c *Context) WithService(service sentinelsdk.ServerService) *Context {
+func (c *Context) WithService(service sdk.ServerService) *Context {
 	c.checkSealed()
 	c.service = service
 	return c
 }
 
 // WithNodeGigabytePrices sets the gigabyte prices for nodes and returns the updated context.
-func (c *Context) WithNodeGigabytePrices(prices sdk.Coins) *Context {
+func (c *Context) WithNodeGigabytePrices(prices cosmossdk.Coins) *Context {
 	c.checkSealed()
 	c.nodeGigabytePrices = prices
 	return c
 }
 
 // WithNodeHourlyPrices sets the hourly prices for nodes and returns the updated context.
-func (c *Context) WithNodeHourlyPrices(prices sdk.Coins) *Context {
+func (c *Context) WithNodeHourlyPrices(prices cosmossdk.Coins) *Context {
 	c.checkSealed()
 	c.nodeHourlyPrices = prices
 	return c
@@ -134,14 +134,14 @@ func (c *Context) WithTxChainID(chainID string) *Context {
 }
 
 // WithTxFeeGranterAddr sets the address of the transaction fee granter and returns the updated context.
-func (c *Context) WithTxFeeGranterAddr(addr sdk.AccAddress) *Context {
+func (c *Context) WithTxFeeGranterAddr(addr cosmossdk.AccAddress) *Context {
 	c.checkSealed()
 	c.txFeeGranterAddr = addr
 	return c
 }
 
 // WithTxFromAddr sets the address of the account sending the transaction and returns the updated context.
-func (c *Context) WithTxFromAddr(addr sdk.AccAddress) *Context {
+func (c *Context) WithTxFromAddr(addr cosmossdk.AccAddress) *Context {
 	c.checkSealed()
 	c.txFromAddr = addr
 	return c
@@ -169,7 +169,7 @@ func (c *Context) WithTxGasAdjustment(adjustment float64) *Context {
 }
 
 // WithTxGasPrices sets the gas prices for transactions and returns the updated context.
-func (c *Context) WithTxGasPrices(prices sdk.DecCoins) *Context {
+func (c *Context) WithTxGasPrices(prices cosmossdk.DecCoins) *Context {
 	c.checkSealed()
 	c.txGasPrices = prices
 	return c
@@ -198,17 +198,17 @@ func (c *Context) Log() log.Logger {
 }
 
 // Service returns the server service instance set in the context.
-func (c *Context) Service() sentinelsdk.ServerService {
+func (c *Context) Service() sdk.ServerService {
 	return c.service
 }
 
 // NodeGigabytePrices returns the gigabyte prices for nodes.
-func (c *Context) NodeGigabytePrices() sdk.Coins {
+func (c *Context) NodeGigabytePrices() cosmossdk.Coins {
 	return c.nodeGigabytePrices
 }
 
 // NodeHourlyPrices returns the hourly prices for nodes.
-func (c *Context) NodeHourlyPrices() sdk.Coins {
+func (c *Context) NodeHourlyPrices() cosmossdk.Coins {
 	return c.nodeHourlyPrices
 }
 
@@ -233,12 +233,12 @@ func (c *Context) TxChainID() string {
 }
 
 // TxFeeGranterAddr returns the address of the transaction fee granter.
-func (c *Context) TxFeeGranterAddr() sdk.AccAddress {
+func (c *Context) TxFeeGranterAddr() cosmossdk.AccAddress {
 	return c.txFeeGranterAddr
 }
 
 // TxFromAddr returns the address of the account sending the transaction.
-func (c *Context) TxFromAddr() sdk.AccAddress {
+func (c *Context) TxFromAddr() cosmossdk.AccAddress {
 	return c.txFromAddr
 }
 
@@ -258,7 +258,7 @@ func (c *Context) TxGasAdjustment() float64 {
 }
 
 // TxGasPrices returns the gas prices for transactions.
-func (c *Context) TxGasPrices() sdk.DecCoins {
+func (c *Context) TxGasPrices() cosmossdk.DecCoins {
 	return c.txGasPrices
 }
 
@@ -286,7 +286,7 @@ func (c *Context) SetRPCAddr(rpcAddr string) *Context {
 }
 
 // SetSpeedtestResults sets the download and upload speeds in the context and returns the updated context.
-func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed sdkmath.Int) *Context {
+func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed cosmossdkmath.Int) *Context {
 	c.rw.Lock()
 	defer c.rw.Unlock()
 
@@ -312,7 +312,7 @@ func (c *Context) RPCAddr() string {
 }
 
 // SpeedtestResults returns the download and upload speeds set in the context.
-func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed sdkmath.Int) {
+func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed cosmossdkmath.Int) {
 	c.rw.RLock()
 	defer c.rw.RUnlock()
 
@@ -322,13 +322,13 @@ func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed sdkmath.Int) {
 // ClientOptions returns an `options.Options` instance configured with the context's settings.
 func (c *Context) ClientOptions() *options.Options {
 	// Create default query options and configure them using the context settings.
-	queryOpts := options.NewDefaultQuery().
+	query := options.NewQuery().
 		WithMaxRetries(c.QueryMaxRetries()).
 		WithRPCAddr(c.RPCAddr()).
 		WithTimeout(c.QueryTimeout())
 
 	// Create default transaction options and configure them using the context settings.
-	txOpts := options.NewDefaultTx().
+	tx := options.NewTx().
 		WithChainID(c.TxChainID()).
 		WithFeeGranterAddr(c.TxFeeGranterAddr().String()).
 		WithFromName(c.TxFromName()).
@@ -339,6 +339,6 @@ func (c *Context) ClientOptions() *options.Options {
 
 	// Return combined options
 	return options.New().
-		WithQueryOptions(queryOpts).
-		WithTxOptions(txOpts)
+		WithQuery(query).
+		WithTx(tx)
 }

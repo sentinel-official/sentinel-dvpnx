@@ -1,124 +1,119 @@
 package options
 
 import (
-	sdkoptions "github.com/sentinel-official/sentinel-go-sdk/client/options"
+	"github.com/sentinel-official/sentinel-go-sdk/client/options"
 	"github.com/spf13/cobra"
 )
 
 // Options aggregates all the individual option structs.
 type Options struct {
-	*HandshakeOptions      `json:"handshake" toml:"handshake"` // Options related to key creation.
-	*KeyringOptions        `json:"keyring" toml:"keyring"`     // Options related to keyring configuration.
-	*sdkoptions.LogOptions `json:"log" toml:"log"`             // Options related to logging.
-	*NodeOptions           `json:"node" toml:"node"`           // Options related to pagination.
-	*QOSOptions            `json:"qos" toml:"qos"`             // Options related to quality of service (QOS).
-	*QueryOptions          `json:"query" toml:"query"`         // Options related to querying.
-	*TxOptions             `json:"tx" toml:"tx"`               // Options related to transactions.
+	*Handshake   `json:"handshake" toml:"handshake"` // Options related to key creation.
+	*Keyring     `json:"keyring" toml:"keyring"`     // Options related to keyring configuration.
+	*options.Log `json:"log" toml:"log"`             // Options related to logging.
+	*Node        `json:"node" toml:"node"`           // Options related to node.
+	*QOS         `json:"qos" toml:"qos"`             // Options related to quality of service (QOS).
+	*Query       `json:"query" toml:"query"`         // Options related to querying.
+	*Tx          `json:"tx" toml:"tx"`               // Options related to transactions.
 }
 
-// New creates and returns a new instance of Options with all fields initialized to nil.
+// New creates and returns a new instance of Options with default values.
 func New() *Options {
-	return &Options{}
-}
-
-// NewDefault creates and returns a new instance of Options with default values.
-func NewDefault() *Options {
 	return &Options{
-		HandshakeOptions: NewDefaultHandshake(),      // Initializes with default HandshakeOptions.
-		KeyringOptions:   NewDefaultKeyring(),        // Initializes with default KeyringOptions.
-		LogOptions:       sdkoptions.NewDefaultLog(), // Initializes with default LogOptions.
-		NodeOptions:      NewDefaultNode(),           // Initializes with default NodeOptions.
-		QOSOptions:       NewDefaultQOS(),            // Initializes with default QOSOptions.
-		QueryOptions:     NewDefaultQuery(),          // Initializes with default QueryOptions.
-		TxOptions:        NewDefaultTx(),             // Initializes with default TxOptions.
+		Handshake: NewHandshake(),   // Initializes with default Handshake.
+		Keyring:   NewKeyring(),     // Initializes with default Keyring.
+		Log:       options.NewLog(), // Initializes with default LogOptions.
+		Node:      NewNode(),        // Initializes with default Node.
+		QOS:       NewQOS(),         // Initializes with default QOS.
+		Query:     NewQuery(),       // Initializes with default Query.
+		Tx:        NewTx(),          // Initializes with default Tx.
 	}
 }
 
-// WithHandshakeOptions sets the HandshakeOptions for the Options and returns the updated Options.
-func (o *Options) WithHandshakeOptions(v *HandshakeOptions) *Options {
-	o.HandshakeOptions = v
+// WithHandshake sets the Handshake for the Options and returns the updated Options.
+func (o *Options) WithHandshake(v *Handshake) *Options {
+	o.Handshake = v
 	return o
 }
 
-// WithKeyringOptions sets the KeyringOptions for the Options and returns the updated Options.
-func (o *Options) WithKeyringOptions(v *KeyringOptions) *Options {
-	o.KeyringOptions = v
+// WithKeyring sets the Keyring for the Options and returns the updated Options.
+func (o *Options) WithKeyring(v *Keyring) *Options {
+	o.Keyring = v
 	return o
 }
 
-// WithLogOptions sets the LogOptions for the Options and returns the updated Options.
-func (o *Options) WithLogOptions(v *sdkoptions.LogOptions) *Options {
-	o.LogOptions = v
+// WithLog sets the Log for the Options and returns the updated Options.
+func (o *Options) WithLog(v *options.Log) *Options {
+	o.Log = v
 	return o
 }
 
-// WithNodeOptions sets the NodeOptions for the Options and returns the updated Options.
-func (o *Options) WithNodeOptions(v *NodeOptions) *Options {
-	o.NodeOptions = v
+// WithNode sets the Node for the Options and returns the updated Options.
+func (o *Options) WithNode(v *Node) *Options {
+	o.Node = v
 	return o
 }
 
-// WithQOSOptions sets the QOSOptions for the Options and returns the updated Options.
-func (o *Options) WithQOSOptions(v *QOSOptions) *Options {
-	o.QOSOptions = v
+// WithQOSOptions sets the QOS for the Options and returns the updated Options.
+func (o *Options) WithQOSOptions(v *QOS) *Options {
+	o.QOS = v
 	return o
 }
 
-// WithQueryOptions sets the QueryOptions for the Options and returns the updated Options.
-func (o *Options) WithQueryOptions(v *QueryOptions) *Options {
-	o.QueryOptions = v
+// WithQueryOptions sets the Query for the Options and returns the updated Options.
+func (o *Options) WithQueryOptions(v *Query) *Options {
+	o.Query = v
 	return o
 }
 
-// WithTxOptions sets the TxOptions for the Options and returns the updated Options.
-func (o *Options) WithTxOptions(v *TxOptions) *Options {
-	o.TxOptions = v
+// WithTxOptions sets the Tx for the Options and returns the updated Options.
+func (o *Options) WithTxOptions(v *Tx) *Options {
+	o.Tx = v
 	return o
 }
 
-// WithHandshakeOptionsFromCmd updates HandshakeOptions in the Options from the given command's flags.
-func (o *Options) WithHandshakeOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	opts, err := NewHandshakeOptionsFromCmd(cmd)
+// WithHandshakeFromCmd updates Handshake in the Options from the given command's flags.
+func (o *Options) WithHandshakeFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := NewHandshakeFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return o.WithHandshakeOptions(opts), nil
+	return o.WithHandshake(opts), nil
 }
 
-// WithKeyringOptionsFromCmd updates KeyringOptions in the Options from the given command's flags.
-func (o *Options) WithKeyringOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	opts, err := NewKeyringOptionsFromCmd(cmd)
+// WithKeyringFromCmd updates Keyring in the Options from the given command's flags.
+func (o *Options) WithKeyringFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := NewKeyringFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return o.WithKeyringOptions(opts), nil
+	return o.WithKeyring(opts), nil
 }
 
-// WithLogOptionsFromCmd updates LogOptions in the Options from the given command's flags.
-func (o *Options) WithLogOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	opts, err := sdkoptions.NewLogOptionsFromCmd(cmd)
+// WithLogFromCmd updates LogOptions in the Options from the given command's flags.
+func (o *Options) WithLogFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := options.NewLogFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return o.WithLogOptions(opts), nil
+	return o.WithLog(opts), nil
 }
 
-// WithNodeOptionsFromCmd updates NodeOptions in the Options from the given command's flags.
-func (o *Options) WithNodeOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	opts, err := NewNodeOptionsFromCmd(cmd)
+// WithNodeFromCmd updates Node in the Options from the given command's flags.
+func (o *Options) WithNodeFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := NewNodeFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return o.WithNodeOptions(opts), nil
+	return o.WithNode(opts), nil
 }
 
-// WithQOSOptionsFromCmd updates QOSOptions in the Options from the given command's flags.
-func (o *Options) WithQOSOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	opts, err := NewQOSOptionsFromCmd(cmd)
+// WithQOSFromCmd updates QOS in the Options from the given command's flags.
+func (o *Options) WithQOSFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := NewQOSFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -126,9 +121,9 @@ func (o *Options) WithQOSOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
 	return o.WithQOSOptions(opts), nil
 }
 
-// WithQueryOptionsFromCmd updates QueryOptions in the Options from the given command's flags.
-func (o *Options) WithQueryOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	opts, err := NewQueryOptionsFromCmd(cmd)
+// WithQueryFromCmd updates Query in the Options from the given command's flags.
+func (o *Options) WithQueryFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := NewQueryFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -136,9 +131,9 @@ func (o *Options) WithQueryOptionsFromCmd(cmd *cobra.Command) (*Options, error) 
 	return o.WithQueryOptions(opts), nil
 }
 
-// WithTxOptionsFromCmd updates TxOptions in the Options from the given command's flags.
-func (o *Options) WithTxOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	opts, err := NewTxOptionsFromCmd(cmd)
+// WithTxFromCmd updates Tx in the Options from the given command's flags.
+func (o *Options) WithTxFromCmd(cmd *cobra.Command) (*Options, error) {
+	opts, err := NewTxFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -146,58 +141,58 @@ func (o *Options) WithTxOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
 	return o.WithTxOptions(opts), nil
 }
 
-// NewOptionsFromCmd creates and returns an Options instance populated with values from the given command's flags.
-func NewOptionsFromCmd(cmd *cobra.Command) (*Options, error) {
-	// Retrieves HandshakeOptions from command flags.
-	keyOpts, err := NewHandshakeOptionsFromCmd(cmd)
+// NewFromCmd creates and returns an Options instance populated with values from the given command's flags.
+func NewFromCmd(cmd *cobra.Command) (*Options, error) {
+	// Retrieves Handshake from command flags.
+	key, err := NewHandshakeFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieves KeyringOptions from command flags.
-	keyringOpts, err := NewKeyringOptionsFromCmd(cmd)
+	// Retrieves Keyring from command flags.
+	keyring, err := NewKeyringFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieves LogOptions from command flags.
-	logOpts, err := sdkoptions.NewLogOptionsFromCmd(cmd)
+	log, err := options.NewLogFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieves NodeOptions from command flags.
-	nodeOpts, err := NewNodeOptionsFromCmd(cmd)
+	// Retrieves Node from command flags.
+	node, err := NewNodeFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieves QOSOptions from command flags.
-	qosOpts, err := NewQOSOptionsFromCmd(cmd)
+	// Retrieves QOS from command flags.
+	qos, err := NewQOSFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieves QueryOptions from command flags.
-	queryOpts, err := NewQueryOptionsFromCmd(cmd)
+	// Retrieves Query from command flags.
+	query, err := NewQueryFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieves TxOptions from command flags.
-	txOpts, err := NewTxOptionsFromCmd(cmd)
+	// Retrieves Tx from command flags.
+	tx, err := NewTxFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Return a new Options instance populated with the retrieved flag values.
 	return &Options{
-		HandshakeOptions: keyOpts,
-		KeyringOptions:   keyringOpts,
-		LogOptions:       logOpts,
-		NodeOptions:      nodeOpts,
-		QOSOptions:       qosOpts,
-		QueryOptions:     queryOpts,
-		TxOptions:        txOpts,
+		Handshake: key,
+		Keyring:   keyring,
+		Log:       log,
+		Node:      node,
+		QOS:       qos,
+		Query:     query,
+		Tx:        tx,
 	}, nil
 }

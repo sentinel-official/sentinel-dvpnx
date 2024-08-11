@@ -5,8 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TxOptions represents configuration options for transactions.
-type TxOptions struct {
+// Tx represents configuration options for transactions.
+type Tx struct {
 	ChainID            string  `json:"chain_id" toml:"chain_id"`                         // ChainID is the identifier of the blockchain network.
 	FeeGranterAddr     string  `json:"fee_granter_addr" toml:"fee_granter_addr"`         // FeeGranterAddr is the address of the entity granting fees.
 	FromName           string  `json:"from_name" toml:"from_name"`                       // FromName is the name of the sender's account.
@@ -16,9 +16,9 @@ type TxOptions struct {
 	SimulateAndExecute bool    `json:"simulate_and_execute" toml:"simulate_and_execute"` // SimulateAndExecute indicates whether to simulate the transaction before execution.
 }
 
-// NewDefaultTx creates a new TxOptions instance with default values.
-func NewDefaultTx() *TxOptions {
-	return &TxOptions{
+// NewTx creates a new Tx instance with default values.
+func NewTx() *Tx {
+	return &Tx{
 		ChainID:            sdkflags.DefaultTxChainID,
 		Gas:                sdkflags.DefaultTxGas,
 		GasAdjustment:      sdkflags.DefaultTxGasAdjustment,
@@ -27,44 +27,44 @@ func NewDefaultTx() *TxOptions {
 	}
 }
 
-// WithChainID sets the ChainID field and returns the modified TxOptions instance.
-func (t *TxOptions) WithChainID(v string) *TxOptions {
+// WithChainID sets the ChainID field and returns the modified Tx instance.
+func (t *Tx) WithChainID(v string) *Tx {
 	t.ChainID = v
 	return t
 }
 
-// WithFeeGranterAddr sets the FeeGranterAddr field and returns the modified TxOptions instance.
-func (t *TxOptions) WithFeeGranterAddr(v string) *TxOptions {
+// WithFeeGranterAddr sets the FeeGranterAddr field and returns the modified Tx instance.
+func (t *Tx) WithFeeGranterAddr(v string) *Tx {
 	t.FeeGranterAddr = v
 	return t
 }
 
-// WithFromName sets the FromName field and returns the modified TxOptions instance.
-func (t *TxOptions) WithFromName(v string) *TxOptions {
+// WithFromName sets the FromName field and returns the modified Tx instance.
+func (t *Tx) WithFromName(v string) *Tx {
 	t.FromName = v
 	return t
 }
 
-// WithGas sets the Gas field and returns the modified TxOptions instance.
-func (t *TxOptions) WithGas(v uint64) *TxOptions {
+// WithGas sets the Gas field and returns the modified Tx instance.
+func (t *Tx) WithGas(v uint64) *Tx {
 	t.Gas = v
 	return t
 }
 
-// WithGasAdjustment sets the GasAdjustment field and returns the modified TxOptions instance.
-func (t *TxOptions) WithGasAdjustment(v float64) *TxOptions {
+// WithGasAdjustment sets the GasAdjustment field and returns the modified Tx instance.
+func (t *Tx) WithGasAdjustment(v float64) *Tx {
 	t.GasAdjustment = v
 	return t
 }
 
-// WithGasPrices sets the GasPrices field and returns the modified TxOptions instance.
-func (t *TxOptions) WithGasPrices(v string) *TxOptions {
+// WithGasPrices sets the GasPrices field and returns the modified Tx instance.
+func (t *Tx) WithGasPrices(v string) *Tx {
 	t.GasPrices = v
 	return t
 }
 
-// WithSimulateAndExecute sets the SimulateAndExecute field and returns the modified TxOptions instance.
-func (t *TxOptions) WithSimulateAndExecute(v bool) *TxOptions {
+// WithSimulateAndExecute sets the SimulateAndExecute field and returns the modified Tx instance.
+func (t *Tx) WithSimulateAndExecute(v bool) *Tx {
 	t.SimulateAndExecute = v
 	return t
 }
@@ -80,8 +80,8 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 	sdkflags.SetFlagTxSimulateAndExecute(cmd)
 }
 
-// NewTxOptionsFromCmd creates and returns TxOptions from the given cobra command's flags.
-func NewTxOptionsFromCmd(cmd *cobra.Command) (*TxOptions, error) {
+// NewTxFromCmd creates and returns Tx from the given cobra command's flags.
+func NewTxFromCmd(cmd *cobra.Command) (*Tx, error) {
 	// Retrieve the chain ID flag value from the command.
 	chainID, err := sdkflags.GetTxChainIDFromCmd(cmd)
 	if err != nil {
@@ -124,8 +124,8 @@ func NewTxOptionsFromCmd(cmd *cobra.Command) (*TxOptions, error) {
 		return nil, err
 	}
 
-	// Return a new TxOptions instance populated with the retrieved flag values.
-	return &TxOptions{
+	// Return a new Tx instance populated with the retrieved flag values.
+	return &Tx{
 		ChainID:            chainID,
 		FeeGranterAddr:     feeGranterAddr,
 		FromName:           fromName,

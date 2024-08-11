@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1sentinelhub "github.com/sentinel-official/hub/v12/types/v1"
+	cosmossdkmath "cosmossdk.io/math"
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
+	v1base "github.com/sentinel-official/hub/v12/types/v1"
 
 	nodecontext "github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/database/operations"
@@ -24,8 +24,8 @@ func handleSyncSessionUsageWithDB(ctx *nodecontext.Context) func() error {
 		// Iterate through each peer statistic and update the database.
 		for _, item := range items {
 			// Convert download and upload bytes to strings for database storage.
-			downloadBytes := sdkmath.NewInt(item.DownloadBytes).String()
-			uploadBytes := sdkmath.NewInt(item.UploadBytes).String()
+			downloadBytes := cosmossdkmath.NewInt(item.DownloadBytes).String()
+			uploadBytes := cosmossdkmath.NewInt(item.UploadBytes).String()
 
 			// Query to find the session by peer_key.
 			query := map[string]interface{}{
@@ -94,7 +94,7 @@ func handleSyncSessionUsageWithBlockchain(ctx *nodecontext.Context) func() error
 		}
 
 		// Prepare a list of transaction messages for session updates.
-		var messages []sdk.Msg
+		var messages []cosmossdk.Msg
 		for _, item := range items {
 			// Query session details from the blockchain.
 			session, err := ctx.QuerySession(context.TODO(), item.GetID())
@@ -139,7 +139,7 @@ func handleValidateSessions(ctx *nodecontext.Context) func() error {
 				return err
 			}
 
-			if session == nil || !session.GetStatus().Equal(v1sentinelhub.StatusActive) {
+			if session == nil || !session.GetStatus().Equal(v1base.StatusActive) {
 				// Attempt to remove the peer identified by session.PeerKey.
 				if err := ctx.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
 					return err

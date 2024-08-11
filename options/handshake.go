@@ -6,27 +6,27 @@ import (
 	"github.com/sentinel-official/dvpn-node/cmd/flags"
 )
 
-// HandshakeOptions represents options for configuring the Handshake DNS system.
-type HandshakeOptions struct {
+// Handshake represents options for configuring the Handshake DNS system.
+type Handshake struct {
 	Enable bool   `json:"enable" toml:"enable"` // Enable indicates whether the Handshake DNS functionality is enabled.
 	Peers  uint64 `json:"peers" toml:"peers"`   // Peers specifies the number of peers to connect with in the Handshake network.
 }
 
-// NewDefaultHandshake creates a new HandshakeOptions instance with default values.
-func NewDefaultHandshake() *HandshakeOptions {
-	return &HandshakeOptions{
+// NewHandshake creates a new Handshake instance with default values.
+func NewHandshake() *Handshake {
+	return &Handshake{
 		Peers: flags.DefaultHandshakePeers,
 	}
 }
 
-// WithEnable sets the Enable field and returns the modified HandshakeOptions instance.
-func (h *HandshakeOptions) WithEnable(v bool) *HandshakeOptions {
+// WithEnable sets the Enable field and returns the modified Handshake instance.
+func (h *Handshake) WithEnable(v bool) *Handshake {
 	h.Enable = v
 	return h
 }
 
-// WithPeers sets the Peers field and returns the modified HandshakeOptions instance.
-func (h *HandshakeOptions) WithPeers(v uint64) *HandshakeOptions {
+// WithPeers sets the Peers field and returns the modified Handshake instance.
+func (h *Handshake) WithPeers(v uint64) *Handshake {
 	h.Peers = v
 	return h
 }
@@ -37,8 +37,8 @@ func AddHandshakeFlagsToCmd(cmd *cobra.Command) {
 	flags.SetFlagHandshakePeers(cmd)
 }
 
-// NewHandshakeOptionsFromCmd creates and returns HandshakeOptions from the given Cobra command's flags.
-func NewHandshakeOptionsFromCmd(cmd *cobra.Command) (*HandshakeOptions, error) {
+// NewHandshakeFromCmd creates and returns Handshake from the given Cobra command's flags.
+func NewHandshakeFromCmd(cmd *cobra.Command) (*Handshake, error) {
 	// Retrieve the enable flag value from the command.
 	enable, err := flags.GetHandshakeEnableFromCmd(cmd)
 	if err != nil {
@@ -51,8 +51,8 @@ func NewHandshakeOptionsFromCmd(cmd *cobra.Command) (*HandshakeOptions, error) {
 		return nil, err
 	}
 
-	// Return a new HandshakeOptions instance populated with the retrieved flag values.
-	return &HandshakeOptions{
+	// Return a new Handshake instance populated with the retrieved flag values.
+	return &Handshake{
 		Enable: enable,
 		Peers:  peers,
 	}, nil

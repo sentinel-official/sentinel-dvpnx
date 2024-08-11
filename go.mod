@@ -9,7 +9,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.12
 	github.com/gin-gonic/gin v1.8.1
 	github.com/sentinel-official/hub/v12 v12.0.0-rc5
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240809145936-5e7db4aaab6e
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240811181506-9da1b816d693
 	github.com/spf13/cobra v1.8.1
 	github.com/v2fly/v2ray-core/v5 v5.16.1
 	gorm.io/driver/sqlite v1.5.6
