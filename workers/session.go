@@ -73,13 +73,10 @@ func handleValidateSessionUsage(ctx *nodecontext.Context) func() error {
 			}
 
 			// Skip to the next session if the peer should not be removed.
-			if !removePeer {
-				continue
-			}
-
-			// Attempt to remove the peer identified by session.PeerKey.
-			if err := ctx.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
-				return err
+			if removePeer {
+				if err := ctx.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -104,13 +101,12 @@ func handleSyncSessionUsageWithBlockchain(ctx *nodecontext.Context) func() error
 			if err != nil {
 				return err
 			}
-			if session == nil {
-				continue
-			}
 
-			// Create a message to update the session and add it to the list of messages.
-			msg := item.MsgUpdateSessionRequest()
-			messages = append(messages, msg)
+			if session != nil {
+				// Create a message to update the session and add it to the list of messages.
+				msg := item.MsgUpdateSessionRequest()
+				messages = append(messages, msg)
+			}
 		}
 
 		// Broadcast the transaction messages to the blockchain.
@@ -137,27 +133,28 @@ func handleValidateSessions(ctx *nodecontext.Context) func() error {
 
 		// Iterate through each session to check its status.
 		for _, item := range items {
-			removePeer := false
-
 			// Query session details from the blockchain.
 			session, err := ctx.QuerySession(context.TODO(), item.GetID())
 			if err != nil {
 				return err
 			}
 
-			// Mark the peer for removal if the session is not found or is not active.
 			if session == nil || !session.GetStatus().Equal(v1sentinelhub.StatusActive) {
-				removePeer = true
+				// Attempt to remove the peer identified by session.PeerKey.
+				if err := ctx.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
+					return err
+				}
 			}
 
-			// Skip to the next session if the peer should not be removed.
-			if !removePeer {
-				continue
-			}
+			if session == nil {
+				// Delete the session from the database if it does not exist on the blockchain.
+				query := map[string]interface{}{
+					"id": item.ID,
+				}
 
-			// Attempt to remove the peer identified by session.PeerKey.
-			if err := ctx.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
-				return err
+				if _, err := operations.SessionFindOneAndDelete(ctx.DB(), query); err != nil {
+					return err
+				}
 			}
 		}
 
