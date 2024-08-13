@@ -7,11 +7,11 @@ import (
 	v1base "github.com/sentinel-official/hub/v12/types/v1"
 	nodetypes "github.com/sentinel-official/hub/v12/x/node/types/v3"
 
-	nodecontext "github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/dvpn-node/node"
 )
 
-// handleUpdateNodeStatus returns a function that broadcasts a transaction to update the node's status to active.
-func handleUpdateNodeStatus(ctx *nodecontext.Context) func() error {
+// HandlerNodeStatusUpdate returns a function that broadcasts a transaction to update the node's status to active.
+func HandlerNodeStatusUpdate(ctx *node.Context) func() error {
 	return func() error {
 		// Create a new message to update the node's status to active.
 		msg := nodetypes.NewMsgUpdateNodeStatusRequest(

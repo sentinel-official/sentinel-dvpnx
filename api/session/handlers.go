@@ -3,10 +3,10 @@ package session
 import (
 	"github.com/gin-gonic/gin"
 
-	nodecontext "github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/dvpn-node/node"
 )
 
-func HandlerAddSession(ctx *nodecontext.Context) gin.HandlerFunc {
+func HandlerAddSession(ctx *node.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 	}
