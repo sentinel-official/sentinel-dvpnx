@@ -145,7 +145,7 @@ func SetFlagNodeIntervalSpeedtest(cmd *cobra.Command) {
 
 // SetFlagNodeIntervalStatusUpdate adds the "node.interval-update-status" flag to the command.
 func SetFlagNodeIntervalStatusUpdate(cmd *cobra.Command) {
-	cmd.Flags().Duration("node.interval-status-update", 0, "Duration between updating the status of the node.")
+	cmd.Flags().Duration("node.interval-update-status", 0, "Duration between updating the status of the node.")
 }
 
 // SetFlagNodeListenOn adds the "node.listen-on" flag to the command.

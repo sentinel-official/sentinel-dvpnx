@@ -48,7 +48,6 @@ type Context struct {
 	queryTimeout                               time.Duration
 	txChainID                                  string
 	txFeeGranterAddr                           cosmossdk.AccAddress
-	txFromAddr                                 cosmossdk.AccAddress
 	txFromName                                 string
 	txGas                                      uint64
 	txGasAdjustment                            float64
@@ -274,23 +273,9 @@ func (c *Context) WithTxFeeGranterAddr(addr cosmossdk.AccAddress) *Context {
 	return c
 }
 
-// WithTxFromName sets the address and name of the account sending the transaction and returns the updated context.
+// WithTxFromName sets the name of the transaction sender and returns the updated context.
 func (c *Context) WithTxFromName(name string) *Context {
 	c.checkSealed()
-
-	// Retrieve the key record by name.
-	key, err := c.Key(name)
-	if err != nil {
-		panic(err)
-	}
-
-	// Get the address from the key record.
-	addr, err := key.GetAddress()
-	if err != nil {
-		panic(err)
-	}
-
-	c.txFromAddr = addr
 	c.txFromName = name
 	return c
 }
@@ -473,9 +458,15 @@ func (c *Context) TxFeeGranterAddr() cosmossdk.AccAddress {
 	return c.txFeeGranterAddr
 }
 
-// TxFromAddr returns the address of the account sending the transaction.
-func (c *Context) TxFromAddr() cosmossdk.AccAddress {
-	return c.txFromAddr
+// TxFromAddr returns the address of the transaction sender, derived from the account name.
+func (c *Context) TxFromAddr() (cosmossdk.AccAddress, error) {
+	// Retrieve the key record by name.
+	key, err := c.Key(c.TxFromName())
+	if err != nil {
+		return nil, err
+	}
+
+	return key.GetAddress()
 }
 
 // TxFromName returns the name of the account sending the transaction.
