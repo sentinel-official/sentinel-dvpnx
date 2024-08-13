@@ -520,11 +520,11 @@ func (c *Context) ClientOptions() *options.Options {
 	// Create default transaction options and configure them using the context settings.
 	tx := options.NewTx().
 		WithChainID(c.TxChainID()).
-		WithFeeGranterAddr(c.TxFeeGranterAddr().String()).
+		WithFeeGranterAddr(c.TxFeeGranterAddr()).
 		WithFromName(c.TxFromName()).
 		WithGas(c.TxGas()).
 		WithGasAdjustment(c.TxGasAdjustment()).
-		WithGasPrices(c.TxGasPrices().String()).
+		WithGasPrices(c.TxGasPrices()).
 		WithSimulateAndExecute(c.TxSimulateAndExecute())
 
 	// Return combined options.

@@ -16,7 +16,7 @@ import (
 func HandlerSessionUsageSyncWithBlockchain(ctx *node.Context) func() error {
 	return func() error {
 		// Retrieve all sessions from the database.
-		items, err := operations.SessionFind(ctx.DB(), nil)
+		items, err := operations.SessionFind(ctx.Database(), nil)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func HandlerSessionUsageSyncWithDatabase(ctx *node.Context) func() error {
 			}
 
 			// Apply the updates to the session in the database.
-			if _, err := operations.SessionFindOneAndUpdate(ctx.DB(), query, updates); err != nil {
+			if _, err := operations.SessionFindOneAndUpdate(ctx.Database(), query, updates); err != nil {
 				return err
 			}
 		}
@@ -91,7 +91,7 @@ func HandlerSessionUsageSyncWithDatabase(ctx *node.Context) func() error {
 func HandlerSessionUsageValidate(ctx *node.Context) func() error {
 	return func() error {
 		// Retrieve all sessions from the database.
-		items, err := operations.SessionFind(ctx.DB(), nil)
+		items, err := operations.SessionFind(ctx.Database(), nil)
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func HandlerSessionUsageValidate(ctx *node.Context) func() error {
 func HandlerSessionValidate(ctx *node.Context) func() error {
 	return func() error {
 		// Retrieve all sessions from the database.
-		items, err := operations.SessionFind(ctx.DB(), nil)
+		items, err := operations.SessionFind(ctx.Database(), nil)
 		if err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ func HandlerSessionValidate(ctx *node.Context) func() error {
 					"id": item.ID,
 				}
 
-				if _, err := operations.SessionFindOneAndDelete(ctx.DB(), query); err != nil {
+				if _, err := operations.SessionFindOneAndDelete(ctx.Database(), query); err != nil {
 					return err
 				}
 			}
