@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"cosmossdk.io/log"
+	cosmossdklog "cosmossdk.io/log"
 	cosmossdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,7 +25,7 @@ type Context struct {
 	database    *gorm.DB
 	geoIPClient geoip.Client
 	homeDir     string
-	log         log.Logger
+	log         cosmossdklog.Logger
 	service     sdk.ServerService
 
 	keyringBackend                             string
@@ -48,6 +48,7 @@ type Context struct {
 	queryTimeout                               time.Duration
 	txChainID                                  string
 	txFeeGranterAddr                           cosmossdk.AccAddress
+	txFromAddr                                 cosmossdk.AccAddress
 	txFromName                                 string
 	txGas                                      uint64
 	txGasAdjustment                            float64
@@ -120,7 +121,7 @@ func (c *Context) WithHomeDir(dir string) *Context {
 }
 
 // WithLogger sets the logger in the context and returns the updated context.
-func (c *Context) WithLogger(log log.Logger) *Context {
+func (c *Context) WithLogger(log cosmossdklog.Logger) *Context {
 	c.checkSealed()
 	c.log = log
 	return c
@@ -273,7 +274,14 @@ func (c *Context) WithTxFeeGranterAddr(addr cosmossdk.AccAddress) *Context {
 	return c
 }
 
-// WithTxFromName sets the name of the transaction sender and returns the updated context.
+// WithTxFromAddr sets the address of the account sending the transaction and returns the updated context.
+func (c *Context) WithTxFromAddr(addr cosmossdk.AccAddress) *Context {
+	c.checkSealed()
+	c.txFromAddr = addr
+	return c
+}
+
+// WithTxFromName sets the name of the account sending the transaction and returns the updated context.
 func (c *Context) WithTxFromName(name string) *Context {
 	c.checkSealed()
 	c.txFromName = name
@@ -339,7 +347,7 @@ func (c *Context) KeyringDir() string {
 }
 
 // Log returns the logger instance set in the context.
-func (c *Context) Log() log.Logger {
+func (c *Context) Log() cosmossdklog.Logger {
 	return c.log
 }
 
@@ -458,15 +466,9 @@ func (c *Context) TxFeeGranterAddr() cosmossdk.AccAddress {
 	return c.txFeeGranterAddr
 }
 
-// TxFromAddr returns the address of the transaction sender, derived from the account name.
-func (c *Context) TxFromAddr() (cosmossdk.AccAddress, error) {
-	// Retrieve the key record by name.
-	key, err := c.Key(c.TxFromName())
-	if err != nil {
-		return nil, err
-	}
-
-	return key.GetAddress()
+// TxFromAddr returns the address of the account sending the transaction.
+func (c *Context) TxFromAddr() cosmossdk.AccAddress {
+	return c.txFromAddr
 }
 
 // TxFromName returns the name of the account sending the transaction.
@@ -567,16 +569,6 @@ func (c *Context) ClientOptions() *options.Options {
 		WithTx(tx)
 }
 
-// SetupGeoIPClient initializes and sets up the GeoIP client in the context.
-func (c *Context) SetupGeoIPClient() error {
-	// Create a new default GeoIP client.
-	client := geoip.NewDefaultClient()
-
-	// Set the new GeoIP client in the context.
-	c.WithGeoIPClient(client)
-	return nil
-}
-
 // SetupClient initializes and sets up the SDK client.
 func (c *Context) SetupClient(input io.Reader) error {
 	// Create a new codec for proto encoding/decoding.
@@ -610,7 +602,35 @@ func (c *Context) SetupDatabase() error {
 	return nil
 }
 
-func (c *Context) SetupService() error {
+// SetupGeoIPClient initializes and sets up the GeoIP client in the context.
+func (c *Context) SetupGeoIPClient() error {
+	// Create a new default GeoIP client.
+	client := geoip.NewDefaultClient()
 
+	// Set the new GeoIP client in the context.
+	c.WithGeoIPClient(client)
+	return nil
+}
+
+func (c *Context) SetupService() error {
+	return nil
+}
+
+// SetupTxFromAddr retrieves and sets the address of the transaction sender based on the account name.
+func (c *Context) SetupTxFromAddr() error {
+	// Retrieve the key record by name.
+	key, err := c.Key(c.TxFromName())
+	if err != nil {
+		return err
+	}
+
+	// Get the address from the key record.
+	addr, err := key.GetAddress()
+	if err != nil {
+		return err
+	}
+
+	// Set the address in the context.
+	c.WithTxFromAddr(addr)
 	return nil
 }

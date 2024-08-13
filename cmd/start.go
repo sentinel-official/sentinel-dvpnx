@@ -66,7 +66,7 @@ func StartCmd(appName string) *cobra.Command {
 				WithTxGasPrices(opts.Tx.GasPrices).
 				WithTxSimulateAndExecute(opts.Tx.SimulateAndExecute)
 
-			// Setup client, database, GeoIP client and service for the context.
+			// Setup client, database, GeoIP client, service, and tx sender in the context.
 			if err := ctx.SetupClient(cmd.InOrStdin()); err != nil {
 				return err
 			}
@@ -79,6 +79,9 @@ func StartCmd(appName string) *cobra.Command {
 			if err := ctx.SetupService(); err != nil {
 				return err
 			}
+			if err := ctx.SetupTxFromAddr(); err != nil {
+				return err
+			}
 
 			// Seal the context to prevent further modifications.
 			ctx.Seal()
@@ -86,7 +89,7 @@ func StartCmd(appName string) *cobra.Command {
 			// Create and initialize the node.
 			n := node.New(ctx)
 
-			// Setup router, and scheduler for the node.
+			// Setup router and scheduler for the node.
 			if err := n.SetupRouter(); err != nil {
 				return err
 			}
@@ -95,7 +98,11 @@ func StartCmd(appName string) *cobra.Command {
 			}
 
 			// Start the node.
-			return n.Start()
+			if err := n.Start(); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 
