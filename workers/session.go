@@ -8,12 +8,12 @@ import (
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	v1base "github.com/sentinel-official/hub/v12/types/v1"
 
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/database/operations"
-	"github.com/sentinel-official/dvpn-node/node"
 )
 
 // HandlerSessionUsageSyncWithBlockchain returns a function that synchronizes session usage with the blockchain.
-func HandlerSessionUsageSyncWithBlockchain(ctx *node.Context) func() error {
+func HandlerSessionUsageSyncWithBlockchain(ctx *nodecontext.Context) func() error {
 	return func() error {
 		// Retrieve all sessions from the database.
 		items, err := operations.SessionFind(ctx.Database(), nil)
@@ -51,7 +51,7 @@ func HandlerSessionUsageSyncWithBlockchain(ctx *node.Context) func() error {
 }
 
 // HandlerSessionUsageSyncWithDatabase returns a function that updates session usage statistics in the database.
-func HandlerSessionUsageSyncWithDatabase(ctx *node.Context) func() error {
+func HandlerSessionUsageSyncWithDatabase(ctx *nodecontext.Context) func() error {
 	return func() error {
 		// Fetch peer statistics from the service.
 		items, err := ctx.Service().PeerStatistics(context.TODO())
@@ -88,7 +88,7 @@ func HandlerSessionUsageSyncWithDatabase(ctx *node.Context) func() error {
 }
 
 // HandlerSessionUsageValidate returns a function that checks session usage and removes peers if they exceed limits.
-func HandlerSessionUsageValidate(ctx *node.Context) func() error {
+func HandlerSessionUsageValidate(ctx *nodecontext.Context) func() error {
 	return func() error {
 		// Retrieve all sessions from the database.
 		items, err := operations.SessionFind(ctx.Database(), nil)
@@ -123,7 +123,7 @@ func HandlerSessionUsageValidate(ctx *node.Context) func() error {
 }
 
 // HandlerSessionValidate returns a function that verifies sessions and removes peers if necessary.
-func HandlerSessionValidate(ctx *node.Context) func() error {
+func HandlerSessionValidate(ctx *nodecontext.Context) func() error {
 	return func() error {
 		// Retrieve all sessions from the database.
 		items, err := operations.SessionFind(ctx.Database(), nil)

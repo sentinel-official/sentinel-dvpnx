@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sentinel-official/dvpn-node/node"
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 )
 
 // HandlerBestRPCAddr determines the best RPC address based on latency.
-func HandlerBestRPCAddr(ctx *node.Context) func() error {
+func HandlerBestRPCAddr(ctx *nodecontext.Context) func() error {
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}

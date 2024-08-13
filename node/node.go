@@ -8,17 +8,18 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 
 	"github.com/sentinel-official/dvpn-node/api"
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/utils"
 	"github.com/sentinel-official/dvpn-node/workers"
 )
 
 type Node struct {
-	ctx       *Context
+	ctx       *nodecontext.Context
 	router    *gin.Engine
 	scheduler *cron.Scheduler
 }
 
-func New(ctx *Context) *Node {
+func New(ctx *nodecontext.Context) *Node {
 	return &Node{
 		ctx: ctx,
 	}
@@ -96,8 +97,8 @@ func (n *Node) Start() error {
 
 	return utils.ListenAndServeTLS(
 		n.ctx.NodeListenOn(),
-		n.ctx.NodeTLSCertPath(),
-		n.ctx.NodeTLSKeyPath(),
+		n.ctx.TLSCertPath(),
+		n.ctx.TLSKeyPath(),
 		n.router,
 	)
 }

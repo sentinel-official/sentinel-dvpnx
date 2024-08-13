@@ -1,4 +1,4 @@
-package node
+package context
 
 import (
 	"io"
@@ -42,8 +42,6 @@ type Context struct {
 	nodeListenOn                               string
 	nodeMoniker                                string
 	nodeRemoteURL                              string
-	nodeTLSCertPath                            string
-	nodeTLSKeyPath                             string
 	nodeType                                   sdk.ServiceType
 	queryMaxRetries                            int
 	queryRPCAddrs                              []string
@@ -66,8 +64,8 @@ type Context struct {
 	sealed bool
 }
 
-// NewContext creates a new Context instance with default values.
-func NewContext() *Context {
+// New creates a new Context instance with default values.
+func New() *Context {
 	return &Context{
 		dlSpeed: cosmossdkmath.ZeroInt(),
 		ulSpeed: cosmossdkmath.ZeroInt(),
@@ -234,20 +232,6 @@ func (c *Context) WithNodeRemoteURL(url string) *Context {
 	return c
 }
 
-// WithNodeTLSCertPath sets the path to the TLS certificate for secure communication and returns the updated context.
-func (c *Context) WithNodeTLSCertPath(certPath string) *Context {
-	c.checkSealed()
-	c.nodeTLSCertPath = certPath
-	return c
-}
-
-// WithNodeTLSKeyPath sets the path to the TLS key for secure communication and returns the updated context.
-func (c *Context) WithNodeTLSKeyPath(keyPath string) *Context {
-	c.checkSealed()
-	c.nodeTLSKeyPath = keyPath
-	return c
-}
-
 // WithNodeType sets the type or role of the node and returns the updated context.
 func (c *Context) WithNodeType(nodeType sdk.ServiceType) *Context {
 	c.checkSealed()
@@ -379,6 +363,16 @@ func (c *Context) Service() sdk.ServerService {
 	return c.service
 }
 
+// TLSCertPath returns the path to the TLS certificate for secure communication.
+func (c *Context) TLSCertPath() string {
+	return filepath.Join(c.homeDir, "tls.crt")
+}
+
+// TLSKeyPath returns the path to the TLS key for secure communication.
+func (c *Context) TLSKeyPath() string {
+	return filepath.Join(c.homeDir, "tls.key")
+}
+
 // KeyringBackend returns the keyring backend set in the context.
 func (c *Context) KeyringBackend() string {
 	return c.keyringBackend
@@ -447,16 +441,6 @@ func (c *Context) NodeMoniker() string {
 // NodeRemoteURL returns the remote URL for nodes.
 func (c *Context) NodeRemoteURL() string {
 	return c.nodeRemoteURL
-}
-
-// NodeTLSCertPath returns the path to the TLS certificate for secure communication.
-func (c *Context) NodeTLSCertPath() string {
-	return c.nodeTLSCertPath
-}
-
-// NodeTLSKeyPath returns the path to the TLS key for secure communication.
-func (c *Context) NodeTLSKeyPath() string {
-	return c.nodeTLSKeyPath
 }
 
 // NodeType returns the type or role of the node.

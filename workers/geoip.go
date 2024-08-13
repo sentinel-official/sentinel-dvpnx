@@ -1,11 +1,11 @@
 package workers
 
 import (
-	"github.com/sentinel-official/dvpn-node/node"
+	nodecontext "github.com/sentinel-official/dvpn-node/context"
 )
 
 // HandlerGeoIPLocation fetches the geo IP location using the provided client and sets it in the given context.
-func HandlerGeoIPLocation(ctx *node.Context) func() error {
+func HandlerGeoIPLocation(ctx *nodecontext.Context) func() error {
 	return func() error {
 		// Fetch the geo IP location.
 		location, err := ctx.GeoIPClient().Get("")

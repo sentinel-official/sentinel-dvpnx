@@ -88,16 +88,6 @@ func GetNodeRemoteURLFromCmd(cmd *cobra.Command) (string, error) {
 	return cmd.Flags().GetString("node.remote-url")
 }
 
-// GetNodeTLSCertPathFromCmd retrieves the "node.tls-cert-path" flag value from the command.
-func GetNodeTLSCertPathFromCmd(cmd *cobra.Command) (string, error) {
-	return cmd.Flags().GetString("node.tls-cert-path")
-}
-
-// GetNodeTLSKeyPathFromCmd retrieves the "node.tls-key-path" flag value from the command.
-func GetNodeTLSKeyPathFromCmd(cmd *cobra.Command) (string, error) {
-	return cmd.Flags().GetString("node.tls-key-path")
-}
-
 // GetNodeTypeFromCmd retrieves the "node.type" flag value from the command.
 func GetNodeTypeFromCmd(cmd *cobra.Command) (sdk.ServiceType, error) {
 	s, err := cmd.Flags().GetString("node.type")
@@ -176,16 +166,6 @@ func SetFlagNodePublicIPv4Addr(cmd *cobra.Command) {
 // SetFlagNodeRemoteURL adds the "node.remote-url" flag to the command.
 func SetFlagNodeRemoteURL(cmd *cobra.Command) {
 	cmd.Flags().String("node.remote-url", "", "URL for remote operations related to the node.")
-}
-
-// SetFlagNodeTLSCertPath adds the "node.tls-cert-path" flag to the command.
-func SetFlagNodeTLSCertPath(cmd *cobra.Command) {
-	cmd.Flags().String("node.tls-cert-path", "", "Path to the TLS certificate file.")
-}
-
-// SetFlagNodeTLSKeyPath adds the "node.tls-key-path" flag to the command.
-func SetFlagNodeTLSKeyPath(cmd *cobra.Command) {
-	cmd.Flags().String("node.tls-key-path", "", "Path to the TLS key file.")
 }
 
 // SetFlagNodeType adds the "node.type" flag to the command.

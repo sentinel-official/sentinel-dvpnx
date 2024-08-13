@@ -26,8 +26,6 @@ type Node struct {
 	Moniker                                string          `json:"moniker" toml:"moniker"`                                                                         // Moniker is the name or identifier for the node.
 	PublicIPv4Addr                         string          `json:"public_ipv4_addr" toml:"public_ipv4_addr"`                                                       // PublicIPv4Addr is the IPv4 address of the node.
 	RemoteURL                              string          `json:"remote_url" toml:"remote_url"`                                                                   // RemoteURL is the URL for remote operations.
-	TLSCertPath                            string          `json:"tls_cert_path" toml:"tls_cert_path"`                                                             // TLSCertPath is the path to the TLS certificate file.
-	TLSKeyPath                             string          `json:"tls_key_path" toml:"tls_key_path"`                                                               // TLSKeyPath is the path to the TLS key file.
 	Type                                   sdk.ServiceType `json:"type" toml:"type"`                                                                               // Type indicates the type of node.
 }
 
@@ -142,8 +140,6 @@ func AddNodeFlagsToCmd(cmd *cobra.Command) {
 	flags.SetFlagNodeMoniker(cmd)
 	flags.SetFlagNodePublicIPv4Addr(cmd)
 	flags.SetFlagNodeRemoteURL(cmd)
-	flags.SetFlagNodeTLSCertPath(cmd)
-	flags.SetFlagNodeTLSKeyPath(cmd)
 	flags.SetFlagNodeType(cmd)
 }
 
@@ -233,18 +229,6 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 		return nil, err
 	}
 
-	// Retrieve the TLS certificate path flag value from the command.
-	tlsCertPath, err := flags.GetNodeTLSCertPathFromCmd(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	// Retrieve the TLS key path flag value from the command.
-	tlsKeyPath, err := flags.GetNodeTLSKeyPathFromCmd(cmd)
-	if err != nil {
-		return nil, err
-	}
-
 	// Retrieve the node type flag value from the command.
 	nodeType, err := flags.GetNodeTypeFromCmd(cmd)
 	if err != nil {
@@ -267,8 +251,6 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 		Moniker:                                moniker,
 		PublicIPv4Addr:                         publicIPv4Addr,
 		RemoteURL:                              remoteURL,
-		TLSCertPath:                            tlsCertPath,
-		TLSKeyPath:                             tlsKeyPath,
 		Type:                                   nodeType,
 	}, nil
 }

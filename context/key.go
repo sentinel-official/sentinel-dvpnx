@@ -1,4 +1,4 @@
-package node
+package context
 
 import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
