@@ -1,19 +1,20 @@
 package options
 
 import (
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	sdkflags "github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
 // Tx represents configuration options for transactions.
 type Tx struct {
-	ChainID            string  `json:"chain_id" toml:"chain_id"`                         // ChainID is the identifier of the blockchain network.
-	FeeGranterAddr     string  `json:"fee_granter_addr" toml:"fee_granter_addr"`         // FeeGranterAddr is the address of the entity granting fees.
-	FromName           string  `json:"from_name" toml:"from_name"`                       // FromName is the name of the sender's account.
-	Gas                uint64  `json:"gas" toml:"gas"`                                   // Gas is the gas limit for the transaction.
-	GasAdjustment      float64 `json:"gas_adjustment" toml:"gas_adjustment"`             // GasAdjustment is the adjustment factor for gas estimation.
-	GasPrices          string  `json:"gas_prices" toml:"gas_prices"`                     // GasPrices is the price of gas for the transaction.
-	SimulateAndExecute bool    `json:"simulate_and_execute" toml:"simulate_and_execute"` // SimulateAndExecute indicates whether to simulate the transaction before execution.
+	ChainID            string               `json:"chain_id" toml:"chain_id"`                         // ChainID is the identifier of the blockchain network.
+	FeeGranterAddr     cosmossdk.AccAddress `json:"fee_granter_addr" toml:"fee_granter_addr"`         // FeeGranterAddr is the address of the entity granting fees.
+	FromName           string               `json:"from_name" toml:"from_name"`                       // FromName is the name of the sender's account.
+	Gas                uint64               `json:"gas" toml:"gas"`                                   // Gas is the gas limit for the transaction.
+	GasAdjustment      float64              `json:"gas_adjustment" toml:"gas_adjustment"`             // GasAdjustment is the adjustment factor for gas estimation.
+	GasPrices          cosmossdk.DecCoins   `json:"gas_prices" toml:"gas_prices"`                     // GasPrices is the price of gas for the transaction.
+	SimulateAndExecute bool                 `json:"simulate_and_execute" toml:"simulate_and_execute"` // SimulateAndExecute indicates whether to simulate the transaction before execution.
 }
 
 // NewTx creates a new Tx instance with default values.
@@ -22,7 +23,6 @@ func NewTx() *Tx {
 		ChainID:            sdkflags.DefaultTxChainID,
 		Gas:                sdkflags.DefaultTxGas,
 		GasAdjustment:      sdkflags.DefaultTxGasAdjustment,
-		GasPrices:          sdkflags.DefaultTxGasPrices,
 		SimulateAndExecute: sdkflags.DefaultTxSimulateAndExecute,
 	}
 }
@@ -34,7 +34,7 @@ func (t *Tx) WithChainID(v string) *Tx {
 }
 
 // WithFeeGranterAddr sets the FeeGranterAddr field and returns the modified Tx instance.
-func (t *Tx) WithFeeGranterAddr(v string) *Tx {
+func (t *Tx) WithFeeGranterAddr(v cosmossdk.AccAddress) *Tx {
 	t.FeeGranterAddr = v
 	return t
 }
@@ -58,7 +58,7 @@ func (t *Tx) WithGasAdjustment(v float64) *Tx {
 }
 
 // WithGasPrices sets the GasPrices field and returns the modified Tx instance.
-func (t *Tx) WithGasPrices(v string) *Tx {
+func (t *Tx) WithGasPrices(v cosmossdk.DecCoins) *Tx {
 	t.GasPrices = v
 	return t
 }

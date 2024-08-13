@@ -3,17 +3,39 @@ package flags
 import (
 	"time"
 
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/spf13/cobra"
 )
 
 // GetNodeGigabytePricesFromCmd retrieves the "node.gigabyte-prices" flag value from the command.
-func GetNodeGigabytePricesFromCmd(cmd *cobra.Command) (string, error) {
-	return cmd.Flags().GetString("node.gigabyte-prices")
+func GetNodeGigabytePricesFromCmd(cmd *cobra.Command) (cosmossdk.Coins, error) {
+	s, err := cmd.Flags().GetString("node.gigabyte-prices")
+	if err != nil {
+		return nil, err
+	}
+
+	return cosmossdk.ParseCoinsNormalized(s)
 }
 
 // GetNodeHourlyPricesFromCmd retrieves the "node.hourly-prices" flag value from the command.
-func GetNodeHourlyPricesFromCmd(cmd *cobra.Command) (string, error) {
-	return cmd.Flags().GetString("node.hourly-prices")
+func GetNodeHourlyPricesFromCmd(cmd *cobra.Command) (cosmossdk.Coins, error) {
+	s, err := cmd.Flags().GetString("node.hourly-prices")
+	if err != nil {
+		return nil, err
+	}
+
+	return cosmossdk.ParseCoinsNormalized(s)
+}
+
+// GetNodeIntervalBestRPCEndpointFromCmd retrieves the "node.interval-best-rpc-endpoint" flag value from the command.
+func GetNodeIntervalBestRPCEndpointFromCmd(cmd *cobra.Command) (time.Duration, error) {
+	return cmd.Flags().GetDuration("node.interval-best-rpc-endpoint")
+}
+
+// GetNodeIntervalGeoIPLocationFromCmd retrieves the "node.interval-geoip-location" flag value from the command.
+func GetNodeIntervalGeoIPLocationFromCmd(cmd *cobra.Command) (time.Duration, error) {
+	return cmd.Flags().GetDuration("node.interval-geoip-location")
 }
 
 // GetNodeIntervalSessionUsageSyncWithBlockchainFromCmd retrieves the "node.interval-session-usage-sync-with-blockchain" flag value from the command.
@@ -36,8 +58,13 @@ func GetNodeIntervalSessionValidateFromCmd(cmd *cobra.Command) (time.Duration, e
 	return cmd.Flags().GetDuration("node.interval-session-validate")
 }
 
-// GetNodeIntervalUpdateStatusFromCmd retrieves the "node.interval-update-status" flag value from the command.
-func GetNodeIntervalUpdateStatusFromCmd(cmd *cobra.Command) (time.Duration, error) {
+// GetNodeIntervalSpeedtestFromCmd retrieves the "node.interval-speedtest" flag value from the command.
+func GetNodeIntervalSpeedtestFromCmd(cmd *cobra.Command) (time.Duration, error) {
+	return cmd.Flags().GetDuration("node.interval-speedtest")
+}
+
+// GetNodeIntervalStatusUpdateFromCmd retrieves the "node.interval-update-status" flag value from the command.
+func GetNodeIntervalStatusUpdateFromCmd(cmd *cobra.Command) (time.Duration, error) {
 	return cmd.Flags().GetDuration("node.interval-update-status")
 }
 
@@ -61,9 +88,24 @@ func GetNodeRemoteURLFromCmd(cmd *cobra.Command) (string, error) {
 	return cmd.Flags().GetString("node.remote-url")
 }
 
+// GetNodeTLSCertPathFromCmd retrieves the "node.tls-cert-path" flag value from the command.
+func GetNodeTLSCertPathFromCmd(cmd *cobra.Command) (string, error) {
+	return cmd.Flags().GetString("node.tls-cert-path")
+}
+
+// GetNodeTLSKeyPathFromCmd retrieves the "node.tls-key-path" flag value from the command.
+func GetNodeTLSKeyPathFromCmd(cmd *cobra.Command) (string, error) {
+	return cmd.Flags().GetString("node.tls-key-path")
+}
+
 // GetNodeTypeFromCmd retrieves the "node.type" flag value from the command.
-func GetNodeTypeFromCmd(cmd *cobra.Command) (string, error) {
-	return cmd.Flags().GetString("node.type")
+func GetNodeTypeFromCmd(cmd *cobra.Command) (sdk.ServiceType, error) {
+	s, err := cmd.Flags().GetString("node.type")
+	if err != nil {
+		return sdk.ServiceTypeUnspecified, err
+	}
+
+	return sdk.ServiceTypeFromString(s), nil
 }
 
 // SetFlagNodeGigabytePrices adds the "node.gigabyte-prices" flag to the command.
@@ -74,6 +116,16 @@ func SetFlagNodeGigabytePrices(cmd *cobra.Command) {
 // SetFlagNodeHourlyPrices adds the "node.hourly-prices" flag to the command.
 func SetFlagNodeHourlyPrices(cmd *cobra.Command) {
 	cmd.Flags().String("node.hourly-prices", "", "Hourly pricing information for the node.")
+}
+
+// SetFlagNodeIntervalBestRPCEndpoint adds the "node.interval-best-rpc-endpoint" flag to the command.
+func SetFlagNodeIntervalBestRPCEndpoint(cmd *cobra.Command) {
+	cmd.Flags().Duration("node.interval-best-rpc-endpoint", 0, "Duration between checking the best RPC endpoint.")
+}
+
+// SetFlagNodeIntervalGeoIPLocation adds the "node.interval-geoip-location" flag to the command.
+func SetFlagNodeIntervalGeoIPLocation(cmd *cobra.Command) {
+	cmd.Flags().Duration("node.interval-geoip-location", 0, "Duration between checking the GeoIP location.")
 }
 
 // SetFlagNodeIntervalSessionUsageSyncWithBlockchain adds the "node.interval-session-usage-sync-with-blockchain" flag to the command.
@@ -96,9 +148,14 @@ func SetFlagNodeIntervalSessionValidate(cmd *cobra.Command) {
 	cmd.Flags().Duration("node.interval-session-validate", 0, "Duration between validating sessions.")
 }
 
-// SetFlagNodeIntervalUpdateStatus adds the "node.interval-update-status" flag to the command.
-func SetFlagNodeIntervalUpdateStatus(cmd *cobra.Command) {
-	cmd.Flags().Duration("node.interval-update-status", 0, "Duration between updating the status of the node.")
+// SetFlagNodeIntervalSpeedtest adds the "node.interval-speedtest" flag to the command.
+func SetFlagNodeIntervalSpeedtest(cmd *cobra.Command) {
+	cmd.Flags().Duration("node.interval-speedtest", 0, "Duration between performing speed tests.")
+}
+
+// SetFlagNodeIntervalStatusUpdate adds the "node.interval-update-status" flag to the command.
+func SetFlagNodeIntervalStatusUpdate(cmd *cobra.Command) {
+	cmd.Flags().Duration("node.interval-status-update", 0, "Duration between updating the status of the node.")
 }
 
 // SetFlagNodeListenOn adds the "node.listen-on" flag to the command.
@@ -119,6 +176,16 @@ func SetFlagNodePublicIPv4Addr(cmd *cobra.Command) {
 // SetFlagNodeRemoteURL adds the "node.remote-url" flag to the command.
 func SetFlagNodeRemoteURL(cmd *cobra.Command) {
 	cmd.Flags().String("node.remote-url", "", "URL for remote operations related to the node.")
+}
+
+// SetFlagNodeTLSCertPath adds the "node.tls-cert-path" flag to the command.
+func SetFlagNodeTLSCertPath(cmd *cobra.Command) {
+	cmd.Flags().String("node.tls-cert-path", "", "Path to the TLS certificate file.")
+}
+
+// SetFlagNodeTLSKeyPath adds the "node.tls-key-path" flag to the command.
+func SetFlagNodeTLSKeyPath(cmd *cobra.Command) {
+	cmd.Flags().String("node.tls-key-path", "", "Path to the TLS key file.")
 }
 
 // SetFlagNodeType adds the "node.type" flag to the command.

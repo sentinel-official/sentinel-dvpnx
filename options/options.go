@@ -71,6 +71,10 @@ func (o *Options) WithTxOptions(v *Tx) *Options {
 	return o
 }
 
+func (o *Options) Validate() error {
+	return nil
+}
+
 // WithHandshakeFromCmd updates Handshake in the Options from the given command's flags.
 func (o *Options) WithHandshakeFromCmd(cmd *cobra.Command) (*Options, error) {
 	opts, err := NewHandshakeFromCmd(cmd)

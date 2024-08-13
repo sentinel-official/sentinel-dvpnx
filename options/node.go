@@ -3,6 +3,8 @@ package options
 import (
 	"time"
 
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/sentinel-official/dvpn-node/cmd/flags"
@@ -10,18 +12,23 @@ import (
 
 // Node represents options for node configuration.
 type Node struct {
-	GigabytePrices                         string        `json:"gigabyte_prices" toml:"gigabyte_prices"`                                                         // GigabytePrices is the pricing information for gigabytes.
-	HourlyPrices                           string        `json:"hourly_prices" toml:"hourly_prices"`                                                             // HourlyPrices is the pricing information for hourly usage.
-	IntervalSessionUsageSyncWithBlockchain time.Duration `json:"interval_session_usage_sync_with_blockchain" toml:"interval_session_usage_sync_with_blockchain"` // IntervalSessionUsageSyncWithBlockchain is the duration between syncing session usage with the blockchain.
-	IntervalSessionUsageSyncWithDatabase   time.Duration `json:"interval_session_usage_sync_with_database" toml:"interval_session_usage_sync_with_database"`     // IntervalSessionUsageSyncWithDatabase is the duration between syncing session usage with the database.
-	IntervalSessionUsageValidate           time.Duration `json:"interval_session_usage_validate" toml:"interval_session_usage_validate"`                         // IntervalSessionUsageValidate is the duration between validating session usage.
-	IntervalSessionValidate                time.Duration `json:"interval_session_validate" toml:"interval_session_validate"`                                     // IntervalSessionValidate is the duration between validating sessions.
-	IntervalUpdateStatus                   time.Duration `json:"interval_update_status" toml:"interval_update_status"`                                           // IntervalUpdateStatus is the duration between updating the status of the node.
-	ListenOn                               string        `json:"listen_on" toml:"listen_on"`                                                                     // ListenOn is the address on which the node listens.
-	Moniker                                string        `json:"moniker" toml:"moniker"`                                                                         // Moniker is the name or identifier for the node.
-	PublicIPv4Addr                         string        `json:"public_ipv4_addr" toml:"public_ipv4_addr"`                                                       // PublicIPv4Addr is the IPv4 address of the node.
-	RemoteURL                              string        `json:"remote_url" toml:"remote_url"`                                                                   // RemoteURL is the URL for remote operations.
-	Type                                   string        `json:"type" toml:"type"`                                                                               // Type indicates the type of node.
+	GigabytePrices                         cosmossdk.Coins `json:"gigabyte_prices" toml:"gigabyte_prices"`                                                         // GigabytePrices is the pricing information for gigabytes.
+	HourlyPrices                           cosmossdk.Coins `json:"hourly_prices" toml:"hourly_prices"`                                                             // HourlyPrices is the pricing information for hourly usage.
+	IntervalBestRPCEndpoint                time.Duration   `json:"interval_best_rpc_endpoint" toml:"interval_best_rpc_endpoint"`                                   // IntervalBestRPCEndpoint is the duration between checking the best RPC endpoint.
+	IntervalGeoIPLocation                  time.Duration   `json:"interval_geoip_location" toml:"interval_geoip_location"`                                         // IntervalGeoIPLocation is the duration between checking the GeoIP location.
+	IntervalSessionUsageSyncWithBlockchain time.Duration   `json:"interval_session_usage_sync_with_blockchain" toml:"interval_session_usage_sync_with_blockchain"` // IntervalSessionUsageSyncWithBlockchain is the duration between syncing session usage with the blockchain.
+	IntervalSessionUsageSyncWithDatabase   time.Duration   `json:"interval_session_usage_sync_with_database" toml:"interval_session_usage_sync_with_database"`     // IntervalSessionUsageSyncWithDatabase is the duration between syncing session usage with the database.
+	IntervalSessionUsageValidate           time.Duration   `json:"interval_session_usage_validate" toml:"interval_session_usage_validate"`                         // IntervalSessionUsageValidate is the duration between validating session usage.
+	IntervalSessionValidate                time.Duration   `json:"interval_session_validate" toml:"interval_session_validate"`                                     // IntervalSessionValidate is the duration between validating sessions.
+	IntervalSpeedtest                      time.Duration   `json:"interval_speedtest" toml:"interval_speedtest"`                                                   // IntervalSpeedtest is the duration between performing speed tests.
+	IntervalStatusUpdate                   time.Duration   `json:"interval_status_update" toml:"interval_status_update"`                                           // IntervalStatusUpdate is the duration between updating the status of the node.
+	ListenOn                               string          `json:"listen_on" toml:"listen_on"`                                                                     // ListenOn is the address on which the node listens.
+	Moniker                                string          `json:"moniker" toml:"moniker"`                                                                         // Moniker is the name or identifier for the node.
+	PublicIPv4Addr                         string          `json:"public_ipv4_addr" toml:"public_ipv4_addr"`                                                       // PublicIPv4Addr is the IPv4 address of the node.
+	RemoteURL                              string          `json:"remote_url" toml:"remote_url"`                                                                   // RemoteURL is the URL for remote operations.
+	TLSCertPath                            string          `json:"tls_cert_path" toml:"tls_cert_path"`                                                             // TLSCertPath is the path to the TLS certificate file.
+	TLSKeyPath                             string          `json:"tls_key_path" toml:"tls_key_path"`                                                               // TLSKeyPath is the path to the TLS key file.
+	Type                                   sdk.ServiceType `json:"type" toml:"type"`                                                                               // Type indicates the type of node.
 }
 
 // NewNode creates a new Node instance with default values.
@@ -30,14 +37,26 @@ func NewNode() *Node {
 }
 
 // WithGigabytePrices sets the GigabytePrices field and returns the modified Node instance.
-func (n *Node) WithGigabytePrices(v string) *Node {
+func (n *Node) WithGigabytePrices(v cosmossdk.Coins) *Node {
 	n.GigabytePrices = v
 	return n
 }
 
 // WithHourlyPrices sets the HourlyPrices field and returns the modified Node instance.
-func (n *Node) WithHourlyPrices(v string) *Node {
+func (n *Node) WithHourlyPrices(v cosmossdk.Coins) *Node {
 	n.HourlyPrices = v
+	return n
+}
+
+// WithIntervalBestRPCEndpoint sets the IntervalBestRPCEndpoint field and returns the modified Node instance.
+func (n *Node) WithIntervalBestRPCEndpoint(v time.Duration) *Node {
+	n.IntervalBestRPCEndpoint = v
+	return n
+}
+
+// WithIntervalGeoIPLocation sets the IntervalGeoIPLocation field and returns the modified Node instance.
+func (n *Node) WithIntervalGeoIPLocation(v time.Duration) *Node {
+	n.IntervalGeoIPLocation = v
 	return n
 }
 
@@ -65,9 +84,15 @@ func (n *Node) WithIntervalSessionValidate(v time.Duration) *Node {
 	return n
 }
 
-// WithIntervalUpdateStatus sets the IntervalUpdateStatus field and returns the modified Node instance.
-func (n *Node) WithIntervalUpdateStatus(v time.Duration) *Node {
-	n.IntervalUpdateStatus = v
+// WithIntervalSpeedtest sets the IntervalSpeedtest field and returns the modified Node instance.
+func (n *Node) WithIntervalSpeedtest(v time.Duration) *Node {
+	n.IntervalSpeedtest = v
+	return n
+}
+
+// WithIntervalStatusUpdate sets the IntervalStatusUpdate field and returns the modified Node instance.
+func (n *Node) WithIntervalStatusUpdate(v time.Duration) *Node {
+	n.IntervalStatusUpdate = v
 	return n
 }
 
@@ -96,7 +121,7 @@ func (n *Node) WithRemoteURL(v string) *Node {
 }
 
 // WithType sets the Type field and returns the modified Node instance.
-func (n *Node) WithType(v string) *Node {
+func (n *Node) WithType(v sdk.ServiceType) *Node {
 	n.Type = v
 	return n
 }
@@ -109,11 +134,16 @@ func AddNodeFlagsToCmd(cmd *cobra.Command) {
 	flags.SetFlagNodeIntervalSessionUsageSyncWithDatabase(cmd)
 	flags.SetFlagNodeIntervalSessionUsageValidate(cmd)
 	flags.SetFlagNodeIntervalSessionValidate(cmd)
-	flags.SetFlagNodeIntervalUpdateStatus(cmd)
+	flags.SetFlagNodeIntervalStatusUpdate(cmd)
+	flags.SetFlagNodeIntervalBestRPCEndpoint(cmd)
+	flags.SetFlagNodeIntervalGeoIPLocation(cmd)
+	flags.SetFlagNodeIntervalSpeedtest(cmd)
 	flags.SetFlagNodeListenOn(cmd)
 	flags.SetFlagNodeMoniker(cmd)
 	flags.SetFlagNodePublicIPv4Addr(cmd)
 	flags.SetFlagNodeRemoteURL(cmd)
+	flags.SetFlagNodeTLSCertPath(cmd)
+	flags.SetFlagNodeTLSKeyPath(cmd)
 	flags.SetFlagNodeType(cmd)
 }
 
@@ -127,6 +157,18 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 
 	// Retrieve the hourly prices flag value from the command.
 	hourlyPrices, err := flags.GetNodeHourlyPricesFromCmd(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve the interval best RPC endpoint flag value from the command.
+	intervalBestRPCEndpoint, err := flags.GetNodeIntervalBestRPCEndpointFromCmd(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve the interval GeoIP location flag value from the command.
+	intervalGeoIPLocation, err := flags.GetNodeIntervalGeoIPLocationFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -155,8 +197,14 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 		return nil, err
 	}
 
-	// Retrieve the interval update status flag value from the command.
-	intervalUpdateStatus, err := flags.GetNodeIntervalUpdateStatusFromCmd(cmd)
+	// Retrieve the interval speedtest flag value from the command.
+	intervalSpeedtest, err := flags.GetNodeIntervalSpeedtestFromCmd(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve the interval status update flag value from the command.
+	intervalStatusUpdate, err := flags.GetNodeIntervalStatusUpdateFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +233,18 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 		return nil, err
 	}
 
+	// Retrieve the TLS certificate path flag value from the command.
+	tlsCertPath, err := flags.GetNodeTLSCertPathFromCmd(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve the TLS key path flag value from the command.
+	tlsKeyPath, err := flags.GetNodeTLSKeyPathFromCmd(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	// Retrieve the node type flag value from the command.
 	nodeType, err := flags.GetNodeTypeFromCmd(cmd)
 	if err != nil {
@@ -195,15 +255,20 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 	return &Node{
 		GigabytePrices:                         gigabytePrices,
 		HourlyPrices:                           hourlyPrices,
+		IntervalBestRPCEndpoint:                intervalBestRPCEndpoint,
+		IntervalGeoIPLocation:                  intervalGeoIPLocation,
 		IntervalSessionUsageSyncWithBlockchain: intervalSessionUsageSyncWithBlockchain,
 		IntervalSessionUsageSyncWithDatabase:   intervalSessionUsageSyncWithDatabase,
 		IntervalSessionUsageValidate:           intervalSessionUsageValidate,
 		IntervalSessionValidate:                intervalSessionValidate,
-		IntervalUpdateStatus:                   intervalUpdateStatus,
+		IntervalSpeedtest:                      intervalSpeedtest,
+		IntervalStatusUpdate:                   intervalStatusUpdate,
 		ListenOn:                               listenOn,
 		Moniker:                                moniker,
 		PublicIPv4Addr:                         publicIPv4Addr,
 		RemoteURL:                              remoteURL,
+		TLSCertPath:                            tlsCertPath,
+		TLSKeyPath:                             tlsKeyPath,
 		Type:                                   nodeType,
 	}, nil
 }
