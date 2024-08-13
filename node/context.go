@@ -1,12 +1,14 @@
 package node
 
 import (
+	"io"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"cosmossdk.io/log"
 	cosmossdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	sdkclient "github.com/sentinel-official/sentinel-go-sdk/client"
 	"github.com/sentinel-official/sentinel-go-sdk/client/options"
@@ -18,15 +20,18 @@ import (
 )
 
 type Context struct {
-	client   *sdkclient.Client
-	database *gorm.DB
-	homeDir  string
-	log      log.Logger
-	service  sdk.ServerService
+	appName     string
+	client      *sdkclient.Client
+	database    *gorm.DB
+	geoIPClient geoip.Client
+	homeDir     string
+	log         log.Logger
+	service     sdk.ServerService
 
+	keyringBackend                             string
 	nodeGigabytePrices                         cosmossdk.Coins
 	nodeHourlyPrices                           cosmossdk.Coins
-	nodeIntervalBestRPCEndpoint                time.Duration
+	nodeIntervalBestRPCAddr                    time.Duration
 	nodeIntervalGeoIPLocation                  time.Duration
 	nodeIntervalSessionUsageSyncWithBlockchain time.Duration
 	nodeIntervalSessionUsageSyncWithDatabase   time.Duration
@@ -41,14 +46,15 @@ type Context struct {
 	nodeTLSKeyPath                             string
 	nodeType                                   sdk.ServiceType
 	queryMaxRetries                            int
+	queryRPCAddrs                              []string
 	queryTimeout                               time.Duration
 	txChainID                                  string
 	txFeeGranterAddr                           cosmossdk.AccAddress
 	txFromAddr                                 cosmossdk.AccAddress
 	txFromName                                 string
+	txGas                                      uint64
 	txGasAdjustment                            float64
 	txGasPrices                                cosmossdk.DecCoins
-	txGas                                      uint64
 	txSimulateAndExecute                       bool
 
 	rw       sync.RWMutex
@@ -81,6 +87,13 @@ func (c *Context) Seal() *Context {
 	return c
 }
 
+// WithAppName sets the application name in the context and returns the updated context.
+func (c *Context) WithAppName(appName string) *Context {
+	c.checkSealed()
+	c.appName = appName
+	return c
+}
+
 // WithClient sets the client in the context and returns the updated context.
 func (c *Context) WithClient(client *sdkclient.Client) *Context {
 	c.checkSealed()
@@ -92,6 +105,13 @@ func (c *Context) WithClient(client *sdkclient.Client) *Context {
 func (c *Context) WithDatabase(database *gorm.DB) *Context {
 	c.checkSealed()
 	c.database = database
+	return c
+}
+
+// WithGeoIPClient sets the GeoIP client in the context and returns the updated context.
+func (c *Context) WithGeoIPClient(client geoip.Client) *Context {
+	c.checkSealed()
+	c.geoIPClient = client
 	return c
 }
 
@@ -116,6 +136,13 @@ func (c *Context) WithService(service sdk.ServerService) *Context {
 	return c
 }
 
+// WithKeyringBackend sets the keyring backend in the context and returns the updated context.
+func (c *Context) WithKeyringBackend(backend string) *Context {
+	c.checkSealed()
+	c.keyringBackend = backend
+	return c
+}
+
 // WithNodeGigabytePrices sets the gigabyte prices for nodes and returns the updated context.
 func (c *Context) WithNodeGigabytePrices(prices cosmossdk.Coins) *Context {
 	c.checkSealed()
@@ -130,10 +157,10 @@ func (c *Context) WithNodeHourlyPrices(prices cosmossdk.Coins) *Context {
 	return c
 }
 
-// WithNodeIntervalBestRPCEndpoint sets the interval for the best RPC endpoint check and returns the updated context.
-func (c *Context) WithNodeIntervalBestRPCEndpoint(interval time.Duration) *Context {
+// WithNodeIntervalBestRPCAddr sets the interval for the best RPC address check and returns the updated context.
+func (c *Context) WithNodeIntervalBestRPCAddr(interval time.Duration) *Context {
 	c.checkSealed()
-	c.nodeIntervalBestRPCEndpoint = interval
+	c.nodeIntervalBestRPCAddr = interval
 	return c
 }
 
@@ -235,6 +262,13 @@ func (c *Context) WithQueryMaxRetries(retries int) *Context {
 	return c
 }
 
+// WithQueryRPCAddrs sets the RPC addresses for queries in the context and returns the updated context.
+func (c *Context) WithQueryRPCAddrs(addrs []string) *Context {
+	c.checkSealed()
+	c.queryRPCAddrs = addrs
+	return c
+}
+
 // WithQueryTimeout sets the timeout duration for queries and returns the updated context.
 func (c *Context) WithQueryTimeout(timeout time.Duration) *Context {
 	c.checkSealed()
@@ -305,6 +339,11 @@ func (c *Context) WithTxSimulateAndExecute(simulate bool) *Context {
 	return c
 }
 
+// AppName returns the application name set in the context.
+func (c *Context) AppName() string {
+	return c.appName
+}
+
 // Client returns the client instance set in the context.
 func (c *Context) Client() *sdkclient.Client {
 	return c.client
@@ -320,6 +359,16 @@ func (c *Context) DatabaseFilePath() string {
 	return filepath.Join(c.homeDir, "data.db")
 }
 
+// GeoIPClient returns the GeoIP client set in the context.
+func (c *Context) GeoIPClient() geoip.Client {
+	return c.geoIPClient
+}
+
+// KeyringDir returns the directory path where the keyring is located.
+func (c *Context) KeyringDir() string {
+	return c.homeDir
+}
+
 // Log returns the logger instance set in the context.
 func (c *Context) Log() log.Logger {
 	return c.log
@@ -328,6 +377,11 @@ func (c *Context) Log() log.Logger {
 // Service returns the server service instance set in the context.
 func (c *Context) Service() sdk.ServerService {
 	return c.service
+}
+
+// KeyringBackend returns the keyring backend set in the context.
+func (c *Context) KeyringBackend() string {
+	return c.keyringBackend
 }
 
 // NodeGigabytePrices returns the gigabyte prices for nodes.
@@ -340,9 +394,9 @@ func (c *Context) NodeHourlyPrices() cosmossdk.Coins {
 	return c.nodeHourlyPrices
 }
 
-// NodeIntervalBestRPCEndpoint returns the interval for the best RPC endpoint check.
-func (c *Context) NodeIntervalBestRPCEndpoint() time.Duration {
-	return c.nodeIntervalBestRPCEndpoint
+// NodeIntervalBestRPCAddr returns the interval for the best RPC address check.
+func (c *Context) NodeIntervalBestRPCAddr() time.Duration {
+	return c.nodeIntervalBestRPCAddr
 }
 
 // NodeIntervalGeoIPLocation returns the interval for GeoIP location updates.
@@ -413,6 +467,11 @@ func (c *Context) NodeType() sdk.ServiceType {
 // QueryMaxRetries returns the maximum number of retries for queries.
 func (c *Context) QueryMaxRetries() int {
 	return c.queryMaxRetries
+}
+
+// QueryRPCAddrs returns the RPC addresses used for queries in the context.
+func (c *Context) QueryRPCAddrs() []string {
+	return c.queryRPCAddrs
 }
 
 // QueryTimeout returns the timeout duration for queries.
@@ -533,15 +592,50 @@ func (c *Context) ClientOptions() *options.Options {
 		WithTx(tx)
 }
 
-// SetupDatabase initializes and sets up the database connection.
-func (c *Context) SetupDatabase() error {
-	dbPath := c.DatabaseFilePath()
+// SetupGeoIPClient initializes and sets up the GeoIP client in the context.
+func (c *Context) SetupGeoIPClient() error {
+	// Create a new default GeoIP client.
+	client := geoip.NewDefaultClient()
 
-	db, err := database.NewDefault(dbPath)
+	// Set the new GeoIP client in the context.
+	c.WithGeoIPClient(client)
+	return nil
+}
+
+// SetupClient initializes and sets up the SDK client.
+func (c *Context) SetupClient(input io.Reader) error {
+	// Create a new codec for proto encoding/decoding.
+	cdc := sdk.NewProtoCodec()
+
+	// Initialize a keyring with the specified settings.
+	kr, err := keyring.New(c.AppName(), c.KeyringBackend(), c.KeyringDir(), input, cdc)
 	if err != nil {
 		return err
 	}
 
+	// Create a new client instance using the codec and keyring.
+	client := sdkclient.New(cdc).
+		WithKeyring(kr)
+
+	// Set the client in the context.
+	c.WithClient(client)
+	return nil
+}
+
+// SetupDatabase initializes and sets up the database connection.
+func (c *Context) SetupDatabase() error {
+	// Initialize a new database connection using the determined file path.
+	db, err := database.NewDefault(c.DatabaseFilePath())
+	if err != nil {
+		return err
+	}
+
+	// Set the newly created database connection in the context.
 	c.WithDatabase(db)
+	return nil
+}
+
+func (c *Context) SetupService() error {
+
 	return nil
 }

@@ -28,9 +28,9 @@ func GetNodeHourlyPricesFromCmd(cmd *cobra.Command) (cosmossdk.Coins, error) {
 	return cosmossdk.ParseCoinsNormalized(s)
 }
 
-// GetNodeIntervalBestRPCEndpointFromCmd retrieves the "node.interval-best-rpc-endpoint" flag value from the command.
-func GetNodeIntervalBestRPCEndpointFromCmd(cmd *cobra.Command) (time.Duration, error) {
-	return cmd.Flags().GetDuration("node.interval-best-rpc-endpoint")
+// GetNodeIntervalBestRPCAddrFromCmd retrieves the "node.interval-best-rpc-addr" flag value from the command.
+func GetNodeIntervalBestRPCAddrFromCmd(cmd *cobra.Command) (time.Duration, error) {
+	return cmd.Flags().GetDuration("node.interval-best-rpc-addr")
 }
 
 // GetNodeIntervalGeoIPLocationFromCmd retrieves the "node.interval-geoip-location" flag value from the command.
@@ -118,9 +118,9 @@ func SetFlagNodeHourlyPrices(cmd *cobra.Command) {
 	cmd.Flags().String("node.hourly-prices", "", "Hourly pricing information for the node.")
 }
 
-// SetFlagNodeIntervalBestRPCEndpoint adds the "node.interval-best-rpc-endpoint" flag to the command.
-func SetFlagNodeIntervalBestRPCEndpoint(cmd *cobra.Command) {
-	cmd.Flags().Duration("node.interval-best-rpc-endpoint", 0, "Duration between checking the best RPC endpoint.")
+// SetFlagNodeIntervalBestRPCAddr adds the "node.interval-best-rpc-addr" flag to the command.
+func SetFlagNodeIntervalBestRPCAddr(cmd *cobra.Command) {
+	cmd.Flags().Duration("node.interval-best-rpc-addr", 0, "Duration between checking the best RPC address.")
 }
 
 // SetFlagNodeIntervalGeoIPLocation adds the "node.interval-geoip-location" flag to the command.

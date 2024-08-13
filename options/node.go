@@ -14,7 +14,7 @@ import (
 type Node struct {
 	GigabytePrices                         cosmossdk.Coins `json:"gigabyte_prices" toml:"gigabyte_prices"`                                                         // GigabytePrices is the pricing information for gigabytes.
 	HourlyPrices                           cosmossdk.Coins `json:"hourly_prices" toml:"hourly_prices"`                                                             // HourlyPrices is the pricing information for hourly usage.
-	IntervalBestRPCEndpoint                time.Duration   `json:"interval_best_rpc_endpoint" toml:"interval_best_rpc_endpoint"`                                   // IntervalBestRPCEndpoint is the duration between checking the best RPC endpoint.
+	IntervalBestRPCAddr                    time.Duration   `json:"interval_best_rpc_addr" toml:"interval_best_rpc_addr"`                                           // IntervalBestRPCAddr is the duration between checking the best RPC address.
 	IntervalGeoIPLocation                  time.Duration   `json:"interval_geoip_location" toml:"interval_geoip_location"`                                         // IntervalGeoIPLocation is the duration between checking the GeoIP location.
 	IntervalSessionUsageSyncWithBlockchain time.Duration   `json:"interval_session_usage_sync_with_blockchain" toml:"interval_session_usage_sync_with_blockchain"` // IntervalSessionUsageSyncWithBlockchain is the duration between syncing session usage with the blockchain.
 	IntervalSessionUsageSyncWithDatabase   time.Duration   `json:"interval_session_usage_sync_with_database" toml:"interval_session_usage_sync_with_database"`     // IntervalSessionUsageSyncWithDatabase is the duration between syncing session usage with the database.
@@ -48,9 +48,9 @@ func (n *Node) WithHourlyPrices(v cosmossdk.Coins) *Node {
 	return n
 }
 
-// WithIntervalBestRPCEndpoint sets the IntervalBestRPCEndpoint field and returns the modified Node instance.
-func (n *Node) WithIntervalBestRPCEndpoint(v time.Duration) *Node {
-	n.IntervalBestRPCEndpoint = v
+// WithIntervalBestRPCAddr sets the IntervalBestRPCAddr field and returns the modified Node instance.
+func (n *Node) WithIntervalBestRPCAddr(v time.Duration) *Node {
+	n.IntervalBestRPCAddr = v
 	return n
 }
 
@@ -135,7 +135,7 @@ func AddNodeFlagsToCmd(cmd *cobra.Command) {
 	flags.SetFlagNodeIntervalSessionUsageValidate(cmd)
 	flags.SetFlagNodeIntervalSessionValidate(cmd)
 	flags.SetFlagNodeIntervalStatusUpdate(cmd)
-	flags.SetFlagNodeIntervalBestRPCEndpoint(cmd)
+	flags.SetFlagNodeIntervalBestRPCAddr(cmd)
 	flags.SetFlagNodeIntervalGeoIPLocation(cmd)
 	flags.SetFlagNodeIntervalSpeedtest(cmd)
 	flags.SetFlagNodeListenOn(cmd)
@@ -161,8 +161,8 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 		return nil, err
 	}
 
-	// Retrieve the interval best RPC endpoint flag value from the command.
-	intervalBestRPCEndpoint, err := flags.GetNodeIntervalBestRPCEndpointFromCmd(cmd)
+	// Retrieve the interval best RPC address flag value from the command.
+	intervalBestRPCAddr, err := flags.GetNodeIntervalBestRPCAddrFromCmd(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func NewNodeFromCmd(cmd *cobra.Command) (*Node, error) {
 	return &Node{
 		GigabytePrices:                         gigabytePrices,
 		HourlyPrices:                           hourlyPrices,
-		IntervalBestRPCEndpoint:                intervalBestRPCEndpoint,
+		IntervalBestRPCAddr:                    intervalBestRPCAddr,
 		IntervalGeoIPLocation:                  intervalGeoIPLocation,
 		IntervalSessionUsageSyncWithBlockchain: intervalSessionUsageSyncWithBlockchain,
 		IntervalSessionUsageSyncWithDatabase:   intervalSessionUsageSyncWithDatabase,

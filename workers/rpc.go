@@ -8,35 +8,35 @@ import (
 	"github.com/sentinel-official/dvpn-node/node"
 )
 
-// HandlerBestRPCEndpoint determines the best RPC endpoint based on latency.
-func HandlerBestRPCEndpoint(ctx *node.Context) func() error {
+// HandlerBestRPCAddr determines the best RPC address based on latency.
+func HandlerBestRPCAddr(ctx *node.Context) func() error {
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}
 
 	return func() error {
-		endpoints := ctx.RPCAddrs()
-		if len(endpoints) == 0 {
+		addrs := ctx.QueryRPCAddrs()
+		if len(addrs) == 0 {
 			return nil
 		}
 
 		var (
-			bestEndpoint = endpoints[0]     // Initialize with the first endpoint
-			minLatency   = 15 * time.Second // Initial latency threshold
-			mu           sync.Mutex         // Mutex to synchronize access to shared variables
-			wg           sync.WaitGroup     // WaitGroup to wait for all goroutines to finish
+			bestAddr   = addrs[0]         // Initialize with the first address
+			minLatency = 15 * time.Second // Initial latency threshold
+			mu         sync.Mutex         // Mutex to synchronize access to shared variables
+			wg         sync.WaitGroup     // WaitGroup to wait for all goroutines to finish
 		)
 
-		for _, endpoint := range endpoints {
+		for _, addr := range addrs {
 			wg.Add(1)
-			go func(endpoint string) {
+			go func(addr string) {
 				defer wg.Done()
 
 				// Record the start time of the request
 				start := time.Now()
 
-				// Perform GET request to the endpoint
-				resp, err := client.Get(endpoint)
+				// Perform GET request to the address
+				resp, err := client.Get(addr)
 				if err != nil {
 					return
 				}
@@ -53,19 +53,19 @@ func HandlerBestRPCEndpoint(ctx *node.Context) func() error {
 				mu.Lock()
 				defer mu.Unlock()
 
-				// Update the best endpoint if the current one has lower latency
+				// Update the best address if the current one has lower latency
 				if latency < minLatency {
-					bestEndpoint = endpoint
+					bestAddr = addr
 					minLatency = latency
 				}
-			}(endpoint)
+			}(addr)
 		}
 
 		// Wait for all goroutines to complete
 		wg.Wait()
 
 		// Set the best RPC address in the context
-		ctx.SetRPCAddr(bestEndpoint)
+		ctx.SetRPCAddr(bestAddr)
 
 		return nil
 	}

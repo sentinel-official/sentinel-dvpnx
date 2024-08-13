@@ -54,9 +54,9 @@ func (n *Node) SetupRouter() error {
 
 func (n *Node) SetupScheduler() error {
 	items := []cron.Worker{
-		cron.NewBasicWorker().WithName("BestRPCEndpoint").
-			WithHandler(workers.HandlerBestRPCEndpoint(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalBestRPCEndpoint()),
+		cron.NewBasicWorker().WithName("BestRPCAddress").
+			WithHandler(workers.HandlerBestRPCAddr(n.ctx)).
+			WithInterval(n.ctx.NodeIntervalBestRPCAddr()),
 		cron.NewBasicWorker().WithName("GeoIPLocation").
 			WithHandler(workers.HandlerGeoIPLocation(n.ctx)).
 			WithInterval(n.ctx.NodeIntervalGeoIPLocation()),
