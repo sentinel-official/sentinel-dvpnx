@@ -1,104 +1,56 @@
 package node
 
 import (
-	"net/http"
-
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 
-	"github.com/sentinel-official/dvpn-node/api"
 	nodecontext "github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/utils"
-	"github.com/sentinel-official/dvpn-node/workers"
 )
 
+// Node represents the application node, holding its context, router, and scheduler.
 type Node struct {
 	ctx       *nodecontext.Context
 	router    *gin.Engine
 	scheduler *cron.Scheduler
 }
 
+// New creates a new Node with the provided context.
 func New(ctx *nodecontext.Context) *Node {
 	return &Node{
 		ctx: ctx,
 	}
 }
 
+// WithRouter sets the router for the Node and returns the updated Node.
 func (n *Node) WithRouter(v *gin.Engine) *Node {
 	n.router = v
 	return n
 }
 
+// WithScheduler sets the scheduler for the Node and returns the updated Node.
 func (n *Node) WithScheduler(v *cron.Scheduler) *Node {
 	n.scheduler = v
 	return n
 }
 
-func (n *Node) SetupRouter() error {
-	middlewares := []gin.HandlerFunc{
-		cors.New(
-			cors.Config{
-				AllowAllOrigins: true,
-				AllowMethods:    []string{http.MethodGet, http.MethodPost},
-			},
-		),
-	}
-
-	r := gin.New()
-	r.Use(middlewares...)
-	api.RegisterRoutes(n.ctx, r)
-
-	n.WithRouter(r)
-	return nil
-}
-
-func (n *Node) SetupScheduler() error {
-	items := []cron.Worker{
-		cron.NewBasicWorker().WithName("BestRPCAddress").
-			WithHandler(workers.HandlerBestRPCAddr(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalBestRPCAddr()),
-		cron.NewBasicWorker().WithName("GeoIPLocation").
-			WithHandler(workers.HandlerGeoIPLocation(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalGeoIPLocation()),
-		cron.NewBasicWorker().WithName("SessionUsageSyncWithBlockchain").
-			WithHandler(workers.HandlerSessionUsageSyncWithBlockchain(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionUsageSyncWithBlockchain()),
-		cron.NewBasicWorker().WithName("SessionUsageSyncWithDatabase").
-			WithHandler(workers.HandlerSessionUsageSyncWithDatabase(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionUsageSyncWithDatabase()),
-		cron.NewBasicWorker().WithName("SessionUsageValidate").
-			WithHandler(workers.HandlerSessionUsageValidate(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionUsageValidate()),
-		cron.NewBasicWorker().WithName("SessionValidate").
-			WithHandler(workers.HandlerSessionValidate(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionValidate()),
-		cron.NewBasicWorker().WithName("Speedtest").
-			WithHandler(workers.HandlerSpeedtest(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSpeedtest()),
-		cron.NewBasicWorker().WithName("NodeStatusUpdate").
-			WithHandler(workers.HandlerNodeStatusUpdate(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalStatusUpdate()),
-	}
-
-	s := cron.NewScheduler()
-	if err := s.RegisterWorkers(items...); err != nil {
-		return err
-	}
-
-	n.WithScheduler(s)
-	return nil
-}
-
+// Start starts the scheduler and the Node server.
 func (n *Node) Start() error {
+	// Start the cron scheduler.
 	if err := n.scheduler.Start(); err != nil {
 		return err
 	}
 
+	// Start the HTTPS server using the configured TLS certificates.
 	return utils.ListenAndServeTLS(
 		n.ctx.NodeListenOn(),
 		n.ctx.TLSCertPath(),
 		n.ctx.TLSKeyPath(),
 		n.router,
 	)
+}
+
+// Stop stops the Node.
+func (n *Node) Stop() error {
+	return nil
 }

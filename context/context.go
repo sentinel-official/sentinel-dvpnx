@@ -1,22 +1,18 @@
 package context
 
 import (
-	"io"
 	"path/filepath"
 	"sync"
 	"time"
 
 	cosmossdklog "cosmossdk.io/log"
 	cosmossdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	sdkclient "github.com/sentinel-official/sentinel-go-sdk/client"
 	"github.com/sentinel-official/sentinel-go-sdk/client/options"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"gorm.io/gorm"
-
-	"github.com/sentinel-official/dvpn-node/database"
 )
 
 type Context struct {
@@ -316,6 +312,31 @@ func (c *Context) WithTxSimulateAndExecute(simulate bool) *Context {
 	return c
 }
 
+// SetLocation sets the geo-location data in the context.
+func (c *Context) SetLocation(location *geoip.Location) {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+
+	c.location = location
+}
+
+// SetRPCAddr sets the RPC address in the context.
+func (c *Context) SetRPCAddr(rpcAddr string) {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+
+	c.rpcAddr = rpcAddr
+}
+
+// SetSpeedtestResults sets the download and upload speeds in the context.
+func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed cosmossdkmath.Int) {
+	c.rw.Lock()
+	defer c.rw.Unlock()
+
+	c.dlSpeed = dlSpeed
+	c.ulSpeed = ulSpeed
+}
+
 // AppName returns the application name set in the context.
 func (c *Context) AppName() string {
 	return c.appName
@@ -496,31 +517,6 @@ func (c *Context) TxSimulateAndExecute() bool {
 	return c.txSimulateAndExecute
 }
 
-// SetLocation sets the geo-location data in the context.
-func (c *Context) SetLocation(location *geoip.Location) {
-	c.rw.Lock()
-	defer c.rw.Unlock()
-
-	c.location = location
-}
-
-// SetRPCAddr sets the RPC address in the context.
-func (c *Context) SetRPCAddr(rpcAddr string) {
-	c.rw.Lock()
-	defer c.rw.Unlock()
-
-	c.rpcAddr = rpcAddr
-}
-
-// SetSpeedtestResults sets the download and upload speeds in the context.
-func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed cosmossdkmath.Int) {
-	c.rw.Lock()
-	defer c.rw.Unlock()
-
-	c.dlSpeed = dlSpeed
-	c.ulSpeed = ulSpeed
-}
-
 // Location returns the geo-location data set in the context.
 func (c *Context) Location() *geoip.Location {
 	c.rw.RLock()
@@ -567,70 +563,4 @@ func (c *Context) ClientOptions() *options.Options {
 	return options.New().
 		WithQuery(query).
 		WithTx(tx)
-}
-
-// SetupClient initializes and sets up the SDK client.
-func (c *Context) SetupClient(input io.Reader) error {
-	// Create a new codec for proto encoding/decoding.
-	cdc := sdk.NewProtoCodec()
-
-	// Initialize a keyring with the specified settings.
-	kr, err := keyring.New(c.AppName(), c.KeyringBackend(), c.KeyringDir(), input, cdc)
-	if err != nil {
-		return err
-	}
-
-	// Create a new client instance using the codec and keyring.
-	client := sdkclient.New(cdc).
-		WithKeyring(kr)
-
-	// Set the client in the context.
-	c.WithClient(client)
-	return nil
-}
-
-// SetupDatabase initializes and sets up the database connection.
-func (c *Context) SetupDatabase() error {
-	// Initialize a new database connection using the determined file path.
-	db, err := database.NewDefault(c.DatabaseFilePath())
-	if err != nil {
-		return err
-	}
-
-	// Set the newly created database connection in the context.
-	c.WithDatabase(db)
-	return nil
-}
-
-// SetupGeoIPClient initializes and sets up the GeoIP client in the context.
-func (c *Context) SetupGeoIPClient() error {
-	// Create a new default GeoIP client.
-	client := geoip.NewDefaultClient()
-
-	// Set the new GeoIP client in the context.
-	c.WithGeoIPClient(client)
-	return nil
-}
-
-func (c *Context) SetupService() error {
-	return nil
-}
-
-// SetupTxFromAddr retrieves and sets the address of the transaction sender based on the account name.
-func (c *Context) SetupTxFromAddr() error {
-	// Retrieve the key record by name.
-	key, err := c.Key(c.TxFromName())
-	if err != nil {
-		return err
-	}
-
-	// Get the address from the key record.
-	addr, err := key.GetAddress()
-	if err != nil {
-		return err
-	}
-
-	// Set the address in the context.
-	c.WithTxFromAddr(addr)
-	return nil
 }

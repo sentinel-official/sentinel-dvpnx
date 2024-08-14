@@ -66,20 +66,8 @@ func StartCmd(appName string) *cobra.Command {
 				WithTxGasPrices(opts.Tx.GasPrices).
 				WithTxSimulateAndExecute(opts.Tx.SimulateAndExecute)
 
-			// Setup client, database, GeoIP client, service, and tx sender in the context.
-			if err := ctx.SetupClient(cmd.InOrStdin()); err != nil {
-				return err
-			}
-			if err := ctx.SetupDatabase(); err != nil {
-				return err
-			}
-			if err := ctx.SetupGeoIPClient(); err != nil {
-				return err
-			}
-			if err := ctx.SetupService(); err != nil {
-				return err
-			}
-			if err := ctx.SetupTxFromAddr(); err != nil {
+			// Setup the application context.
+			if err := ctx.Setup(cmd.InOrStdin()); err != nil {
 				return err
 			}
 
