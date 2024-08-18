@@ -1,9 +1,11 @@
 package options
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 
-	"github.com/sentinel-official/dvpn-node/cmd/flags"
+	"github.com/sentinel-official/dvpn-node/flags"
 )
 
 // Handshake represents options for configuring the Handshake DNS system.
@@ -15,7 +17,8 @@ type Handshake struct {
 // NewHandshake creates a new Handshake instance with default values.
 func NewHandshake() *Handshake {
 	return &Handshake{
-		Peers: flags.DefaultHandshakePeers,
+		Enable: flags.DefaultHandshakeEnable,
+		Peers:  flags.DefaultHandshakePeers,
 	}
 }
 
@@ -31,22 +34,44 @@ func (h *Handshake) WithPeers(v uint64) *Handshake {
 	return h
 }
 
-// AddHandshakeFlagsToCmd adds Handshake-related flags to the given Cobra command.
-func AddHandshakeFlagsToCmd(cmd *cobra.Command) {
-	flags.SetFlagHandshakeEnable(cmd)
-	flags.SetFlagHandshakePeers(cmd)
+// GetEnable returns the value of the Enable field.
+func (h *Handshake) GetEnable() bool {
+	return h.Enable
+}
+
+// GetPeers returns the value of the Peers field.
+func (h *Handshake) GetPeers() uint64 {
+	return h.Peers
+}
+
+// ValidateHandshakePeers checks if the Peers field is valid.
+func ValidateHandshakePeers(v uint64) error {
+	if v == 0 {
+		return errors.New("peers must be greater than zero")
+	}
+
+	return nil
+}
+
+// Validate validates all fields of the Handshake struct.
+func (h *Handshake) Validate() error {
+	if err := ValidateHandshakePeers(h.Peers); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // NewHandshakeFromCmd creates and returns Handshake from the given Cobra command's flags.
 func NewHandshakeFromCmd(cmd *cobra.Command) (*Handshake, error) {
 	// Retrieve the enable flag value from the command.
-	enable, err := flags.GetHandshakeEnableFromCmd(cmd)
+	enable, err := flags.GetHandshakeEnable(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve the peers flag value from the command.
-	peers, err := flags.GetHandshakePeersFromCmd(cmd)
+	peers, err := flags.GetHandshakePeers(cmd)
 	if err != nil {
 		return nil, err
 	}

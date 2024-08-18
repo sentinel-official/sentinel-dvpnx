@@ -9,8 +9,8 @@ import (
 	cosmossdkmath "cosmossdk.io/math"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	sdkclient "github.com/sentinel-official/sentinel-go-sdk/client"
-	"github.com/sentinel-official/sentinel-go-sdk/client/options"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
+	sdkoptions "github.com/sentinel-official/sentinel-go-sdk/options"
 	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"gorm.io/gorm"
 )
@@ -24,32 +24,32 @@ type Context struct {
 	log         cosmossdklog.Logger
 	service     sdk.ServerService
 
-	keyringBackend                             string
-	nodeGigabytePrices                         cosmossdk.Coins
-	nodeHourlyPrices                           cosmossdk.Coins
-	nodeIntervalBestRPCAddr                    time.Duration
-	nodeIntervalGeoIPLocation                  time.Duration
-	nodeIntervalSessionUsageSyncWithBlockchain time.Duration
-	nodeIntervalSessionUsageSyncWithDatabase   time.Duration
-	nodeIntervalSessionUsageValidate           time.Duration
-	nodeIntervalSessionValidate                time.Duration
-	nodeIntervalSpeedtest                      time.Duration
-	nodeIntervalStatusUpdate                   time.Duration
-	nodeListenOn                               string
-	nodeMoniker                                string
-	nodeRemoteURL                              string
-	nodeType                                   sdk.ServiceType
-	queryMaxRetries                            int
-	queryRPCAddrs                              []string
-	queryTimeout                               time.Duration
-	txChainID                                  string
-	txFeeGranterAddr                           cosmossdk.AccAddress
-	txFromAddr                                 cosmossdk.AccAddress
-	txFromName                                 string
-	txGas                                      uint64
-	txGasAdjustment                            float64
-	txGasPrices                                cosmossdk.DecCoins
-	txSimulateAndExecute                       bool
+	gigabytePrices                         cosmossdk.Coins
+	hourlyPrices                           cosmossdk.Coins
+	intervalBestRPCAddr                    time.Duration
+	intervalGeoIPLocation                  time.Duration
+	intervalSessionUsageSyncWithBlockchain time.Duration
+	intervalSessionUsageSyncWithDatabase   time.Duration
+	intervalSessionUsageValidate           time.Duration
+	intervalSessionValidate                time.Duration
+	intervalSpeedtest                      time.Duration
+	intervalStatusUpdate                   time.Duration
+	keyringBackend                         string
+	listenOn                               string
+	moniker                                string
+	nodeType                               sdk.ServiceType
+	queryMaxRetries                        int
+	queryRPCAddrs                          []string
+	queryTimeout                           time.Duration
+	remoteURL                              string
+	txChainID                              string
+	txFeeGranterAddr                       cosmossdk.AccAddress
+	txFromAddr                             cosmossdk.AccAddress
+	txFromName                             string
+	txGasAdjustment                        float64
+	txGasPrices                            cosmossdk.DecCoins
+	txGas                                  uint64
+	txSimulateAndExecute                   bool
 
 	rw       sync.RWMutex
 	location *geoip.Location
@@ -130,6 +130,76 @@ func (c *Context) WithService(service sdk.ServerService) *Context {
 	return c
 }
 
+// WithGigabytePrices sets the gigabyte prices for nodes and returns the updated context.
+func (c *Context) WithGigabytePrices(prices cosmossdk.Coins) *Context {
+	c.checkSealed()
+	c.gigabytePrices = prices
+	return c
+}
+
+// WithHourlyPrices sets the hourly prices for nodes and returns the updated context.
+func (c *Context) WithHourlyPrices(prices cosmossdk.Coins) *Context {
+	c.checkSealed()
+	c.hourlyPrices = prices
+	return c
+}
+
+// WithIntervalBestRPCAddr sets the interval for the best RPC address check and returns the updated context.
+func (c *Context) WithIntervalBestRPCAddr(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalBestRPCAddr = interval
+	return c
+}
+
+// WithIntervalGeoIPLocation sets the interval for GeoIP location updates and returns the updated context.
+func (c *Context) WithIntervalGeoIPLocation(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalGeoIPLocation = interval
+	return c
+}
+
+// WithIntervalSessionUsageSyncWithBlockchain sets the interval for syncing session usage with the blockchain and returns the updated context.
+func (c *Context) WithIntervalSessionUsageSyncWithBlockchain(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalSessionUsageSyncWithBlockchain = interval
+	return c
+}
+
+// WithIntervalSessionUsageSyncWithDatabase sets the interval for syncing session usage with the database and returns the updated context.
+func (c *Context) WithIntervalSessionUsageSyncWithDatabase(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalSessionUsageSyncWithDatabase = interval
+	return c
+}
+
+// WithIntervalSessionUsageValidate sets the interval for validating session usage and returns the updated context.
+func (c *Context) WithIntervalSessionUsageValidate(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalSessionUsageValidate = interval
+	return c
+}
+
+// WithIntervalSessionValidate sets the interval for validating sessions and returns the updated context.
+func (c *Context) WithIntervalSessionValidate(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalSessionValidate = interval
+	return c
+}
+
+// WithIntervalSpeedtest sets the interval for running speed tests and returns the updated context.
+func (c *Context) WithIntervalSpeedtest(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalSpeedtest = interval
+	return c
+}
+
+// WithIntervalStatusUpdate sets the interval for updating the node status and returns the updated context.
+func (c *Context) WithIntervalStatusUpdate(interval time.Duration) *Context {
+	c.checkSealed()
+	c.intervalStatusUpdate = interval
+	return c
+}
+
 // WithKeyringBackend sets the keyring backend in the context and returns the updated context.
 func (c *Context) WithKeyringBackend(backend string) *Context {
 	c.checkSealed()
@@ -137,94 +207,17 @@ func (c *Context) WithKeyringBackend(backend string) *Context {
 	return c
 }
 
-// WithNodeGigabytePrices sets the gigabyte prices for nodes and returns the updated context.
-func (c *Context) WithNodeGigabytePrices(prices cosmossdk.Coins) *Context {
+// WithListenOn sets the address or port the node should listen on and returns the updated context.
+func (c *Context) WithListenOn(address string) *Context {
 	c.checkSealed()
-	c.nodeGigabytePrices = prices
+	c.listenOn = address
 	return c
 }
 
-// WithNodeHourlyPrices sets the hourly prices for nodes and returns the updated context.
-func (c *Context) WithNodeHourlyPrices(prices cosmossdk.Coins) *Context {
+// WithMoniker sets the name or identifier for the node and returns the updated context.
+func (c *Context) WithMoniker(moniker string) *Context {
 	c.checkSealed()
-	c.nodeHourlyPrices = prices
-	return c
-}
-
-// WithNodeIntervalBestRPCAddr sets the interval for the best RPC address check and returns the updated context.
-func (c *Context) WithNodeIntervalBestRPCAddr(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalBestRPCAddr = interval
-	return c
-}
-
-// WithNodeIntervalGeoIPLocation sets the interval for GeoIP location updates and returns the updated context.
-func (c *Context) WithNodeIntervalGeoIPLocation(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalGeoIPLocation = interval
-	return c
-}
-
-// WithNodeIntervalSessionUsageSyncWithBlockchain sets the interval for syncing session usage with the blockchain and returns the updated context.
-func (c *Context) WithNodeIntervalSessionUsageSyncWithBlockchain(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalSessionUsageSyncWithBlockchain = interval
-	return c
-}
-
-// WithNodeIntervalSessionUsageSyncWithDatabase sets the interval for syncing session usage with the database and returns the updated context.
-func (c *Context) WithNodeIntervalSessionUsageSyncWithDatabase(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalSessionUsageSyncWithDatabase = interval
-	return c
-}
-
-// WithNodeIntervalSessionUsageValidate sets the interval for validating session usage and returns the updated context.
-func (c *Context) WithNodeIntervalSessionUsageValidate(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalSessionUsageValidate = interval
-	return c
-}
-
-// WithNodeIntervalSessionValidate sets the interval for validating sessions and returns the updated context.
-func (c *Context) WithNodeIntervalSessionValidate(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalSessionValidate = interval
-	return c
-}
-
-// WithNodeIntervalSpeedtest sets the interval for running speed tests and returns the updated context.
-func (c *Context) WithNodeIntervalSpeedtest(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalSpeedtest = interval
-	return c
-}
-
-// WithNodeIntervalStatusUpdate sets the interval for updating the node status and returns the updated context.
-func (c *Context) WithNodeIntervalStatusUpdate(interval time.Duration) *Context {
-	c.checkSealed()
-	c.nodeIntervalStatusUpdate = interval
-	return c
-}
-
-// WithNodeListenOn sets the address or port the node should listen on and returns the updated context.
-func (c *Context) WithNodeListenOn(address string) *Context {
-	c.checkSealed()
-	c.nodeListenOn = address
-	return c
-}
-
-// WithNodeMoniker sets the name or identifier for the node and returns the updated context.
-func (c *Context) WithNodeMoniker(moniker string) *Context {
-	c.checkSealed()
-	c.nodeMoniker = moniker
-	return c
-}
-
-// WithNodeRemoteURL sets the remote URL for nodes and returns the updated context.
-func (c *Context) WithNodeRemoteURL(url string) *Context {
-	c.checkSealed()
-	c.nodeRemoteURL = url
+	c.moniker = moniker
 	return c
 }
 
@@ -253,6 +246,13 @@ func (c *Context) WithQueryRPCAddrs(addrs []string) *Context {
 func (c *Context) WithQueryTimeout(timeout time.Duration) *Context {
 	c.checkSealed()
 	c.queryTimeout = timeout
+	return c
+}
+
+// WithRemoteURL sets the remote URL for nodes and returns the updated context.
+func (c *Context) WithRemoteURL(url string) *Context {
+	c.checkSealed()
+	c.remoteURL = url
 	return c
 }
 
@@ -387,74 +387,69 @@ func (c *Context) TLSKeyPath() string {
 	return filepath.Join(c.homeDir, "tls.key")
 }
 
+// GigabytePrices returns the gigabyte prices for nodes.
+func (c *Context) GigabytePrices() cosmossdk.Coins {
+	return c.gigabytePrices
+}
+
+// HourlyPrices returns the hourly prices for nodes.
+func (c *Context) HourlyPrices() cosmossdk.Coins {
+	return c.hourlyPrices
+}
+
+// IntervalBestRPCAddr returns the interval for the best RPC address check.
+func (c *Context) IntervalBestRPCAddr() time.Duration {
+	return c.intervalBestRPCAddr
+}
+
+// IntervalGeoIPLocation returns the interval for GeoIP location updates.
+func (c *Context) IntervalGeoIPLocation() time.Duration {
+	return c.intervalGeoIPLocation
+}
+
+// IntervalSessionUsageSyncWithBlockchain returns the interval for syncing session usage with the blockchain.
+func (c *Context) IntervalSessionUsageSyncWithBlockchain() time.Duration {
+	return c.intervalSessionUsageSyncWithBlockchain
+}
+
+// IntervalSessionUsageSyncWithDatabase returns the interval for syncing session usage with the database.
+func (c *Context) IntervalSessionUsageSyncWithDatabase() time.Duration {
+	return c.intervalSessionUsageSyncWithDatabase
+}
+
+// IntervalSessionUsageValidate returns the interval for validating session usage.
+func (c *Context) IntervalSessionUsageValidate() time.Duration {
+	return c.intervalSessionUsageValidate
+}
+
+// IntervalSessionValidate returns the interval for validating sessions.
+func (c *Context) IntervalSessionValidate() time.Duration {
+	return c.intervalSessionValidate
+}
+
+// IntervalSpeedtest returns the interval for running speed tests.
+func (c *Context) IntervalSpeedtest() time.Duration {
+	return c.intervalSpeedtest
+}
+
+// IntervalStatusUpdate returns the interval for updating the node status.
+func (c *Context) IntervalStatusUpdate() time.Duration {
+	return c.intervalStatusUpdate
+}
+
 // KeyringBackend returns the keyring backend set in the context.
 func (c *Context) KeyringBackend() string {
 	return c.keyringBackend
 }
 
-// NodeGigabytePrices returns the gigabyte prices for nodes.
-func (c *Context) NodeGigabytePrices() cosmossdk.Coins {
-	return c.nodeGigabytePrices
+// ListenOn returns the address or port the node is listening on.
+func (c *Context) ListenOn() string {
+	return c.listenOn
 }
 
-// NodeHourlyPrices returns the hourly prices for nodes.
-func (c *Context) NodeHourlyPrices() cosmossdk.Coins {
-	return c.nodeHourlyPrices
-}
-
-// NodeIntervalBestRPCAddr returns the interval for the best RPC address check.
-func (c *Context) NodeIntervalBestRPCAddr() time.Duration {
-	return c.nodeIntervalBestRPCAddr
-}
-
-// NodeIntervalGeoIPLocation returns the interval for GeoIP location updates.
-func (c *Context) NodeIntervalGeoIPLocation() time.Duration {
-	return c.nodeIntervalGeoIPLocation
-}
-
-// NodeIntervalSessionUsageSyncWithBlockchain returns the interval for syncing session usage with the blockchain.
-func (c *Context) NodeIntervalSessionUsageSyncWithBlockchain() time.Duration {
-	return c.nodeIntervalSessionUsageSyncWithBlockchain
-}
-
-// NodeIntervalSessionUsageSyncWithDatabase returns the interval for syncing session usage with the database.
-func (c *Context) NodeIntervalSessionUsageSyncWithDatabase() time.Duration {
-	return c.nodeIntervalSessionUsageSyncWithDatabase
-}
-
-// NodeIntervalSessionUsageValidate returns the interval for validating session usage.
-func (c *Context) NodeIntervalSessionUsageValidate() time.Duration {
-	return c.nodeIntervalSessionUsageValidate
-}
-
-// NodeIntervalSessionValidate returns the interval for validating sessions.
-func (c *Context) NodeIntervalSessionValidate() time.Duration {
-	return c.nodeIntervalSessionValidate
-}
-
-// NodeIntervalSpeedtest returns the interval for running speed tests.
-func (c *Context) NodeIntervalSpeedtest() time.Duration {
-	return c.nodeIntervalSpeedtest
-}
-
-// NodeIntervalStatusUpdate returns the interval for updating the node status.
-func (c *Context) NodeIntervalStatusUpdate() time.Duration {
-	return c.nodeIntervalStatusUpdate
-}
-
-// NodeListenOn returns the address or port the node is listening on.
-func (c *Context) NodeListenOn() string {
-	return c.nodeListenOn
-}
-
-// NodeMoniker returns the name or identifier for the node.
-func (c *Context) NodeMoniker() string {
-	return c.nodeMoniker
-}
-
-// NodeRemoteURL returns the remote URL for nodes.
-func (c *Context) NodeRemoteURL() string {
-	return c.nodeRemoteURL
+// Moniker returns the name or identifier for the node.
+func (c *Context) Moniker() string {
+	return c.moniker
 }
 
 // NodeType returns the type or role of the node.
@@ -475,6 +470,11 @@ func (c *Context) QueryRPCAddrs() []string {
 // QueryTimeout returns the timeout duration for queries.
 func (c *Context) QueryTimeout() time.Duration {
 	return c.queryTimeout
+}
+
+// RemoteURL returns the remote URL for nodes.
+func (c *Context) RemoteURL() string {
+	return c.remoteURL
 }
 
 // TxChainID returns the chain ID for transactions.
@@ -541,16 +541,16 @@ func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed cosmossdkmath.Int) {
 	return c.dlSpeed, c.ulSpeed
 }
 
-// ClientOptions returns an `options.Options` instance configured with the context's settings.
-func (c *Context) ClientOptions() *options.Options {
+// ClientOptions returns an `sdkclient.Options` instance configured with the context's settings.
+func (c *Context) ClientOptions() *sdkclient.Options {
 	// Create default query options and configure them using the context settings.
-	query := options.NewQuery().
+	query := sdkoptions.NewQuery().
 		WithMaxRetries(c.QueryMaxRetries()).
 		WithRPCAddr(c.RPCAddr()).
 		WithTimeout(c.QueryTimeout())
 
 	// Create default transaction options and configure them using the context settings.
-	tx := options.NewTx().
+	tx := sdkoptions.NewTx().
 		WithChainID(c.TxChainID()).
 		WithFeeGranterAddr(c.TxFeeGranterAddr()).
 		WithFromName(c.TxFromName()).
@@ -560,7 +560,7 @@ func (c *Context) ClientOptions() *options.Options {
 		WithSimulateAndExecute(c.TxSimulateAndExecute())
 
 	// Return combined options.
-	return options.New().
+	return sdkclient.NewOptions().
 		WithQuery(query).
 		WithTx(tx)
 }

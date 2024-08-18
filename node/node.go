@@ -43,7 +43,7 @@ func (n *Node) Start() error {
 
 	// Start the HTTPS server using the configured TLS certificates.
 	return utils.ListenAndServeTLS(
-		n.ctx.NodeListenOn(),
+		n.ctx.ListenOn(),
 		n.ctx.TLSCertPath(),
 		n.ctx.TLSKeyPath(),
 		n.router,

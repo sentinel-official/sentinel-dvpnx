@@ -3,14 +3,14 @@ module github.com/sentinel-official/dvpn-node
 go 1.22.5
 
 require (
-	cosmossdk.io/log v1.4.0
+	cosmossdk.io/log v1.4.1
 	cosmossdk.io/math v1.3.0
 	github.com/cometbft/cometbft v0.37.7
 	github.com/cosmos/cosmos-sdk v0.47.12
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/sentinel-official/hub/v12 v12.0.0-rc5
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240813171140-3ca40349b9c1
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc4.0.20240818065901-6acee21040e2
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.8.1
 	github.com/v2fly/v2ray-core/v5 v5.16.1

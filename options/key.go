@@ -1,7 +1,8 @@
 package options
 
 import (
-	sdkflags "github.com/sentinel-official/sentinel-go-sdk/cmd/flags"
+	sdkflags "github.com/sentinel-official/sentinel-go-sdk/flags"
+	sdkoptions "github.com/sentinel-official/sentinel-go-sdk/options"
 	"github.com/spf13/cobra"
 )
 
@@ -23,15 +24,24 @@ func (k *Keyring) WithBackend(v string) *Keyring {
 	return k
 }
 
-// AddKeyringFlagsToCmd adds keyring-related flags to the given cobra command.
-func AddKeyringFlagsToCmd(cmd *cobra.Command) {
-	sdkflags.SetFlagKeyringBackend(cmd)
+// GetBackend returns the value of the Backend field.
+func (k *Keyring) GetBackend() string {
+	return k.Backend
+}
+
+// Validate checks if the Keyring configuration is valid.
+func (k *Keyring) Validate() error {
+	if err := sdkoptions.ValidateKeyringBackend(k.Backend); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // NewKeyringFromCmd creates and returns Keyring from the given cobra command's flags.
 func NewKeyringFromCmd(cmd *cobra.Command) (*Keyring, error) {
 	// Retrieve the backend flag value from the command.
-	backend, err := sdkflags.GetKeyringBackendFromCmd(cmd)
+	backend, err := sdkflags.GetKeyringBackend(cmd)
 	if err != nil {
 		return nil, err
 	}

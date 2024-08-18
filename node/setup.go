@@ -46,28 +46,28 @@ func (n *Node) SetupScheduler() error {
 	items := []cron.Worker{
 		cron.NewBasicWorker().WithName("BestRPCAddress").
 			WithHandler(workers.HandlerBestRPCAddr(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalBestRPCAddr()),
+			WithInterval(n.ctx.IntervalBestRPCAddr()),
 		cron.NewBasicWorker().WithName("GeoIPLocation").
 			WithHandler(workers.HandlerGeoIPLocation(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalGeoIPLocation()),
+			WithInterval(n.ctx.IntervalGeoIPLocation()),
 		cron.NewBasicWorker().WithName("SessionUsageSyncWithBlockchain").
 			WithHandler(workers.HandlerSessionUsageSyncWithBlockchain(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionUsageSyncWithBlockchain()),
+			WithInterval(n.ctx.IntervalSessionUsageSyncWithBlockchain()),
 		cron.NewBasicWorker().WithName("SessionUsageSyncWithDatabase").
 			WithHandler(workers.HandlerSessionUsageSyncWithDatabase(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionUsageSyncWithDatabase()),
+			WithInterval(n.ctx.IntervalSessionUsageSyncWithDatabase()),
 		cron.NewBasicWorker().WithName("SessionUsageValidate").
 			WithHandler(workers.HandlerSessionUsageValidate(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionUsageValidate()),
+			WithInterval(n.ctx.IntervalSessionUsageValidate()),
 		cron.NewBasicWorker().WithName("SessionValidate").
 			WithHandler(workers.HandlerSessionValidate(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSessionValidate()),
+			WithInterval(n.ctx.IntervalSessionValidate()),
 		cron.NewBasicWorker().WithName("Speedtest").
 			WithHandler(workers.HandlerSpeedtest(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalSpeedtest()),
+			WithInterval(n.ctx.IntervalSpeedtest()),
 		cron.NewBasicWorker().WithName("NodeStatusUpdate").
 			WithHandler(workers.HandlerNodeStatusUpdate(n.ctx)).
-			WithInterval(n.ctx.NodeIntervalStatusUpdate()),
+			WithInterval(n.ctx.IntervalStatusUpdate()),
 	}
 
 	// Create a new cron scheduler and register the workers.

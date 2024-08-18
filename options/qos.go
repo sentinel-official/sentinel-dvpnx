@@ -1,9 +1,11 @@
 package options
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 
-	"github.com/sentinel-official/dvpn-node/cmd/flags"
+	"github.com/sentinel-official/dvpn-node/flags"
 )
 
 // QOS represents options for configuring Quality of Service (QOS).
@@ -24,15 +26,33 @@ func (q *QOS) WithMaxPeers(v int) *QOS {
 	return q
 }
 
-// AddQOSFlagsToCmd adds QOS-related flags to the given Cobra command.
-func AddQOSFlagsToCmd(cmd *cobra.Command) {
-	flags.SetFlagQOSMaxPeers(cmd)
+// GetMaxPeers returns the maximum number of peers.
+func (q *QOS) GetMaxPeers() int {
+	return q.MaxPeers
+}
+
+// ValidateQOSMaxPeers checks if the MaxPeers field is valid.
+func ValidateQOSMaxPeers(maxPeers int) error {
+	if maxPeers <= 0 {
+		return errors.New("max peers must be greater than zero")
+	}
+
+	return nil
+}
+
+// Validate validates all fields of the QOS struct.
+func (q *QOS) Validate() error {
+	if err := ValidateQOSMaxPeers(q.MaxPeers); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // NewQOSFromCmd creates and returns QOS from the given Cobra command's flags.
 func NewQOSFromCmd(cmd *cobra.Command) (*QOS, error) {
 	// Retrieve the max peers flag value from the command.
-	maxPeers, err := flags.GetQOSMaxPeersFromCmd(cmd)
+	maxPeers, err := flags.GetQOSMaxPeers(cmd)
 	if err != nil {
 		return nil, err
 	}
