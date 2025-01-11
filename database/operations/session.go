@@ -2,6 +2,7 @@ package operations
 
 import (
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 
@@ -11,7 +12,7 @@ import (
 // SessionInsertOne inserts a single Session record into the database.
 func SessionInsertOne(db *gorm.DB, session *models.Session) error {
 	if err := db.Create(session).Error; err != nil {
-		return err
+		return fmt.Errorf("failed to insert session: %w", err)
 	}
 
 	return nil
@@ -20,7 +21,7 @@ func SessionInsertOne(db *gorm.DB, session *models.Session) error {
 // SessionInsertMany inserts multiple Session records into the database.
 func SessionInsertMany(db *gorm.DB, sessions []models.Session) error {
 	if err := db.Create(&sessions).Error; err != nil {
-		return err
+		return fmt.Errorf("failed to insert multiple sessions: %w", err)
 	}
 
 	return nil
@@ -35,8 +36,7 @@ func SessionFindOne(db *gorm.DB, query map[string]interface{}) (*models.Session,
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-
-		return nil, err
+		return nil, fmt.Errorf("failed to find session: %w", err)
 	}
 
 	return &session, nil
@@ -48,7 +48,7 @@ func SessionFind(db *gorm.DB, query map[string]interface{}) ([]models.Session, e
 
 	db = applyQuery(db, query)
 	if err := db.Find(&sessions).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find sessions: %w", err)
 	}
 
 	return sessions, nil
@@ -58,11 +58,11 @@ func SessionFind(db *gorm.DB, query map[string]interface{}) ([]models.Session, e
 func SessionFindOneAndUpdate(db *gorm.DB, query, updates map[string]interface{}) (*models.Session, error) {
 	session, err := SessionFindOne(db, query)
 	if err != nil || session == nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find session for update: %w", err)
 	}
 
 	if err := db.Model(session).Updates(updates).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update session: %w", err)
 	}
 
 	return session, nil
@@ -72,7 +72,7 @@ func SessionFindOneAndUpdate(db *gorm.DB, query, updates map[string]interface{})
 func SessionUpdateMany(db *gorm.DB, query map[string]interface{}, updates map[string]interface{}) error {
 	db = applyQuery(db, query)
 	if err := db.Model(&models.Session{}).Updates(updates).Error; err != nil {
-		return err
+		return fmt.Errorf("failed to update multiple sessions: %w", err)
 	}
 
 	return nil
@@ -82,11 +82,11 @@ func SessionUpdateMany(db *gorm.DB, query map[string]interface{}, updates map[st
 func SessionFindOneAndDelete(db *gorm.DB, query map[string]interface{}) (*models.Session, error) {
 	session, err := SessionFindOne(db, query)
 	if err != nil || session == nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find session for deletion: %w", err)
 	}
 
 	if err := db.Model(session).Delete(nil).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to delete session: %w", err)
 	}
 
 	return session, nil
@@ -96,7 +96,7 @@ func SessionFindOneAndDelete(db *gorm.DB, query map[string]interface{}) (*models
 func SessionDeleteMany(db *gorm.DB, query map[string]interface{}) error {
 	db = applyQuery(db, query)
 	if err := db.Model(&models.Session{}).Delete(nil).Error; err != nil {
-		return err
+		return fmt.Errorf("failed to delete multiple sessions: %w", err)
 	}
 
 	return nil
