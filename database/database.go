@@ -1,6 +1,8 @@
 package database
 
 import (
+	"fmt"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -14,12 +16,12 @@ func New(filepath string, cfg *gorm.Config) (*gorm.DB, error) {
 	// Open a database connection using the provided filepath and configuration.
 	db, err := gorm.Open(sqlite.Open(filepath), cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	// Run migrations to apply the schema of the `Session` model to the database.
 	if err := db.AutoMigrate(&models.Session{}); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to auto migrate session: %w", err)
 	}
 
 	// Return the database connection if everything is successful.
