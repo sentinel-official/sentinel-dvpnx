@@ -1,107 +1,219 @@
 package context
 
 import (
-	"io"
+	"context"
+	"fmt"
+	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdkclient "github.com/sentinel-official/sentinel-go-sdk/client"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
+	"github.com/sentinel-official/sentinel-go-sdk/client"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
-	sdk "github.com/sentinel-official/sentinel-go-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
+	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 
+	"github.com/sentinel-official/dvpn-node/config"
 	"github.com/sentinel-official/dvpn-node/database"
 )
 
-// SetupClient initializes and sets up the SDK client.
-func (c *Context) SetupClient(input io.Reader) error {
-	// Create a new codec for proto encoding/decoding.
-	cdc := sdk.NewProtoCodec()
+// SetupClient initializes the SDK client with the given configuration and assigns it to the context.
+func (c *Context) SetupClient(cfg *config.Config) error {
+	log.Info("Setting up client")
 
-	// Initialize a keyring with the specified settings.
-	kr, err := keyring.New(c.AppName(), c.KeyringBackend(), c.KeyringDir(), input, cdc)
+	// Create a codec for encoding/decoding protocol buffer messages.
+	protoCodec := types.NewProtoCodec()
+	txConfig := tx.NewTxConfig(protoCodec, tx.DefaultSignModes)
+
+	// Create a keyring to manage cryptographic keys.
+	kr, err := keyring.New(cfg.Keyring.GetName(), cfg.Keyring.GetBackend(), c.HomeDir(), c.Input(), protoCodec)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create keyring: %w", err)
 	}
 
-	// Create a new client instance using the codec and keyring.
-	client := sdkclient.New(cdc).
-		WithKeyring(kr)
+	// Initialize the client with the provided configurations.
+	v := client.New().
+		WithChainID(cfg.Tx.GetChainID()).
+		WithKeyring(kr).
+		WithProtoCodec(protoCodec).
+		WithQueryProve(cfg.Query.GetProve()).
+		WithQueryRetries(cfg.Query.GetRetries()).
+		WithQueryRetryDelay(cfg.Query.GetRetryDelay()).
+		WithRPCAddr(c.RPCAddr()).
+		WithRPCTimeout(cfg.RPC.GetTimeout()).
+		WithTxConfig(txConfig).
+		WithTxFeeGranterAddr(cfg.Tx.GetFeeGranterAddr()).
+		WithTxFees(nil).
+		WithTxFromName(cfg.Tx.GetFromName()).
+		WithTxGas(cfg.Tx.GetGas()).
+		WithTxGasAdjustment(cfg.Tx.GetGasAdjustment()).
+		WithTxGasPrices(cfg.Tx.GetGasPrices()).
+		WithTxMemo("").
+		WithTxSimulateAndExecute(cfg.Tx.GetSimulateAndExecute()).
+		WithTxTimeoutHeight(0)
 
-	// Set the client in the context.
-	c.WithClient(client)
+	// Assign the initialized client to the context.
+	c.WithClient(v)
 	return nil
 }
 
-// SetupDatabase initializes and sets up the database connection.
-func (c *Context) SetupDatabase() error {
-	// Initialize a new database connection using the determined file path.
-	db, err := database.NewDefault(c.DatabaseFilePath())
+// SetupDatabase creates and configures the database, then assigns it to the context.
+func (c *Context) SetupDatabase(_ *config.Config) error {
+	log.Info("Setting up database")
+
+	// Construct the database path within the home directory.
+	dbPath := filepath.Join(c.HomeDir(), "data.db")
+
+	// Initialize the database connection.
+	db, err := database.NewDefault(dbPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	// Set the newly created database connection in the context.
+	// Assign the database instance to the context.
 	c.WithDatabase(db)
 	return nil
 }
 
-// SetupGeoIPClient initializes and sets up the GeoIP client in the context.
-func (c *Context) SetupGeoIPClient() error {
-	// Create a new default GeoIP client.
-	client := geoip.NewDefaultClient()
+// SetupGeoIPClient initializes the GeoIP client and assigns it to the context.
+func (c *Context) SetupGeoIPClient(_ *config.Config) error {
+	log.Info("Setting up geoip client")
 
-	// Set the new GeoIP client in the context.
-	c.WithGeoIPClient(client)
+	// Create a default GeoIP client instance.
+	v := geoip.NewDefaultClient()
+
+	// Assign the GeoIP client to the context.
+	c.WithGeoIPClient(v)
 	return nil
 }
 
-func (c *Context) SetupService() error {
-	return nil
-}
+// SetupAccAddr retrieves the account address for transactions and assigns it to the context.
+func (c *Context) SetupAccAddr(cfg *config.Config) error {
+	log.Info("Setting up account address")
 
-// SetupTxFromAddr retrieves and sets the address of the transaction sender based on the account name.
-func (c *Context) SetupTxFromAddr() error {
-	// Retrieve the key record by name.
-	key, err := c.Key(c.TxFromName())
+	// Retrieve the key associated with the configured account name.
+	key, err := c.Client().Key(cfg.Tx.GetFromName())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to retrieve key: %w", err)
 	}
 
-	// Get the address from the key record.
+	// Extract the address from the key.
 	addr, err := key.GetAddress()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to retrieve address from key: %w", err)
 	}
 
-	// Set the address in the context.
-	c.WithTxFromAddr(addr)
+	// Query the account to ensure it exists and is valid.
+	acc, err := c.Client().Account(context.TODO(), addr)
+	if err != nil {
+		return fmt.Errorf("failed to query account: %w", err)
+	}
+	if acc == nil {
+		return fmt.Errorf("account %s does not exist", addr)
+	}
+
+	// Assign the account address to the context.
+	c.WithAccAddr(addr)
 	return nil
 }
 
-// Setup initializes all the necessary components in the context.
-func (c *Context) Setup(input io.Reader) error {
-	// Setup the client with the provided input reader.
-	if err := c.SetupClient(input); err != nil {
-		return err
+// setupV2RayService configures the V2Ray service and assigns it to the context.
+func (c *Context) setupV2RayService(cfg *v2ray.ServerConfig) error {
+	// Initialize the peer manager and V2Ray service.
+	pm := v2ray.NewPeerManager()
+	service := v2ray.NewServer().
+		WithHomeDir(c.HomeDir()).
+		WithName("v2ray").
+		WithPeerManager(pm)
+
+	// Perform pre-start setup for the V2Ray service.
+	if err := service.PreUp(cfg); err != nil {
+		return fmt.Errorf("failed to run pre-up task: %w", err)
 	}
 
-	// Setup the database connection.
-	if err := c.SetupDatabase(); err != nil {
-		return err
+	// Assign the service to the context.
+	c.WithService(service)
+	return nil
+}
+
+// setupWireGuardService configures the WireGuard service and assigns it to the context.
+func (c *Context) setupWireGuardService(cfg *wireguard.ServerConfig) error {
+	// Initialize the peer manager and WireGuard service.
+	pm := wireguard.NewPeerManager(cfg.IPv4Addrs(), cfg.IPv6Addrs())
+	service := wireguard.NewServer().
+		WithHomeDir(c.HomeDir()).
+		WithName(cfg.InInterface).
+		WithPeerManager(pm)
+
+	// Perform pre-start setup tasks for the WireGuard service.
+	if err := service.PreUp(cfg); err != nil {
+		return fmt.Errorf("failed to run pre-up task: %w", err)
 	}
 
-	// Setup the GeoIP client for geolocation services.
-	if err := c.SetupGeoIPClient(); err != nil {
-		return err
+	// Assign the service to the context.
+	c.WithService(service)
+	return nil
+}
+
+// SetupService determines the service type and configures it accordingly.
+func (c *Context) SetupService(cfg *config.Config) error {
+	log.Info("Setting up service")
+
+	// Determine the type of service to set up.
+	t := cfg.Node.GetType()
+	switch t {
+	case types.ServiceTypeV2Ray:
+		// Setup the V2Ray service.
+		if err := c.setupV2RayService(&cfg.V2Ray); err != nil {
+			return fmt.Errorf("failed to setup v2ray service: %w", err)
+		}
+	case types.ServiceTypeWireGuard:
+		// Setup the WireGuard service.
+		if err := c.setupWireGuardService(&cfg.WireGuard); err != nil {
+			return fmt.Errorf("failed to setup wireguard service: %w", err)
+		}
+	default:
+		// Return an error for unsupported service types.
+		return fmt.Errorf("invalid service type %s", t)
+	}
+	return nil
+}
+
+// Setup initializes all components of the node context.
+func (c *Context) Setup(cfg *config.Config) error {
+	log.Info("Setting up node context...")
+
+	// Assign configuration values to the context.
+	c.WithGigabytePrices(cfg.Node.GetGigabytePrices())
+	c.WithHourlyPrices(cfg.Node.GetHourlyPrices())
+	c.WithMoniker(cfg.Node.GetMoniker())
+	c.WithRemoteAddrs(cfg.Node.APIRemoteAddrs())
+	c.WithRPCAddrs(cfg.RPC.GetAddrs())
+
+	// Set up the client for blockchain communication.
+	if err := c.SetupClient(cfg); err != nil {
+		return fmt.Errorf("failed to setup client: %w", err)
 	}
 
-	// Setup the service layer components.
-	if err := c.SetupService(); err != nil {
-		return err
+	// Set up the local database for storing data.
+	if err := c.SetupDatabase(cfg); err != nil {
+		return fmt.Errorf("failed to setup database: %w", err)
 	}
 
-	// Setup the transaction from address for outgoing transactions.
-	if err := c.SetupTxFromAddr(); err != nil {
-		return err
+	// Set up the GeoIP client for geographical location resolution.
+	if err := c.SetupGeoIPClient(cfg); err != nil {
+		return fmt.Errorf("failed to setup geoip client: %w", err)
+	}
+
+	// Set up the appropriate service (e.g., V2Ray or WireGuard).
+	if err := c.SetupService(cfg); err != nil {
+		return fmt.Errorf("failed to setup service: %w", err)
+	}
+
+	// Retrieve and configure the account address for transactions.
+	if err := c.SetupAccAddr(cfg); err != nil {
+		return fmt.Errorf("failed to setup account address: %w", err)
 	}
 
 	return nil
