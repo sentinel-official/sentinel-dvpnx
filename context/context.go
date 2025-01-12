@@ -142,6 +142,11 @@ func (c *Context) SetLocation(location *geoip.Location) {
 func (c *Context) SetRPCAddrs(addrs []string) {
 	c.rw.Lock()
 	defer c.rw.Unlock()
+
+	if len(addrs) == 0 {
+		panic("empty rpc_addrs")
+	}
+
 	c.rpcAddrs = addrs
 }
 
@@ -233,6 +238,11 @@ func (c *Context) WithRemoteAddrs(addrs []string) *Context {
 // WithRPCAddrs sets the RPC addresses for queries in the context and returns the updated context.
 func (c *Context) WithRPCAddrs(addrs []string) *Context {
 	c.checkSealed()
+
+	if len(addrs) == 0 {
+		panic("empty rpc_addrs")
+	}
+
 	c.rpcAddrs = addrs
 	return c
 }
