@@ -127,9 +127,17 @@ func (c *Context) setupV2RayService(cfg *v2ray.ServerConfig) error {
 		WithName("v2ray").
 		WithPeerManager(pm)
 
+	ok, err := service.IsUp(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to check if v2ray service is up: %w", err)
+	}
+	if ok {
+		return fmt.Errorf("v2ray service is already up")
+	}
+
 	// Perform pre-start setup for the V2Ray service.
 	if err := service.PreUp(cfg); err != nil {
-		return fmt.Errorf("failed to run pre-up task: %w", err)
+		return fmt.Errorf("failed to run v2ray pre-up task: %w", err)
 	}
 
 	// Assign the service to the context.
@@ -146,9 +154,17 @@ func (c *Context) setupWireGuardService(cfg *wireguard.ServerConfig) error {
 		WithName(cfg.InInterface).
 		WithPeerManager(pm)
 
+	ok, err := service.IsUp(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to check if wireguard service is up: %w", err)
+	}
+	if ok {
+		return fmt.Errorf("wireguard service is already up")
+	}
+
 	// Perform pre-start setup tasks for the WireGuard service.
 	if err := service.PreUp(cfg); err != nil {
-		return fmt.Errorf("failed to run pre-up task: %w", err)
+		return fmt.Errorf("failed to run wireguard pre-up task: %w", err)
 	}
 
 	// Assign the service to the context.

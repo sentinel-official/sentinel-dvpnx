@@ -26,7 +26,7 @@ func InitCmd() *cobra.Command {
 
 			// Create the home directory if it doesn't exist
 			if err := os.MkdirAll(homeDir, 0755); err != nil {
-				return fmt.Errorf("failed to create directory %s: %w", homeDir, err)
+				return fmt.Errorf("failed to create application directory: %w", err)
 			}
 
 			// Define the path to the configuration file
@@ -36,7 +36,7 @@ func InitCmd() *cobra.Command {
 			if _, err := os.Stat(cfgFile); err != nil {
 				// If an error other than "file not found" occurs, return it
 				if !os.IsNotExist(err) {
-					return fmt.Errorf("failed to stat file %s: %w", cfgFile, err)
+					return fmt.Errorf("failed to stat config file: %w", err)
 				}
 			} else {
 				// If the file exists, check if the `force` flag is set
@@ -51,7 +51,7 @@ func InitCmd() *cobra.Command {
 
 			// Write the default configuration to the configuration file
 			if err := cfg.WriteToFile(cfgFile); err != nil {
-				return fmt.Errorf("failed to write file %s: %w", cfgFile, err)
+				return fmt.Errorf("failed to write config file: %w", err)
 			}
 
 			return nil
