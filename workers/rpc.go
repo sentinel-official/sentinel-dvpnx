@@ -2,6 +2,7 @@ package workers
 
 import (
 	"net/http"
+	"net/url"
 	"sort"
 	"sync"
 	"time"
@@ -41,10 +42,15 @@ func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worke
 			go func(addr string) {
 				defer wg.Done()
 
+				endpoint, err := url.JoinPath(addr, "/status")
+				if err != nil {
+					return
+				}
+
 				// Record start time and perform HTTP GET request.
 				start := time.Now()
 
-				resp, err := client.Get(addr)
+				resp, err := client.Get(endpoint)
 				if err != nil {
 					return
 				}
