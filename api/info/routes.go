@@ -1,4 +1,4 @@
-package session
+package info
 
 import (
 	"github.com/gin-gonic/gin"
@@ -7,5 +7,5 @@ import (
 )
 
 func RegisterRoutes(ctx *context.Context, r gin.IRouter) {
-	r.GET("/accounts/:acc_addr/sessions/:id", HandlerAddSession(ctx))
+	r.GET("/", HandlerGetInfo(ctx))
 }

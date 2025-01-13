@@ -1,41 +1,36 @@
 package main
 
 import (
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/version"
-	hubtypes "github.com/sentinel-official/hub/types"
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/sentinel-official/dvpn-node/cmd"
-	v2ray "github.com/sentinel-official/dvpn-node/services/v2ray/cli"
-	wireguard "github.com/sentinel-official/dvpn-node/services/wireguard/cli"
-	"github.com/sentinel-official/dvpn-node/types"
 )
 
+func init() {
+	// Enable Cobra's feature to traverse and execute hooks for commands.
+	cobra.EnableTraverseRunHooks = true
+}
+
 func main() {
-	hubtypes.GetConfig().Seal()
-	root := &cobra.Command{
-		Use:          "sentinelnode",
-		SilenceUsage: true,
+	// Retrieve the user's home directory.
+	userDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Unable to determine user home directory: %v\n", err)
+		os.Exit(1)
 	}
 
-	root.AddCommand(
-		cmd.ConfigCmd(),
-		cmd.KeysCmd(),
-		v2ray.Command(),
-		wireguard.Command(),
-		cmd.StartCmd(),
-		version.NewVersionCommand(),
-	)
+	// Define the default home directory for the application.
+	homeDir := filepath.Join(userDir, ".sentinelnode")
 
-	root.PersistentFlags().String(flags.FlagHome, types.DefaultHomeDirectory, "home directory")
-	root.PersistentFlags().String(flags.FlagLogFormat, "plain", "log format")
-	root.PersistentFlags().String(flags.FlagLogLevel, "info", "log level")
+	// Initialize the root command for the application.
+	rootCmd := cmd.NewRootCmd(homeDir)
 
-	_ = viper.BindPFlag(flags.FlagHome, root.PersistentFlags().Lookup(flags.FlagHome))
-	_ = viper.BindPFlag(flags.FlagLogFormat, root.PersistentFlags().Lookup(flags.FlagLogFormat))
-	_ = viper.BindPFlag(flags.FlagLogLevel, root.PersistentFlags().Lookup(flags.FlagLogLevel))
-
-	_ = root.Execute()
+	// Execute the root command.
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }

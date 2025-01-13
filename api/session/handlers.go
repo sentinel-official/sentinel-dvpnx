@@ -1,246 +1,193 @@
 package session
 
 import (
+	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/gin-gonic/gin"
-	hubtypes "github.com/sentinel-official/hub/types"
-	subscriptiontypes "github.com/sentinel-official/hub/x/subscription/types"
+	"github.com/sentinel-official/hub/v12/types/v1"
+	"github.com/sentinel-official/sentinel-go-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
+	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 
 	"github.com/sentinel-official/dvpn-node/context"
-	"github.com/sentinel-official/dvpn-node/types"
+	"github.com/sentinel-official/dvpn-node/database/models"
+	"github.com/sentinel-official/dvpn-node/database/operations"
 )
 
-func HandlerAddSession(ctx *context.Context) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if ctx.Service().PeerCount() >= ctx.Config().QOS.MaxPeers {
-			err := fmt.Errorf("reached maximum peers limit %d", ctx.Config().QOS.MaxPeers)
-			c.JSON(http.StatusBadRequest, types.NewResponseError(1, err))
-			return
-		}
+func HandlerAddSession(c *context.Context) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		// TODO: validate current peer count
 
-		req, err := NewRequestAddSession(c)
+		req, err := NewRequestAddSession(ctx)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, types.NewResponseError(2, err))
+			err := fmt.Errorf("invalid request: %w", err)
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(2, err.Error()))
 			return
 		}
 
-		item := types.Session{}
-		ctx.Database().Model(
-			&types.Session{},
-		).Where(
-			&types.Session{
-				ID: req.URI.ID,
-			},
-		).First(&item)
-
-		if item.ID != 0 {
-			err = fmt.Errorf("peer for session %d already exist", req.URI.ID)
-			c.JSON(http.StatusBadRequest, types.NewResponseError(3, err))
-			return
+		query := map[string]interface{}{
+			"id": req.URI.ID,
 		}
 
-		item = types.Session{}
-		ctx.Database().Model(
-			&types.Session{},
-		).Where(
-			&types.Session{
-				Key: req.Body.Key,
-			},
-		).First(&item)
-
-		if item.ID != 0 {
-			err = fmt.Errorf("key %s for service already exist", req.Body.Key)
-			c.JSON(http.StatusBadRequest, types.NewResponseError(3, err))
-			return
-		}
-
-		account, err := ctx.Client().QueryAccount(req.AccAddress)
+		record, err := operations.SessionFindOne(c.Database(), query)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, types.NewResponseError(4, err))
+			err := fmt.Errorf("failed to retrieve session from database: %w", err)
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(3, err.Error()))
+			return
+		}
+		if record != nil {
+			err := fmt.Errorf("session already exists for id %d", req.URI.ID)
+			ctx.JSON(http.StatusConflict, types.NewResponseError(4, err.Error()))
+			return
+		}
+
+		var peerKey string
+		if c.Service().Type() == types.ServiceTypeV2Ray {
+			var r v2ray.AddPeerRequest
+			if err := json.Unmarshal(req.Data, &r); err != nil {
+				err := fmt.Errorf("failed to unmarshal add peer request: %w", err)
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err.Error()))
+				return
+			}
+
+			peerKey = r.Key()
+		}
+		if c.Service().Type() == types.ServiceTypeWireGuard {
+			var r wireguard.AddPeerRequest
+			if err := json.Unmarshal(req.Data, &r); err != nil {
+				err := fmt.Errorf("failed to unmarshal add peer request: %w", err)
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err.Error()))
+				return
+			}
+
+			peerKey = r.Key()
+		}
+
+		query = map[string]interface{}{
+			"peer_key": peerKey,
+		}
+
+		record, err = operations.SessionFindOne(c.Database(), query)
+		if err != nil {
+			err := fmt.Errorf("failed to retrieve session from database: %w", err)
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(6, err.Error()))
+			return
+		}
+		if record != nil {
+			err := fmt.Errorf("session already exists for peer key %s", peerKey)
+			ctx.JSON(http.StatusConflict, types.NewResponseError(7, err.Error()))
+			return
+		}
+
+		account, err := c.Client().Account(ctx, req.AccAddr)
+		if err != nil {
+			err := fmt.Errorf("failed to query account for addr %s: %w", req.AccAddr, err)
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err.Error()))
 			return
 		}
 		if account == nil {
-			err = fmt.Errorf("account %s does not exist", req.AccAddress)
-			c.JSON(http.StatusNotFound, types.NewResponseError(4, err))
+			err := fmt.Errorf("account for addr %s does not exist", req.AccAddr)
+			ctx.JSON(http.StatusNotFound, types.NewResponseError(6, err.Error()))
 			return
 		}
 		if account.GetPubKey() == nil {
-			err = fmt.Errorf("public key for account %s does not exist", req.AccAddress)
-			c.JSON(http.StatusNotFound, types.NewResponseError(4, err))
+			err := fmt.Errorf("public key for addr %s does not exist", req.AccAddr)
+			ctx.JSON(http.StatusNotFound, types.NewResponseError(7, err.Error()))
 			return
 		}
 
-		var (
-			pubKey = account.GetPubKey()
-			msg    = sdk.Uint64ToBigEndian(req.URI.ID)
-		)
-
-		if ok := pubKey.VerifySignature(msg, req.Signature); !ok {
-			err = fmt.Errorf("invalid signature %s", req.Signature)
-			c.JSON(http.StatusBadRequest, types.NewResponseError(4, err))
+		if ok := account.GetPubKey().VerifySignature(req.Msg(), req.Signature); !ok {
+			err := fmt.Errorf("invalid signature")
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(8, err.Error()))
 			return
 		}
 
-		session, err := ctx.Client().QuerySession(req.URI.ID)
+		session, err := c.Client().Session(ctx, req.URI.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, types.NewResponseError(5, err))
+			err := fmt.Errorf("failed to query session %d: %w", req.URI.ID, err)
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(9, err.Error()))
 			return
 		}
 		if session == nil {
-			err = fmt.Errorf("session %d does not exist", req.URI.ID)
-			c.JSON(http.StatusNotFound, types.NewResponseError(5, err))
+			err := fmt.Errorf("session %d does not exist", req.URI.ID)
+			ctx.JSON(http.StatusNotFound, types.NewResponseError(10, err.Error()))
 			return
 		}
-		if !session.Status.Equal(hubtypes.StatusActive) {
-			err = fmt.Errorf("invalid status %s for session %d", session.Status, session.ID)
-			c.JSON(http.StatusNotFound, types.NewResponseError(5, err))
+		if !session.GetStatus().Equal(v1.StatusActive) {
+			err := fmt.Errorf("invalid session status %s; expected %s", session.GetStatus(), v1.StatusActive)
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(11, err.Error()))
 			return
 		}
-		if session.Address != req.URI.AccAddress {
-			err = fmt.Errorf("account address mismatch; expected %s, got %s", req.URI.AccAddress, session.Address)
-			c.JSON(http.StatusBadRequest, types.NewResponseError(5, err))
+		if session.GetAccAddress() != req.URI.AccAddr {
+			err := fmt.Errorf("invalid account addr %s; expected %s", session.GetAccAddress(), req.URI.AccAddr)
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(1, err.Error()))
 			return
 		}
-
-		subscription, err := ctx.Client().QuerySubscription(session.SubscriptionID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, types.NewResponseError(6, err))
-			return
-		}
-		if subscription == nil {
-			err = fmt.Errorf("subscription %d does not exist", session.SubscriptionID)
-			c.JSON(http.StatusNotFound, types.NewResponseError(6, err))
-			return
-		}
-		if !subscription.GetStatus().Equal(hubtypes.StatusActive) {
-			err = fmt.Errorf("invalid status %s for subscription %d", subscription.GetStatus(), subscription.GetID())
-			c.JSON(http.StatusBadRequest, types.NewResponseError(6, err))
+		if session.GetNodeAddress() != c.NodeAddr().String() {
+			err := fmt.Errorf("invalid node addr %s; expected %s", session.GetNodeAddress(), req.URI.AccAddr)
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(1, err.Error()))
 			return
 		}
 
-		switch s := subscription.(type) {
-		case *subscriptiontypes.NodeSubscription:
-			if s.NodeAddress != ctx.Address().String() {
-				err = fmt.Errorf("node address mismatch; expected %s, got %s", ctx.Address(), s.NodeAddress)
-				c.JSON(http.StatusBadRequest, types.NewResponseError(7, err))
+		var data interface{}
+		if c.Service().Type() == types.ServiceTypeV2Ray {
+			var r v2ray.AddPeerRequest
+			if err := json.Unmarshal(req.Data, &r); err != nil {
+				err := fmt.Errorf("failed to unmarshal add peer request: %w", err)
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err.Error()))
 				return
 			}
-		case *subscriptiontypes.PlanSubscription:
-			exists, err := ctx.Client().HasNodeForPlan(s.PlanID, ctx.Address())
+
+			data, err = c.Service().AddPeer(ctx, &r)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
+				err := fmt.Errorf("failed to add peer request: %w", err)
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(6, err.Error()))
 				return
-			}
-			if !exists {
-				err = fmt.Errorf("node %s does not exist for plan %d", ctx.Address(), s.PlanID)
-				c.JSON(http.StatusBadRequest, types.NewResponseError(7, err))
-				return
-			}
-		default:
-			err = fmt.Errorf("invalid type %T for subscription %d", s, subscription.GetID())
-			c.JSON(http.StatusBadRequest, types.NewResponseError(7, err))
-			return
-		}
-
-		var (
-			checkAllocation       = true
-			remainingBytes  int64 = 0
-		)
-
-		if s, ok := subscription.(*subscriptiontypes.NodeSubscription); ok {
-			if req.URI.AccAddress != s.Address {
-				err = fmt.Errorf("account address mismatch; expected %s, got %s", req.URI.AccAddress, s.Address)
-				c.JSON(http.StatusBadRequest, types.NewResponseError(8, err))
-				return
-			}
-			if s.Hours != 0 {
-				checkAllocation = false
 			}
 		}
+		if c.Service().Type() == types.ServiceTypeWireGuard {
+			var r wireguard.AddPeerRequest
+			if err := json.Unmarshal(req.Data, &r); err != nil {
+				err := fmt.Errorf("failed to unmarshal add peer request: %w", err)
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(6, err.Error()))
+				return
+			}
 
-		if checkAllocation {
-			alloc, err := ctx.Client().QueryAllocation(subscription.GetID(), req.AccAddress)
+			data, err = c.Service().AddPeer(ctx, &r)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, types.NewResponseError(8, err))
-				return
-			}
-			if alloc == nil {
-				err = fmt.Errorf("allocation %d/%s does not exist", subscription.GetID(), req.AccAddress)
-				c.JSON(http.StatusNotFound, types.NewResponseError(8, err))
-				return
-			}
-
-			var items []types.Session
-			ctx.Database().Model(
-				&types.Session{},
-			).Where(
-				&types.Session{
-					Subscription: subscription.GetID(),
-					Address:      req.URI.AccAddress,
-				},
-			).Find(&items)
-
-			for i := 0; i < len(items); i++ {
-				utilisedBytes := sdk.NewInt(items[i].Download + items[i].Upload)
-				alloc.UtilisedBytes = alloc.UtilisedBytes.Add(utilisedBytes)
-			}
-
-			if alloc.UtilisedBytes.GTE(alloc.GrantedBytes) {
-				err = fmt.Errorf("invalid allocation; granted bytes %s, utilised bytes %s", alloc.GrantedBytes, alloc.UtilisedBytes)
-				c.JSON(http.StatusBadRequest, types.NewResponseError(8, err))
-				return
-			}
-
-			diff := alloc.GrantedBytes.Sub(alloc.UtilisedBytes)
-			if diff.IsInt64() {
-				remainingBytes = diff.Int64()
-			} else {
-				remainingBytes = math.MaxInt64
-			}
-		}
-
-		var items []types.Session
-		ctx.Database().Model(
-			&types.Session{},
-		).Where(
-			&types.Session{
-				Subscription: subscription.GetID(),
-				Address:      req.URI.AccAddress,
-			},
-		).Find(&items)
-
-		for i := 0; i < len(items); i++ {
-			if err = ctx.RemovePeerIfExists(items[i].Key); err != nil {
-				c.JSON(http.StatusInternalServerError, types.NewResponseError(9, err))
+				err := fmt.Errorf("failed to add peer request: %w", err)
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(6, err.Error()))
 				return
 			}
 		}
 
-		result, err := ctx.Service().AddPeer(req.Key)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, types.NewResponseError(10, err))
+		item := models.NewSession().
+			WithID(session.GetID()).
+			WithAccAddr(req.AccAddr).
+			WithNodeAddr(c.NodeAddr()).
+			WithDownloadBytes(math.ZeroInt()).
+			WithUploadBytes(math.ZeroInt()).
+			WithMaxBytes(session.GetMaxBytes()).
+			WithDuration(0).
+			WithMaxDuration(session.GetMaxDuration()).
+			WithSignature(nil).
+			WithPeerKey(peerKey).
+			WithServiceType(c.Service().Type())
+
+		if err := operations.SessionInsertOne(c.Database(), item); err != nil {
+			err := fmt.Errorf("failed to insert session into database: %w", err)
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(12, err.Error()))
 			return
 		}
-		ctx.Log().Info("Added a new peer", "key", req.Body.Key, "count", ctx.Service().PeerCount())
 
-		ctx.Database().Model(
-			&types.Session{},
-		).Create(
-			&types.Session{
-				ID:           req.URI.ID,
-				Subscription: subscription.GetID(),
-				Key:          req.Body.Key,
-				Address:      req.URI.AccAddress,
-				Available:    remainingBytes,
-			},
-		)
+		res := &ResultAddSession{
+			Addrs: c.RemoteAddrs(),
+			Data:  data,
+		}
 
-		result = append(result, ctx.IPv4Address()...)
-		result = append(result, ctx.Service().Info()...)
-		c.JSON(http.StatusCreated, types.NewResponseResult(result))
+		ctx.JSON(http.StatusOK, types.NewResponseResult(res))
 	}
 }

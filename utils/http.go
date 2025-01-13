@@ -9,48 +9,49 @@ import (
 	"github.com/soheilhy/cmux"
 )
 
-func ListenAndServeTLS(address, certFile, keyFile string, handler http.Handler) error {
-	l, err := net.Listen("tcp", address)
-	if err != nil {
-		return err
-	}
-
+// ListenAndServeTLS sets up a server that listens for both TLS and non-TLS traffic on the same address.
+func ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) error {
+	// Load the TLS certificate and key
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return err
 	}
 
-	var (
-		mux    = cmux.New(l)
-		tlsMux = mux.Match(cmux.TLS())
-		anyMux = mux.Match(cmux.Any())
-	)
+	// Create a TCP listener
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
 
+	// Create a cmux multiplexer
+	mux := cmux.New(l)
+
+	// Create matchers for TLS and non-TLS traffic
+	tlsMux := mux.Match(cmux.TLS())
+	anyMux := mux.Match(cmux.Any())
+
+	// Serve TLS traffic
 	go func() {
-		if err := http.Serve(
-			tls.NewListener(
-				tlsMux,
-				&tls.Config{
-					Certificates: []tls.Certificate{
-						cert,
-					},
-					Rand: rand.Reader,
-				},
-			),
+		err := http.Serve(
+			tls.NewListener(tlsMux, &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				Rand:         rand.Reader,
+			}),
 			handler,
-		); err != nil {
+		)
+		if err != nil {
 			panic(err)
 		}
 	}()
 
+	// Serve non-TLS traffic
 	go func() {
-		if err := http.Serve(
-			anyMux,
-			handler,
-		); err != nil {
+		err := http.Serve(anyMux, handler)
+		if err != nil {
 			panic(err)
 		}
 	}()
 
+	// Start the mux server
 	return mux.Serve()
 }

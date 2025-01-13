@@ -1,94 +1,82 @@
 package context
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	hubtypes "github.com/sentinel-official/hub/types"
-	nodetypes "github.com/sentinel-official/hub/x/node/types"
-	sessiontypes "github.com/sentinel-official/hub/x/session/types"
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
 
-	"github.com/sentinel-official/dvpn-node/types"
+	"github.com/avast/retry-go/v4"
+	abci "github.com/cometbft/cometbft/abci/types"
+	core "github.com/cometbft/cometbft/rpc/core/types"
+	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (c *Context) RegisterNode() error {
-	c.Log().Info("Registering the node...")
-
-	_, err := c.Client().Tx(
-		nodetypes.NewMsgRegisterRequest(
-			c.Operator(),
-			c.GigabytePrices(),
-			c.HourlyPrices(),
-			c.RemoteURL(),
-		),
-	)
-	if err != nil {
-		c.Log().Error("failed to register the node", "error", err)
-		return err
-	}
-
-	return nil
+// isTxInMempoolCacheError checks if the error indicates that the transaction is already present in the mempool cache.
+func isTxInMempoolCacheError(err error) bool {
+	return strings.Contains(strings.ToLower(err.Error()), "tx already exists in cache")
 }
 
-func (c *Context) UpdateNodeInfo() error {
-	c.Log().Info("Updating the node info...")
+// BroadcastTx broadcasts a transaction to the network and returns the transaction result.
+func (c *Context) BroadcastTx(ctx context.Context, msgs ...cosmossdk.Msg) (*core.ResultTx, error) {
+	var err error
+	var resp *core.ResultBroadcastTx
+	var result *core.ResultTx
 
-	_, err := c.Client().Tx(
-		nodetypes.NewMsgUpdateDetailsRequest(
-			c.Address(),
-			c.GigabytePrices(),
-			c.HourlyPrices(),
-			c.RemoteURL(),
-		),
-	)
-	if err != nil {
-		c.Log().Error("failed to update the node info", "error", err)
-		return err
+	// Define a function for broadcasting the transaction with retry logic.
+	broadcastTxFunc := func() error {
+		// Broadcast the transaction
+		resp, err = c.Client().BroadcastTx(ctx, msgs)
+		if err != nil {
+			// Return the error if the error is not TxInMempoolCacheError.
+			if !isTxInMempoolCacheError(err) {
+				return fmt.Errorf("failed to broadcast tx: %w", err)
+			}
+		}
+
+		return nil
 	}
 
-	return nil
-}
+	// TODO: broadcast tx retry only on certain errors
 
-func (c *Context) UpdateNodeStatus() error {
-	c.Log().Info("Updating the node status...")
-
-	_, err := c.Client().Tx(
-		nodetypes.NewMsgUpdateStatusRequest(
-			c.Address(),
-			hubtypes.StatusActive,
-		),
-	)
-	if err != nil {
-		c.Log().Error("failed to update the node status", "error", err)
-		return err
+	// Retry broadcasting the transaction.
+	if err := retry.Do(
+		broadcastTxFunc,
+		retry.Attempts(5),
+		retry.Delay(3*time.Second),
+		retry.DelayType(retry.FixedDelay),
+		retry.LastErrorOnly(true),
+	); err != nil {
+		return nil, fmt.Errorf("tx broadcast failed after retries: %w", err)
 	}
 
-	return nil
-}
-
-func (c *Context) UpdateSessions(items ...types.Session) error {
-	c.Log().Info("Updating the sessions...")
-
-	messages := make([]sdk.Msg, 0, len(items))
-	for _, item := range items {
-		messages = append(messages,
-			sessiontypes.NewMsgUpdateDetailsRequest(
-				c.Address(),
-				sessiontypes.Proof{
-					ID:        item.ID,
-					Duration:  item.UpdatedAt.Sub(item.CreatedAt),
-					Bandwidth: hubtypes.NewBandwidthFromInt64(item.Upload, item.Download),
-				},
-				nil,
-			),
-		)
+	// Check if the transaction was successful.
+	if resp.Code != abci.CodeTypeOK {
+		err := errors.New(resp.Log)
+		return nil, fmt.Errorf("tx broadcast failed with code %d: %w", resp.Code, err)
 	}
 
-	_, err := c.Client().Tx(
-		messages...,
-	)
-	if err != nil {
-		c.Log().Error("failed to update the sessions", "error", err)
-		return err
+	// Define a function for fetching the transaction result with retry logic.
+	txFunc := func() error {
+		result, err = c.Client().Tx(ctx, resp.Hash)
+		if err != nil {
+			return fmt.Errorf("failed to query tx result: %w", err)
+		}
+
+		return nil
 	}
 
-	return nil
+	// Retry fetching the transaction result.
+	if err := retry.Do(
+		txFunc,
+		retry.Attempts(30),
+		retry.Delay(1*time.Second),
+		retry.DelayType(retry.FixedDelay),
+		retry.LastErrorOnly(true),
+	); err != nil {
+		return nil, fmt.Errorf("tx query failed after retries: %w", err)
+	}
+
+	return result, nil
 }
