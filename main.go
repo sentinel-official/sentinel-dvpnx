@@ -1,21 +1,36 @@
 package main
 
 import (
-	"github.com/cosmos/cosmos-sdk/version"
-	sdkcmd "github.com/sentinel-official/sentinel-go-sdk/cmd"
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
+
+	"github.com/sentinel-official/dvpn-node/cmd"
 )
 
+func init() {
+	// Enable Cobra's feature to traverse and execute hooks for commands.
+	cobra.EnableTraverseRunHooks = true
+}
+
 func main() {
-	root := &cobra.Command{
-		Use:          "sentinelnode",
-		SilenceUsage: true,
+	// Retrieve the user's home directory.
+	userDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Unable to determine user home directory: %v\n", err)
+		os.Exit(1)
 	}
 
-	root.AddCommand(
-		sdkcmd.KeysCmd(),
-		version.NewVersionCommand(),
-	)
+	// Define the default home directory for the application.
+	homeDir := filepath.Join(userDir, ".sentinelnode")
 
-	_ = root.Execute()
+	// Initialize the root command for the application.
+	rootCmd := cmd.NewRootCmd(homeDir)
+
+	// Execute the root command.
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
