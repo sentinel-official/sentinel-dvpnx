@@ -1,0 +1,23 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - development
+      - master
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Go Build
+        run: go build ./...
