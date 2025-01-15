@@ -73,7 +73,7 @@ node initialization, ensuring privacy, performance, and ease of use.`,
 	)
 
 	// Persistent flags
-	rootCmd.PersistentFlags().String("home", homeDir, "Home directory for application config and data")
+	rootCmd.PersistentFlags().String("home", homeDir, "home directory for application config and data")
 
 	return rootCmd
 }

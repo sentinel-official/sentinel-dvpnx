@@ -1,7 +1,8 @@
 package workers
 
 import (
-	"context"
+	gocontext "context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
-	nodecontext "github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/database/operations"
 )
 
@@ -25,7 +26,7 @@ const (
 // NewSessionUsageSyncWithBlockchainWorker creates a worker that synchronizes session usage with the blockchain.
 // This worker retrieves session data from the database, validates it against the blockchain,
 // and broadcasts any updates as transactions.
-func NewSessionUsageSyncWithBlockchainWorker(c *nodecontext.Context, interval time.Duration) cron.Worker {
+func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.Duration) cron.Worker {
 	log := logger.With("name", nameSessionUsageSyncWithBlockchain)
 
 	handlerFunc := func() error {
@@ -34,7 +35,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *nodecontext.Context, interval ti
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve sessions from database: %w", err)
+			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
 		}
 		if len(items) == 0 {
 			return nil
@@ -43,9 +44,9 @@ func NewSessionUsageSyncWithBlockchainWorker(c *nodecontext.Context, interval ti
 		var msgs []types.Msg
 		// Iterate over sessions and prepare messages for updates.
 		for _, item := range items {
-			session, err := c.Client().Session(context.TODO(), item.GetID())
+			session, err := c.Client().Session(gocontext.TODO(), item.GetID())
 			if err != nil {
-				return fmt.Errorf("failed to query session: %w", err)
+				return fmt.Errorf("failed to query session from the blockchain: %w", err)
 			}
 
 			if session != nil {
@@ -56,12 +57,13 @@ func NewSessionUsageSyncWithBlockchainWorker(c *nodecontext.Context, interval ti
 		}
 
 		// Broadcast the prepared messages as a transaction.
-		res, err := c.BroadcastTx(context.TODO(), msgs...)
+		res, err := c.BroadcastTx(gocontext.TODO(), msgs...)
 		if err != nil {
-			return fmt.Errorf("failed to broadcast update session details tx: %w", err)
+			return fmt.Errorf("failed to broadcast update session tx: %w", err)
 		}
 		if !res.TxResult.IsOK() {
-			return fmt.Errorf("update session details tx failed with code %d: %s", res.TxResult.Code, res.TxResult.Log)
+			err := errors.New(res.TxResult.Log)
+			return fmt.Errorf("update session tx failed with code %d: %w", res.TxResult.Code, err)
 		}
 
 		return nil
@@ -83,13 +85,14 @@ func NewSessionUsageSyncWithBlockchainWorker(c *nodecontext.Context, interval ti
 
 // NewSessionUsageSyncWithDatabaseWorker creates a worker that updates session usage in the database.
 // This worker fetches usage data from the peer service and updates the corresponding database records.
-func NewSessionUsageSyncWithDatabaseWorker(c *nodecontext.Context, interval time.Duration) cron.Worker {
+func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Duration) cron.Worker {
 	log := logger.With("name", nameSessionUsageSyncWithDatabase)
 
 	handlerFunc := func() error {
 		log.Info("Running scheduler worker")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		// Create a context with a timeout to fetch peer statistics.
+		ctx, cancel := gocontext.WithTimeout(gocontext.TODO(), 5*time.Second)
 		defer cancel()
 
 		// Fetch peer usage statistics from the service.
@@ -103,19 +106,24 @@ func NewSessionUsageSyncWithDatabaseWorker(c *nodecontext.Context, interval time
 
 		// Update the database with the fetched statistics.
 		for _, item := range items {
+			// Convert usage statistics to strings for database storage.
 			downloadBytes := math.NewInt(item.DownloadBytes).String()
 			uploadBytes := math.NewInt(item.UploadBytes).String()
 
+			// Define query to find the session by peer key.
 			query := map[string]interface{}{
 				"peer_key": item.Key,
 			}
+
+			// Define updates to apply to the session record.
 			updates := map[string]interface{}{
 				"download_bytes": downloadBytes,
 				"upload_bytes":   uploadBytes,
 			}
 
+			// Update the session in the database.
 			if _, err := operations.SessionFindOneAndUpdate(c.Database(), query, updates); err != nil {
-				return fmt.Errorf("failed to update session: %w", err)
+				return fmt.Errorf("failed to update session with peer key %s: %w", item.Key, err)
 			}
 		}
 
@@ -138,7 +146,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *nodecontext.Context, interval time
 
 // NewSessionUsageValidateWorker creates a worker that validates session usage limits and removes peers if necessary.
 // This worker checks if sessions exceed their maximum byte or duration limits and removes peers accordingly.
-func NewSessionUsageValidateWorker(c *nodecontext.Context, interval time.Duration) cron.Worker {
+func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) cron.Worker {
 	log := logger.With("name", nameSessionUsageValidate)
 
 	handlerFunc := func() error {
@@ -147,7 +155,7 @@ func NewSessionUsageValidateWorker(c *nodecontext.Context, interval time.Duratio
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve sessions from database: %w", err)
+			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
 		}
 		if len(items) == 0 {
 			return nil
@@ -157,16 +165,22 @@ func NewSessionUsageValidateWorker(c *nodecontext.Context, interval time.Duratio
 		for _, item := range items {
 			removePeer := false
 
-			if item.GetBytes().GTE(item.GetMaxBytes()) {
-				removePeer = true
-			}
-			if item.GetDuration() >= item.GetMaxDuration() {
+			// Check if the session exceeds the maximum allowed bytes.
+			maxBytes := item.GetMaxBytes()
+			if !maxBytes.IsZero() && item.GetBytes().GTE(maxBytes) {
 				removePeer = true
 			}
 
+			// Check if the session exceeds the maximum allowed duration.
+			maxDuration := item.GetMaxDuration()
+			if maxDuration != 0 && item.GetDuration() >= maxDuration {
+				removePeer = true
+			}
+
+			// Remove the peer if validation fails.
 			if removePeer {
-				if err := c.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
-					return fmt.Errorf("failed to remove peer: %w", err)
+				if err := c.RemovePeerIfExistsForKey(gocontext.TODO(), item.PeerKey); err != nil {
+					return fmt.Errorf("failed to remove peer with key %s: %w", item.PeerKey, err)
 				}
 			}
 		}
@@ -190,7 +204,7 @@ func NewSessionUsageValidateWorker(c *nodecontext.Context, interval time.Duratio
 
 // NewSessionValidateWorker creates a worker that validates session status and removes peers if necessary.
 // This worker ensures sessions are active and consistent between the database and blockchain.
-func NewSessionValidateWorker(c *nodecontext.Context, interval time.Duration) cron.Worker {
+func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.Worker {
 	log := logger.With("name", nameSessionValidate)
 
 	handlerFunc := func() error {
@@ -199,7 +213,7 @@ func NewSessionValidateWorker(c *nodecontext.Context, interval time.Duration) cr
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve sessions from database: %w", err)
+			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
 		}
 		if len(items) == 0 {
 			return nil
@@ -207,15 +221,15 @@ func NewSessionValidateWorker(c *nodecontext.Context, interval time.Duration) cr
 
 		// Validate session status and consistency.
 		for _, item := range items {
-			session, err := c.Client().Session(context.TODO(), item.GetID())
+			session, err := c.Client().Session(gocontext.TODO(), item.GetID())
 			if err != nil {
-				return fmt.Errorf("failed to query session: %w", err)
+				return fmt.Errorf("failed to query session from the blockchain: %w", err)
 			}
 
 			// Remove peers if sessions are inactive or missing on the blockchain.
 			if session == nil || !session.GetStatus().Equal(v1.StatusActive) {
-				if err := c.RemovePeerIfExistsForKey(context.TODO(), item.PeerKey); err != nil {
-					return fmt.Errorf("failed to remove peer: %w", err)
+				if err := c.RemovePeerIfExistsForKey(gocontext.TODO(), item.PeerKey); err != nil {
+					return fmt.Errorf("failed to remove peer with key %s: %w", item.PeerKey, err)
 				}
 			}
 
@@ -224,8 +238,9 @@ func NewSessionValidateWorker(c *nodecontext.Context, interval time.Duration) cr
 				query := map[string]interface{}{
 					"id": item.ID,
 				}
+
 				if _, err := operations.SessionFindOneAndDelete(c.Database(), query); err != nil {
-					return fmt.Errorf("failed to delete session: %w", err)
+					return fmt.Errorf("failed to delete session %d: %w", item.ID, err)
 				}
 			}
 		}

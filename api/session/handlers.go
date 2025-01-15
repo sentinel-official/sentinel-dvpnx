@@ -101,7 +101,7 @@ func HandlerAddSession(c *context.Context) gin.HandlerFunc {
 			return
 		}
 		if session.GetNodeAddress() != c.NodeAddr().String() {
-			err = fmt.Errorf("node address mismatch: got %s, expected %s", session.GetNodeAddress(), c.NodeAddr())
+			err = fmt.Errorf("node address mismatch; got %s, expected %s", session.GetNodeAddress(), c.NodeAddr())
 			ctx.JSON(http.StatusBadRequest, types.NewResponseError(6, err))
 			return
 		}
