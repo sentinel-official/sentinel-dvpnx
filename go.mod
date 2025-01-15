@@ -10,7 +10,7 @@ require (
 	github.com/cometbft/cometbft v0.37.13
 	github.com/cosmos/cosmos-sdk v0.47.15
 	github.com/gin-contrib/cors v1.7.2
-	github.com/gin-gonic/gin v1.9.1
+	github.com/gin-gonic/gin v1.10.0
 	github.com/sentinel-official/hub/v12 v12.0.0-rc9
 	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc5.0.20250114070954-c175d6cf03f8
 	github.com/soheilhy/cmux v0.1.5
@@ -159,7 +159,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/arch v0.7.0 // indirect
+	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/net v0.32.0 // indirect
