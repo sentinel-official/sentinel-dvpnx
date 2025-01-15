@@ -1,7 +1,8 @@
 package workers
 
 import (
-	"context"
+	gocontext "context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,14 +11,14 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
-	nodecontext "github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/dvpn-node/context"
 )
 
 const nameNodeStatusUpdate = "node_status_update"
 
 // NewNodeStatusUpdateWorker creates a worker to periodically update the node's status to active on the blockchain.
 // This worker broadcasts a transaction to mark the node as active at regular intervals.
-func NewNodeStatusUpdateWorker(c *nodecontext.Context, interval time.Duration) cron.Worker {
+func NewNodeStatusUpdateWorker(c *context.Context, interval time.Duration) cron.Worker {
 	log := logger.With("name", nameNodeStatusUpdate)
 
 	// Handler function that updates the node's status to active.
@@ -31,12 +32,13 @@ func NewNodeStatusUpdateWorker(c *nodecontext.Context, interval time.Duration) c
 		)
 
 		// Broadcast the transaction message to the blockchain.
-		res, err := c.BroadcastTx(context.TODO(), msg)
+		res, err := c.BroadcastTx(gocontext.TODO(), msg)
 		if err != nil {
 			return fmt.Errorf("failed to broadcast update node status tx: %w", err)
 		}
 		if !res.TxResult.IsOK() {
-			return fmt.Errorf("update node status tx failed with code %d: %s", res.TxResult.Code, res.TxResult.Log)
+			err := errors.New(res.TxResult.Log)
+			return fmt.Errorf("update node status tx failed with code %d: %w", res.TxResult.Code, err)
 		}
 
 		return nil

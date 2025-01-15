@@ -1,7 +1,7 @@
 package node
 
 import (
-	"context"
+	gocontext "context"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -11,7 +11,7 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
-	nodecontext "github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/utils"
 )
 
@@ -61,8 +61,8 @@ func (n *Node) Scheduler() *cron.Scheduler {
 }
 
 // Register registers the node on the network if not already registered.
-func (n *Node) Register(c *nodecontext.Context) error {
-	node, err := c.Client().Node(context.TODO(), c.AccAddr().Bytes())
+func (n *Node) Register(c *context.Context) error {
+	node, err := c.Client().Node(gocontext.TODO(), c.NodeAddr())
 	if err != nil {
 		return fmt.Errorf("failed to query node: %w", err)
 	}
@@ -74,14 +74,14 @@ func (n *Node) Register(c *nodecontext.Context) error {
 
 	// Prepare a message to register the node.
 	msg := v3.NewMsgRegisterNodeRequest(
-		c.AccAddr().Bytes(),
+		c.AccAddr(),
 		c.GigabytePrices(),
 		c.HourlyPrices(),
 		c.RemoteAddrs()[0],
 	)
 
 	// Broadcast the registration transaction.
-	res, err := c.BroadcastTx(context.TODO(), msg)
+	res, err := c.BroadcastTx(gocontext.TODO(), msg)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast register node tx: %w", err)
 	}
@@ -94,19 +94,19 @@ func (n *Node) Register(c *nodecontext.Context) error {
 }
 
 // UpdateDetails updates the node's pricing and address details on the network.
-func (n *Node) UpdateDetails(c *nodecontext.Context) error {
+func (n *Node) UpdateDetails(c *context.Context) error {
 	log.Info("Updating node details...")
 
 	// Prepare a message to update the node's details.
 	msg := v3.NewMsgUpdateNodeDetailsRequest(
-		c.AccAddr().Bytes(),
+		c.NodeAddr(),
 		c.GigabytePrices(),
 		c.HourlyPrices(),
 		c.RemoteAddrs()[0],
 	)
 
 	// Broadcast the update transaction.
-	res, err := c.BroadcastTx(context.TODO(), msg)
+	res, err := c.BroadcastTx(gocontext.TODO(), msg)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast update node details tx: %w", err)
 	}
@@ -119,12 +119,12 @@ func (n *Node) UpdateDetails(c *nodecontext.Context) error {
 }
 
 // Start initializes the Node's services, scheduler, and HTTPS server.
-func (n *Node) Start(c *nodecontext.Context, errChan chan error) error {
+func (n *Node) Start(c *context.Context, errChan chan error) error {
 	log.Info("Starting node...")
 
 	go func() {
 		// Bring up the service by running pre-defined tasks.
-		if err := c.Service().Up(context.TODO()); err != nil {
+		if err := c.Service().Up(gocontext.TODO()); err != nil {
 			errChan <- fmt.Errorf("failed to run service up task: %w", err)
 			return
 		}
@@ -166,11 +166,11 @@ func (n *Node) Start(c *nodecontext.Context, errChan chan error) error {
 }
 
 // Stop gracefully stops the Node's operations.
-func (n *Node) Stop(c *nodecontext.Context) error {
+func (n *Node) Stop(c *context.Context) error {
 	if err := c.Service().PreDown(); err != nil {
 		return fmt.Errorf("failed to run service pre-down task: %w", err)
 	}
-	if err := c.Service().Down(context.TODO()); err != nil {
+	if err := c.Service().Down(gocontext.TODO()); err != nil {
 		return fmt.Errorf("failed to run service down task: %w", err)
 	}
 	if err := c.Service().PostDown(); err != nil {
