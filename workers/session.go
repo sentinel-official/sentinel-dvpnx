@@ -177,7 +177,12 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 				removePeer = true
 			}
 
-			// Remove the peer if validation fails.
+			// Ensure that only sessions of the current service type are validated.
+			if item.GetServiceType() != c.Service().Type() {
+				removePeer = false
+			}
+
+			// If the session exceeded any limits, remove the associated peer.
 			if removePeer {
 				if err := c.RemovePeerIfExistsForKey(gocontext.TODO(), item.PeerKey); err != nil {
 					return fmt.Errorf("failed to remove peer with key %s: %w", item.PeerKey, err)
@@ -226,15 +231,37 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 				return fmt.Errorf("failed to query session from the blockchain: %w", err)
 			}
 
-			// Remove peers if sessions are inactive or missing on the blockchain.
-			if session == nil || !session.GetStatus().Equal(v1.StatusActive) {
+			removePeer := false
+
+			// Remove peer if the session is missing on the blockchain.
+			if session == nil {
+				removePeer = true
+			}
+			// Remove peer if the session status is not active.
+			if session != nil && !session.GetStatus().Equal(v1.StatusActive) {
+				removePeer = true
+			}
+			// Validate only sessions of the current service type.
+			if item.GetServiceType() != c.Service().Type() {
+				removePeer = false
+			}
+
+			// Remove the associated peer if validation fails.
+			if removePeer {
 				if err := c.RemovePeerIfExistsForKey(gocontext.TODO(), item.PeerKey); err != nil {
 					return fmt.Errorf("failed to remove peer with key %s: %w", item.PeerKey, err)
 				}
 			}
 
-			// Delete sessions missing on the blockchain from the database.
+			deleteSession := false
+
+			// Delete session if the session is missing on the blockchain.
 			if session == nil {
+				deleteSession = true
+			}
+
+			// Delete the session record from the database if not found on the blockchain.
+			if deleteSession {
 				query := map[string]interface{}{
 					"id": item.ID,
 				}

@@ -19,7 +19,7 @@ func (c *Context) HasPeerForKey(ctx context.Context, s string) (bool, error) {
 		// Create a peer existence request for V2Ray service.
 		req, err := v2ray.NewHasPeerRequestFromKey(s)
 		if err != nil {
-			return false, fmt.Errorf("failed to create v2ray peer request: %w", err)
+			return false, fmt.Errorf("failed to create v2ray has peer request: %w", err)
 		}
 
 		// Check if the peer exists for V2Ray service.
@@ -33,7 +33,7 @@ func (c *Context) HasPeerForKey(ctx context.Context, s string) (bool, error) {
 		// Create a peer existence request for WireGuard service.
 		req, err := wireguard.NewHasPeerRequestFromKey(s)
 		if err != nil {
-			return false, fmt.Errorf("failed to create wireguard peer request: %w", err)
+			return false, fmt.Errorf("failed to create wireguard has peer request: %w", err)
 		}
 
 		// Check if the peer exists for WireGuard service.
