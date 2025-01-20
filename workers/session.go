@@ -56,6 +56,11 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 			}
 		}
 
+		// If no update messages were generated, exit early.
+		if len(msgs) == 0 {
+			return nil
+		}
+
 		// Broadcast the prepared messages as a transaction.
 		res, err := c.BroadcastTx(gocontext.TODO(), msgs...)
 		if err != nil {
