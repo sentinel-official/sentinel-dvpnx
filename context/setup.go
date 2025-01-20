@@ -147,8 +147,13 @@ func (c *Context) setupV2RayService(cfg *v2ray.ServerConfig) error {
 
 // setupWireGuardService configures the WireGuard service and assigns it to the context.
 func (c *Context) setupWireGuardService(cfg *wireguard.ServerConfig) error {
+	pools, err := cfg.IPPools()
+	if err != nil {
+		return fmt.Errorf("failed to get ip pools: %w", err)
+	}
+
 	// Initialize the peer manager and WireGuard service.
-	pm := wireguard.NewPeerManager(cfg.IPv4Addrs(), cfg.IPv6Addrs())
+	pm := wireguard.NewPeerManager(pools...)
 	service := wireguard.NewServer().
 		WithHomeDir(c.HomeDir()).
 		WithName(cfg.InInterface).
