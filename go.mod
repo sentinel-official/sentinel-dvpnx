@@ -12,7 +12,7 @@ require (
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-gonic/gin v1.10.0
 	github.com/sentinel-official/hub/v12 v12.0.0-rc9
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc5.0.20250120101212-36986a72d34a
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc5.0.20250120183109-7de793d94338
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0

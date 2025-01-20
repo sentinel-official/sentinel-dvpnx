@@ -20,6 +20,8 @@ func StartCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start the Sentinel dVPN node",
+		Long: `Starts the Sentinel dVPN node. Initializes the logger, sets up the context and node,
+explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get the home directory from viper configuration.
 			homeDir := viper.GetString("home")
