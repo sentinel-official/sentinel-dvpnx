@@ -77,7 +77,7 @@ func (n *Node) Register(c *context.Context) error {
 		c.AccAddr(),
 		c.GigabytePrices(),
 		c.HourlyPrices(),
-		c.RemoteAddrs()[0],
+		c.APIAddrs()[0],
 	)
 
 	// Broadcast the registration transaction.
@@ -102,7 +102,7 @@ func (n *Node) UpdateDetails(c *context.Context) error {
 		c.NodeAddr(),
 		c.GigabytePrices(),
 		c.HourlyPrices(),
-		c.RemoteAddrs()[0],
+		c.APIAddrs()[0],
 	)
 
 	// Broadcast the update transaction.

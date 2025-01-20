@@ -18,6 +18,7 @@ import (
 // Context defines the application context, holding configurations and shared components.
 type Context struct {
 	accAddr        cosmossdk.AccAddress
+	apiAddrs       []string
 	client         *client.Client
 	database       *gorm.DB
 	dlSpeed        math.Int
@@ -45,6 +46,11 @@ func New() *Context {
 // AccAddr returns the transaction sender address set in the context.
 func (c *Context) AccAddr() cosmossdk.AccAddress {
 	return c.accAddr.Bytes()
+}
+
+// APIAddrs returns the api addresses set in the context.
+func (c *Context) APIAddrs() []string {
+	return c.apiAddrs
 }
 
 // Client returns the client instance set in the context.
@@ -169,6 +175,13 @@ func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed math.Int) {
 func (c *Context) WithAccAddr(addr cosmossdk.AccAddress) *Context {
 	c.checkSealed()
 	c.accAddr = addr
+	return c
+}
+
+// WithAPIAddrs sets the api addresses in the context and returns the updated context.
+func (c *Context) WithAPIAddrs(addrs []string) *Context {
+	c.checkSealed()
+	c.apiAddrs = addrs
 	return c
 }
 
