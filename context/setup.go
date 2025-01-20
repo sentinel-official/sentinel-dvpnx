@@ -206,10 +206,11 @@ func (c *Context) Setup(cfg *config.Config) error {
 	log.Info("Setting up node context...")
 
 	// Assign configuration values to the context.
+	c.WithAPIAddrs(cfg.Node.APIAddrs())
 	c.WithGigabytePrices(cfg.Node.GetGigabytePrices())
 	c.WithHourlyPrices(cfg.Node.GetHourlyPrices())
 	c.WithMoniker(cfg.Node.GetMoniker())
-	c.WithRemoteAddrs(cfg.Node.APIRemoteAddrs())
+	c.WithRemoteAddrs(cfg.Node.RemoteAddrs)
 	c.WithRPCAddrs(cfg.RPC.GetAddrs())
 
 	// Set up the client for blockchain communication.

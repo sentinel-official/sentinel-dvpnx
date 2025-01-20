@@ -32,21 +32,23 @@ type NodeConfig struct {
 	Type                                   string   `mapstructure:"type"`                                        // Type is the service type of the node.
 }
 
+func (c *NodeConfig) APIAddrs() []string {
+	addrs := make([]string, len(c.RemoteAddrs))
+	port := c.GetAPIPort().OutFrom
+
+	for i, addr := range c.RemoteAddrs {
+		addrs[i] = fmt.Sprintf("https://%s:%d", addr, port)
+	}
+
+	return addrs
+}
+
 func (c *NodeConfig) APIListenAddr() string {
 	return fmt.Sprintf("0.0.0.0:%d", c.APIListenPort())
 }
 
 func (c *NodeConfig) APIListenPort() uint16 {
 	return c.GetAPIPort().InFrom
-}
-
-func (c *NodeConfig) APIRemoteAddrs() []string {
-	addrs := make([]string, len(c.RemoteAddrs))
-	for i, addr := range c.RemoteAddrs {
-		addrs[i] = fmt.Sprintf("https://%s:%d", addr, c.APIListenPort())
-	}
-
-	return addrs
 }
 
 // GetAPIPort returns the APIPort field.
