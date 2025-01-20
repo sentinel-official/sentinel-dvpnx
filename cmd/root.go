@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/sentinel-official/sentinel-go-sdk/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,10 +16,10 @@ func NewRootCmd(homeDir string) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "dvpnx",
 		Short: "Run and manage the Sentinel dVPN node",
-		Long: `The Sentinel dVPN node software lets users join the decentralized VPN network on the Sentinel Hub blockchain,
-providing secure, private, and censorship-resistant internet access while earning cryptocurrency rewards.
-It integrates with Cosmos-SDK, supports robust configuration, and offers tools for key management and
-node initialization, ensuring privacy, performance, and ease of use.`,
+		Long: `The Sentinel dVPN node software lets users join the decentralized VPN network on the Sentinel Hub
+blockchain, providing secure, private, and censorship-resistant internet access while earning
+cryptocurrency rewards. It integrates with Cosmos-SDK, supports robust configuration, and offers
+tools for key management and node initialization, ensuring privacy, performance, and ease of use.`,
 		SilenceUsage: true,
 		CompletionOptions: cobra.CompletionOptions{
 			DisableDefaultCmd: true,
@@ -67,9 +66,9 @@ node initialization, ensuring privacy, performance, and ease of use.`,
 	// Add subcommands
 	rootCmd.AddCommand(
 		cmd.KeysCmd(),
+		cmd.NewVersionCmd(),
 		InitCmd(),
 		StartCmd(),
-		version.NewVersionCommand(),
 	)
 
 	// Persistent flags

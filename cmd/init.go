@@ -17,6 +17,9 @@ func InitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize the application configuration",
+		Long: `Creates the application home directory and generates a default config.toml file.
+If a configuration file already exists, this command will abort unless the "force" flag
+is set to overwrite the existing configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Retrieve Viper instance for managing configuration
 			v := viper.GetViper()

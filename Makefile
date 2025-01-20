@@ -4,11 +4,8 @@ COMMIT := $(shell git log -1 --format='%H')
 
 TAGS := $(strip netgo)
 LD_FLAGS := -s -w \
-	-X github.com/cosmos/cosmos-sdk/version.Name=sentinel \
-	-X github.com/cosmos/cosmos-sdk/version.AppName=dvpnx \
-	-X github.com/cosmos/cosmos-sdk/version.Version=${VERSION} \
-	-X github.com/cosmos/cosmos-sdk/version.Commit=${COMMIT} \
-	-X github.com/cosmos/cosmos-sdk/version.BuildTags=${TAGS}
+	-X github.com/sentinel-official/sentinel-go-sdk/version.GitCommit=${COMMIT} \
+	-X github.com/sentinel-official/sentinel-go-sdk/version.Version=${VERSION}
 
 .PHONY: benchmark
 benchmark:
