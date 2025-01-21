@@ -3,10 +3,10 @@ package info
 import (
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/gin-gonic/gin"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/version"
 
 	"github.com/sentinel-official/dvpn-node/context"
 )
@@ -32,7 +32,7 @@ func HandlerGetInfo(c *context.Context) gin.HandlerFunc {
 			Peers:   c.Service().PeerCount(),
 			Type:    c.Service().Type().String(),
 			UpLink:  upLink.String(),
-			Version: version.Version,
+			Version: version.Get(),
 		}
 
 		// Send the result as a JSON response with HTTP status 200.
