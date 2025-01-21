@@ -1,11 +1,11 @@
 .DEFAULT_GOAL := default
-VERSION := $(shell git describe --tags | sed 's/^v//' | rev | cut -d - -f 2- | rev)
-COMMIT := $(shell git log -1 --format='%H')
+GIT_COMMIT := $(shell git log -1 --format='%H')
+GIT_TAG := $(shell git describe --tags | sed 's/^v//' | rev | cut -d - -f 2- | rev)
 
 TAGS := $(strip netgo)
 LD_FLAGS := -s -w \
-	-X github.com/sentinel-official/sentinel-go-sdk/version.GitCommit=${COMMIT} \
-	-X github.com/sentinel-official/sentinel-go-sdk/version.Version=${VERSION}
+	-X github.com/sentinel-official/sentinel-go-sdk/version.Commit=${GIT_COMMIT} \
+	-X github.com/sentinel-official/sentinel-go-sdk/version.Tag=${GIT_TAG}
 
 .PHONY: benchmark
 benchmark:

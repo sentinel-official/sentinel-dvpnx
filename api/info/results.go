@@ -2,6 +2,8 @@ package info
 
 import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
+	"github.com/sentinel-official/sentinel-go-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/version"
 )
 
 // ResultGetInfo represents metadata about a node.
@@ -14,5 +16,9 @@ type ResultGetInfo struct {
 	Peers        int             `json:"peers"`
 	Type         string          `json:"type"`
 	UpLink       string          `json:"up_link"`
-	Version      string          `json:"version"`
+	Version      *version.Info   `json:"version"`
+}
+
+func (i *ResultGetInfo) GetType() types.ServiceType {
+	return types.ServiceTypeFromString(i.Type)
 }
