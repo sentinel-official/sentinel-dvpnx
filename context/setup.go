@@ -32,8 +32,8 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		return fmt.Errorf("failed to create keyring: %w", err)
 	}
 
-	// Initialize the client with the provided configurations.
-	v := client.New().
+	// Initialize the base client with the provided configurations.
+	bc := client.NewBaseClient().
 		WithChainID(cfg.Tx.GetChainID()).
 		WithKeyring(kr).
 		WithProtoCodec(protoCodec).
@@ -54,7 +54,7 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		WithTxTimeoutHeight(0)
 
 	// Assign the initialized client to the context.
-	c.WithClient(v)
+	c.WithClient(bc)
 	return nil
 }
 
