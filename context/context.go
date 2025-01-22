@@ -19,7 +19,7 @@ import (
 type Context struct {
 	accAddr        cosmossdk.AccAddress
 	apiAddrs       []string
-	client         *client.Client
+	client         *client.BaseClient
 	database       *gorm.DB
 	dlSpeed        math.Int
 	geoIPClient    geoip.Client
@@ -54,7 +54,7 @@ func (c *Context) APIAddrs() []string {
 }
 
 // Client returns the client instance set in the context.
-func (c *Context) Client() *client.Client {
+func (c *Context) Client() *client.BaseClient {
 	return c.client.WithRPCAddr(c.RPCAddr())
 }
 
@@ -185,8 +185,8 @@ func (c *Context) WithAPIAddrs(addrs []string) *Context {
 	return c
 }
 
-// WithClient sets the client in the context and returns the updated context.
-func (c *Context) WithClient(client *client.Client) *Context {
+// WithClient sets the base client in the context and returns the updated context.
+func (c *Context) WithClient(client *client.BaseClient) *Context {
 	c.checkSealed()
 	c.client = client
 	return c
