@@ -11,6 +11,7 @@ import (
 	"github.com/sentinel-official/hub/v12/types/v1"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
+	"github.com/spf13/pflag"
 )
 
 const MaxRemoteAddrLen = (1 << 6) - 1
@@ -32,6 +33,7 @@ type NodeConfig struct {
 	Type                                   string   `mapstructure:"type"`                                        // Type is the service type of the node.
 }
 
+// APIAddrs generates the API addresses for the node.
 func (c *NodeConfig) APIAddrs() []string {
 	addrs := make([]string, len(c.RemoteAddrs))
 	port := c.GetAPIPort().OutFrom
@@ -43,10 +45,12 @@ func (c *NodeConfig) APIAddrs() []string {
 	return addrs
 }
 
+// APIListenAddr returns the API listen address.
 func (c *NodeConfig) APIListenAddr() string {
 	return fmt.Sprintf("0.0.0.0:%d", c.APIListenPort())
 }
 
+// APIListenPort returns the API listen port.
 func (c *NodeConfig) APIListenPort() uint16 {
 	return c.GetAPIPort().InFrom
 }
@@ -178,18 +182,25 @@ func (c *NodeConfig) GetType() types.ServiceType {
 
 // Validate validates the node configuration.
 func (c *NodeConfig) Validate() error {
+	// Ensure the API port is not empty and validate it.
 	if c.APIPort == "" {
 		return errors.New("api_port cannot be empty")
 	}
 	if _, err := types.NewPortFromString(c.APIPort); err != nil {
 		return fmt.Errorf("invalid api_port: %w", err)
 	}
+
+	// Validate the GigabytePrices field.
 	if _, err := v1.NewPricesFromString(c.GigabytePrices); err != nil {
 		return fmt.Errorf("invalid gigabyte_prices: %w", err)
 	}
+
+	// Validate the HourlyPrices field.
 	if _, err := v1.NewPricesFromString(c.HourlyPrices); err != nil {
 		return fmt.Errorf("invalid hourly_prices: %w", err)
 	}
+
+	// Validate interval fields.
 	if _, err := time.ParseDuration(c.IntervalBestRPCAddr); err != nil {
 		return fmt.Errorf("invalid interval_best_rpc_addr: %w", err)
 	}
@@ -214,18 +225,25 @@ func (c *NodeConfig) Validate() error {
 	if _, err := time.ParseDuration(c.IntervalStatusUpdate); err != nil {
 		return fmt.Errorf("invalid interval_status_update: %w", err)
 	}
+
+	// Ensure the Moniker field is not empty.
 	if c.Moniker == "" {
 		return errors.New("moniker cannot be empty")
 	}
+
+	// Ensure the RemoteAddrs field is not empty.
 	if len(c.RemoteAddrs) == 0 {
 		return errors.New("remote_addrs cannot be empty")
 	}
+
+	// Validate each address in the RemoteAddrs field.
 	for _, addr := range c.RemoteAddrs {
 		if err := validateRemoteAddr(addr); err != nil {
 			return fmt.Errorf("invalid remote_addr %s: %w", addr, err)
 		}
 	}
 
+	// Validate the node type.
 	validTypes := map[string]bool{
 		types.ServiceTypeV2Ray.String():     true,
 		types.ServiceTypeWireGuard.String(): true,
@@ -237,8 +255,27 @@ func (c *NodeConfig) Validate() error {
 	return nil
 }
 
-func DefaultNodeConfig() NodeConfig {
-	return NodeConfig{
+// SetForFlags adds node configuration flags to the specified FlagSet.
+func (c *NodeConfig) SetForFlags(f *pflag.FlagSet) {
+	f.StringVar(&c.APIPort, "node.api-port", c.APIPort, "port for API access")
+	f.StringVar(&c.GigabytePrices, "node.gigabyte-prices", c.GigabytePrices, "pricing information for gigabytes")
+	f.StringVar(&c.HourlyPrices, "node.hourly-prices", c.HourlyPrices, "pricing information for hourly usage")
+	f.StringVar(&c.IntervalBestRPCAddr, "node.interval-best-rpc-addr", c.IntervalBestRPCAddr, "interval for checking the best RPC address")
+	f.StringVar(&c.IntervalGeoIPLocation, "node.interval-geo-ip-location", c.IntervalGeoIPLocation, "interval for checking GeoIP location")
+	f.StringVar(&c.IntervalSessionUsageSyncWithBlockchain, "node.interval-session-usage-sync-with-blockchain", c.IntervalSessionUsageSyncWithBlockchain, "interval for syncing session usage with blockchain")
+	f.StringVar(&c.IntervalSessionUsageSyncWithDatabase, "node.interval-session-usage-sync-with-database", c.IntervalSessionUsageSyncWithDatabase, "interval for syncing session usage with database")
+	f.StringVar(&c.IntervalSessionUsageValidate, "node.interval-session-usage-validate", c.IntervalSessionUsageValidate, "interval for validating session usage")
+	f.StringVar(&c.IntervalSessionValidate, "node.interval-session-validate", c.IntervalSessionValidate, "interval for validating sessions")
+	f.StringVar(&c.IntervalSpeedtest, "node.interval-speedtest", c.IntervalSpeedtest, "interval for performing speed tests")
+	f.StringVar(&c.IntervalStatusUpdate, "node.interval-status-update", c.IntervalStatusUpdate, "interval for updating node status")
+	f.StringVar(&c.Moniker, "node.moniker", c.Moniker, "moniker (identifier) for the node")
+	f.StringSliceVar(&c.RemoteAddrs, "node.remote-addrs", c.RemoteAddrs, "list of remote addresses for the node")
+	f.StringVar(&c.Type, "node.type", c.Type, "service type of the node (e.g., v2ray, wireguard)")
+}
+
+// DefaultNodeConfig returns a NodeConfig instance with default values.
+func DefaultNodeConfig() *NodeConfig {
+	return &NodeConfig{
 		APIPort:                                fmt.Sprintf("%d", utils.RandomPort()),
 		GigabytePrices:                         "0.01;0;udvpn",
 		HourlyPrices:                           "0.02;0;udvpn",
@@ -282,6 +319,7 @@ func randMoniker() string {
 }
 
 func validateRemoteAddr(addr string) error {
+	// Ensure the address is not empty or too long.
 	if len(addr) == 0 {
 		return errors.New("addr cannot be empty")
 	}
@@ -289,6 +327,7 @@ func validateRemoteAddr(addr string) error {
 		return fmt.Errorf("addr cannot be longer than %d chars", MaxRemoteAddrLen)
 	}
 
+	// Validate the IP address format.
 	if ip := net.ParseIP(addr); ip != nil {
 		if ipv4 := ip.To4(); ipv4 != nil {
 			return nil
