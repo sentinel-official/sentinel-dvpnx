@@ -186,12 +186,12 @@ func (c *Context) SetupService(cfg *config.Config) error {
 	switch t {
 	case types.ServiceTypeV2Ray:
 		// Setup the V2Ray service.
-		if err := c.setupV2RayService(&cfg.V2Ray); err != nil {
+		if err := c.setupV2RayService(cfg.V2Ray); err != nil {
 			return fmt.Errorf("failed to setup v2ray service: %w", err)
 		}
 	case types.ServiceTypeWireGuard:
 		// Setup the WireGuard service.
-		if err := c.setupWireGuardService(&cfg.WireGuard); err != nil {
+		if err := c.setupWireGuardService(cfg.WireGuard); err != nil {
 			return fmt.Errorf("failed to setup wireguard service: %w", err)
 		}
 	default:
