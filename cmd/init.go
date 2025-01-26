@@ -12,8 +12,11 @@ import (
 	"github.com/sentinel-official/dvpn-node/config"
 )
 
-// InitCmd returns a new Cobra command for initializing the application configuration.
-func InitCmd() *cobra.Command {
+// NewInitCmd creates and returns a new Cobra command for initializing the application configuration.
+func NewInitCmd() *cobra.Command {
+	// Initialize default configuration
+	cfg := config.DefaultConfig()
+
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize the application configuration",
@@ -21,18 +24,13 @@ func InitCmd() *cobra.Command {
 If a configuration file already exists, this command will abort unless the "force" flag
 is set to overwrite the existing configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Retrieve Viper instance for managing configuration
-			v := viper.GetViper()
-
-			// Get the home directory path from the configuration
-			homeDir := v.GetString("home")
-
 			// Create the home directory if it doesn't exist
+			homeDir := viper.GetString("home")
 			if err := os.MkdirAll(homeDir, 0755); err != nil {
 				return fmt.Errorf("failed to create application directory: %w", err)
 			}
 
-			// Define the path to the configuration file
+			// Construct the config file path.
 			cfgFile := filepath.Join(homeDir, "config.toml")
 
 			// Check if the configuration file already exists
@@ -43,23 +41,33 @@ is set to overwrite the existing configuration.`,
 				}
 			} else {
 				// If the file exists, check if the `force` flag is set
-				force := v.GetBool("force")
+				force, err := cmd.Flags().GetBool("force")
+				if err != nil {
+					return fmt.Errorf("failed to get 'force' flag: %w", err)
+				}
+
 				if !force {
 					return errors.New("config file already exists")
 				}
 			}
 
-			// Generate the default configuration
-			cfg := config.DefaultConfig()
+			// Validate the configuration.
+			if err := cfg.Validate(); err != nil {
+				return fmt.Errorf("invalid configuration: %w", err)
+			}
 
 			// Write the default configuration to the configuration file
 			if err := cfg.WriteToFile(cfgFile); err != nil {
 				return fmt.Errorf("failed to write config file: %w", err)
 			}
 
+			cmd.Println("Configuration initialized successfully")
 			return nil
 		},
 	}
+
+	// Set configuration flags using the default configuration.
+	cfg.SetForFlags(cmd.Flags())
 
 	// Add a flag to allow overwriting the existing configuration file
 	cmd.Flags().Bool("force", false, "overwrite the existing configuration file if it exists")
