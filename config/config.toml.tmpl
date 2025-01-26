@@ -1,14 +1,3 @@
-[handshake_dns]
-# Enable Handshake DNS functionality.
-# Valid values: true (enabled), false (disabled).
-# Example: true
-enable = {{ .HandshakeDNS.Enable }}
-
-# Specifies the number of peer connections allowed.
-# Valid values: Any positive integer up to 8.
-# Example: 4
-peers = {{ .HandshakeDNS.Peers }}
-
 [keyring]
 # Specifies the name of the keyring, which identifies the key storage system.
 # Valid values: Any string
@@ -30,6 +19,80 @@ format = "{{ .Log.Format }}"
 # Valid values: "debug", "info", "warn", "error"
 # Example: "debug"
 level = "{{ .Log.Level }}"
+
+[query]
+# Specifies whether proof of validity should be included in query results.
+# Valid values: true, false
+# Example: true
+prove = {{ .Query.Prove }}
+
+# Specifies the number of retries for queries.
+# Valid values: Any positive integer
+# Example: 3
+retries = {{ .Query.Retries }}
+
+# Specifies the duration to wait between retry attempts for failed queries.
+# Valid values: Duration string
+# Example: "500ms"
+retry_delay = "{{ .Query.RetryDelay }}"
+
+[rpc]
+# Lists the RPC server addresses used for blockchain interactions.
+# Valid values: Array of valid URL strings
+# Example: ["http://rpc1.example.com", "http://rpc2.example.com"]
+addrs = [{{ range .RPC.Addrs }}"{{ . }}", {{ end }}]
+
+# Specifies the maximum duration allowed for completing an RPC query.
+# Valid values: Duration string
+# Example: "2s"
+timeout = "{{ .RPC.Timeout }}"
+
+[tx]
+# Specifies the unique identifier for the blockchain network where transactions are executed.
+# Valid values: Any string
+# Example: "sentinelhub-2"
+chain_id = "{{ .Tx.ChainID }}"
+
+# Specifies the address of the entity granting fees for transactions.
+# Valid values: Any valid blockchain address starting with "sent"
+# Example: "sent1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3nv8w3n"
+fee_granter_addr = "{{ .Tx.FeeGranterAddr }}"
+
+# Specifies the name of the sender's account initiating the transaction.
+# Valid values: Any string
+# Example: "default"
+from_name = "{{ .Tx.FromName }}"
+
+# Specifies the maximum gas units allowed for the transaction.
+# Valid values: Any non-negative integer
+# Example: 200000
+gas = {{ .Tx.Gas }}
+
+# Specifies the adjustment factor applied to the estimated gas for the transaction.
+# Valid values: Any positive float
+# Example: 1.2
+gas_adjustment = {{ .Tx.GasAdjustment }}
+
+# Specifies the price of gas in the defined denomination.
+# Valid values: Any valid coin string
+# Example: "0.1udvpn"
+gas_prices = "{{ .Tx.GasPrices }}"
+
+# Indicates whether the transaction should be simulated before execution to estimate gas and fees.
+# Valid values: true, false
+# Example: true
+simulate_and_execute = {{ .Tx.SimulateAndExecute }}
+
+[handshake_dns]
+# Enable Handshake DNS functionality.
+# Valid values: true (enabled), false (disabled).
+# Example: true
+enable = {{ .HandshakeDNS.Enable }}
+
+# Specifies the number of peer connections allowed.
+# Valid values: Any positive integer up to 8.
+# Example: 4
+peers = {{ .HandshakeDNS.Peers }}
 
 [node]
 # Specifies the API port for node operations.
@@ -109,69 +172,6 @@ type = "{{ .Node.Type }}"
 # Valid values: Any positive integer up to 252.
 # Example: 128
 max_peers = {{ .QOS.MaxPeers }}
-
-[query]
-# Specifies whether proof of validity should be included in query results.
-# Valid values: true, false
-# Example: true
-prove = {{ .Query.Prove }}
-
-# Specifies the number of retries for queries.
-# Valid values: Any positive integer
-# Example: 3
-retries = {{ .Query.Retries }}
-
-# Specifies the duration to wait between retry attempts for failed queries.
-# Valid values: Duration string
-# Example: "500ms"
-retry_delay = "{{ .Query.RetryDelay }}"
-
-[rpc]
-# Lists the RPC server addresses used for blockchain interactions.
-# Valid values: Array of valid URL strings
-# Example: ["http://rpc1.example.com", "http://rpc2.example.com"]
-addrs = [{{ range .RPC.Addrs }}"{{ . }}", {{ end }}]
-
-# Specifies the maximum duration allowed for completing an RPC query.
-# Valid values: Duration string
-# Example: "2s"
-timeout = "{{ .RPC.Timeout }}"
-
-[tx]
-# Specifies the unique identifier for the blockchain network where transactions are executed.
-# Valid values: Any string
-# Example: "sentinelhub-2"
-chain_id = "{{ .Tx.ChainID }}"
-
-# Specifies the address of the entity granting fees for transactions.
-# Valid values: Any valid blockchain address starting with "sent"
-# Example: "sent1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3nv8w3n"
-fee_granter_addr = "{{ .Tx.FeeGranterAddr }}"
-
-# Specifies the name of the sender's account initiating the transaction.
-# Valid values: Any string
-# Example: "default"
-from_name = "{{ .Tx.FromName }}"
-
-# Specifies the maximum gas units allowed for the transaction.
-# Valid values: Any non-negative integer
-# Example: 200000
-gas = {{ .Tx.Gas }}
-
-# Specifies the adjustment factor applied to the estimated gas for the transaction.
-# Valid values: Any positive float
-# Example: 1.2
-gas_adjustment = {{ .Tx.GasAdjustment }}
-
-# Specifies the price of gas in the defined denomination.
-# Valid values: Any valid coin string
-# Example: "0.1udvpn"
-gas_prices = "{{ .Tx.GasPrices }}"
-
-# Indicates whether the transaction should be simulated before execution to estimate gas and fees.
-# Valid values: true, false
-# Example: true
-simulate_and_execute = {{ .Tx.SimulateAndExecute }}
 
 [v2ray]
 # Inbound field descriptions:
