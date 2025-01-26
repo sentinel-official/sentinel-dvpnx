@@ -15,35 +15,32 @@ import (
 	"github.com/sentinel-official/dvpn-node/node"
 )
 
-// StartCmd creates and returns a new Cobra command to start the node application.
-func StartCmd() *cobra.Command {
+// NewStartCmd creates and returns a new Cobra command to start the node application.
+func NewStartCmd(cfg *config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start the Sentinel dVPN node",
 		Long: `Starts the Sentinel dVPN node. Initializes the logger, sets up the context and node,
 explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// Get the home directory from viper configuration.
-			homeDir := viper.GetString("home")
-
-			// Unmarshal the configuration.
-			cfg := &config.Config{}
-			if err := viper.Unmarshal(cfg); err != nil {
-				return fmt.Errorf("failed to unmarshal config: %w", err)
-			}
-
-			// Validate the configuration.
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Validate the provided configuration.
 			if err := cfg.Validate(); err != nil {
 				return fmt.Errorf("invalid configuration: %w", err)
 			}
 
-			// Initialize the logger.
+			// Initialize the logger based on the configuration.
 			logger, err := log.NewLogger(cmd.OutOrStderr(), cfg.Log.GetFormat(), cfg.Log.GetLevel())
 			if err != nil {
 				return fmt.Errorf("failed to initialize logger: %w", err)
 			}
 
+			// Set the global logger for the application.
 			log.SetLogger(logger)
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Retrieve the home directory from the configuration.
+			homeDir := viper.GetString("home")
 
 			// Create and configure the application context.
 			ctx := context.New().
@@ -67,12 +64,12 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			// Channel to capture errors from the node.
 			errChan := make(chan error, 1)
 
-			// Start the node.
+			// Start the node and handle any startup errors.
 			if err := n.Start(ctx, errChan); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
 			}
 
-			// Set up channel to capture OS signals.
+			// Channel to capture OS signals (SIGINT, SIGTERM).
 			signalChan := make(chan os.Signal, 1)
 			signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -92,6 +89,9 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			return nil
 		},
 	}
+
+	// Set configuration flags with the command.
+	cfg.SetForFlags(cmd.Flags())
 
 	return cmd
 }
