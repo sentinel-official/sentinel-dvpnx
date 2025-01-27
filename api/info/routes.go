@@ -7,5 +7,5 @@ import (
 )
 
 func RegisterRoutes(ctx *context.Context, r gin.IRouter) {
-	r.GET("/", HandlerGetInfo(ctx))
+	r.GET("/", handlerGetInfo(ctx))
 }

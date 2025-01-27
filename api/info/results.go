@@ -19,6 +19,6 @@ type ResultGetInfo struct {
 	Version      *version.Info   `json:"version"`
 }
 
-func (i *ResultGetInfo) GetType() types.ServiceType {
-	return types.ServiceTypeFromString(i.Type)
+func (r *ResultGetInfo) GetType() types.ServiceType {
+	return types.ServiceTypeFromString(r.Type)
 }

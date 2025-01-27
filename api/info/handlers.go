@@ -11,8 +11,8 @@ import (
 	"github.com/sentinel-official/dvpn-node/context"
 )
 
-// HandlerGetInfo returns a handler function to retrieve node information.
-func HandlerGetInfo(c *context.Context) gin.HandlerFunc {
+// handlerGetInfo returns a handler function to retrieve node information.
+func handlerGetInfo(c *context.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		downLink, upLink := c.SpeedtestResults()
 		loc := c.Location()
