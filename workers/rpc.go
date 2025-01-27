@@ -83,6 +83,11 @@ func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worke
 			return latencies[addrs[i]] < latencies[addrs[j]]
 		})
 
+		// Return early if no RPC addresses are available.
+		if len(addrs) == 0 {
+			return nil
+		}
+
 		// Update the context with the sorted list of RPC addresses.
 		c.SetRPCAddrs(addrs)
 
