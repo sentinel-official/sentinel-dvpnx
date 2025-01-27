@@ -1,7 +1,6 @@
 package session
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +19,7 @@ import (
 	"github.com/sentinel-official/dvpn-node/database/operations"
 )
 
+// handlerAddSession returns a handler function to process the request for adding a session.
 func handlerAddSession(c *context.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO: validate current peer count
@@ -113,8 +113,8 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
 			return
 		}
-		if !bytes.Equal(req.PubKey.Address(), accAddr) {
-			err = fmt.Errorf("account address mismatch; got %s, expected %s", req.PubKey.Address(), accAddr)
+		if !req.AccAddr().Equals(accAddr) {
+			err = fmt.Errorf("account address mismatch; got %s, expected %s", req.AccAddr(), accAddr)
 			ctx.JSON(http.StatusUnauthorized, types.NewResponseError(7, err))
 			return
 		}
