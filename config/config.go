@@ -21,12 +21,12 @@ var fs embed.FS
 
 // Config represents the overall configuration structure.
 type Config struct {
-	*config.Config
-	HandshakeDNS *HandshakeDNSConfig     `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
-	Node         *NodeConfig             `mapstructure:"node"`          // Node contains node-specific configuration.
-	QOS          *QOSConfig              `mapstructure:"qos"`           // QOS contains Quality of Service configuration.
-	V2Ray        *v2ray.ServerConfig     `mapstructure:"v2ray"`         // V2Ray contains V2Ray server configuration.
-	WireGuard    *wireguard.ServerConfig `mapstructure:"wireguard"`     // WireGuard contains WireGuard server configuration.
+	*config.Config `mapstructure:",squash"`
+	HandshakeDNS   *HandshakeDNSConfig     `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
+	Node           *NodeConfig             `mapstructure:"node"`          // Node contains node-specific configuration.
+	QOS            *QOSConfig              `mapstructure:"qos"`           // QOS contains Quality of Service configuration.
+	V2Ray          *v2ray.ServerConfig     `mapstructure:"v2ray"`         // V2Ray contains V2Ray server configuration.
+	WireGuard      *wireguard.ServerConfig `mapstructure:"wireguard"`     // WireGuard contains WireGuard server configuration.
 }
 
 // Validate validates the entire configuration.
