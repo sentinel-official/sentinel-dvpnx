@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const MaxRemoteAddrLen = (1 << 6) - 1
+const MaxRemoteAddrLen = (1 << 6) - 1 // Maximum allowable length for a remote address.
 
 type NodeConfig struct {
 	APIPort                                string   `mapstructure:"api_port"`                                    // APIPort is the port for API access.
@@ -30,6 +30,8 @@ type NodeConfig struct {
 	IntervalStatusUpdate                   string   `mapstructure:"interval_status_update"`                      // IntervalStatusUpdate is the duration between updating the status of the node.
 	Moniker                                string   `mapstructure:"moniker"`                                     // Moniker is the name or identifier for the node.
 	RemoteAddrs                            []string `mapstructure:"remote_addrs"`                                // RemoteAddrs is a list of remote addresses for operations.
+	TLSCertPath                            string   `mapstructure:"-"`                                           // TLSCertPath is the file path to the TLS certificate.
+	TLSKeyPath                             string   `mapstructure:"-"`                                           // TLSKeyPath is the file path to the TLS private key.
 	Type                                   string   `mapstructure:"type"`                                        // Type is the service type of the node.
 }
 
@@ -175,6 +177,16 @@ func (c *NodeConfig) GetRemoteAddrs() []string {
 	return c.RemoteAddrs
 }
 
+// GetTLSCertPath returns the TLSCertPath field.
+func (c *NodeConfig) GetTLSCertPath() string {
+	return c.TLSCertPath
+}
+
+// GetTLSKeyPath returns the TLSKeyPath field.
+func (c *NodeConfig) GetTLSKeyPath() string {
+	return c.TLSKeyPath
+}
+
 // GetType returns the Type field.
 func (c *NodeConfig) GetType() types.ServiceType {
 	return types.ServiceTypeFromString(c.Type)
@@ -243,6 +255,16 @@ func (c *NodeConfig) Validate() error {
 		}
 	}
 
+	// Ensure the TLSCertPath field is not empty.
+	if c.TLSCertPath == "" {
+		return errors.New("tls_cert_path cannot be empty")
+	}
+
+	// Ensure the TLSKeyPath field is not empty.
+	if c.TLSKeyPath == "" {
+		return errors.New("tls_key_path cannot be empty")
+	}
+
 	// Validate the node type.
 	validTypes := map[string]bool{
 		types.ServiceTypeV2Ray.String():     true,
@@ -289,6 +311,8 @@ func DefaultNodeConfig() *NodeConfig {
 		IntervalStatusUpdate:                   (1*time.Hour - 5*time.Minute).String(),
 		Moniker:                                randMoniker(),
 		RemoteAddrs:                            []string{},
+		TLSCertPath:                            "",
+		TLSKeyPath:                             "",
 		Type:                                   randServiceType().String(),
 	}
 }

@@ -4,7 +4,6 @@ import (
 	gocontext "context"
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sentinel-official/hub/v12/x/node/types/v3"
@@ -17,9 +16,11 @@ import (
 
 // Node represents the application node, holding its context, router, and scheduler.
 type Node struct {
-	router     *gin.Engine     // HTTP router for handling API requests.
-	scheduler  *cron.Scheduler // Scheduler for managing periodic tasks.
-	listenAddr string          // Address the Node listens on for incoming requests.
+	listenAddr  string          // Address the Node listens on for incoming requests.
+	router      *gin.Engine     // HTTP router for handling API requests.
+	scheduler   *cron.Scheduler // Scheduler for managing periodic tasks.
+	tlsCertPath string          // Path to the TLS certificate file.
+	tlsKeyPath  string          // Path to the TLS key file.
 }
 
 // New creates a new Node with the provided context.
@@ -45,6 +46,18 @@ func (n *Node) WithScheduler(v *cron.Scheduler) *Node {
 	return n
 }
 
+// WithTLSCertPath sets the TLS certificate path for the Node and returns the updated Node.
+func (n *Node) WithTLSCertPath(v string) *Node {
+	n.tlsCertPath = v
+	return n
+}
+
+// WithTLSKeyPath sets the TLS key path for the Node and returns the updated Node.
+func (n *Node) WithTLSKeyPath(v string) *Node {
+	n.tlsKeyPath = v
+	return n
+}
+
 // ListenAddr returns the listen address of the Node.
 func (n *Node) ListenAddr() string {
 	return n.listenAddr
@@ -58,6 +71,16 @@ func (n *Node) Router() *gin.Engine {
 // Scheduler returns the scheduler configured for the Node.
 func (n *Node) Scheduler() *cron.Scheduler {
 	return n.scheduler
+}
+
+// TLSCertPath returns the TLS certificate path of the Node.
+func (n *Node) TLSCertPath() string {
+	return n.tlsCertPath
+}
+
+// TLSKeyPath returns the TLS key path of the Node.
+func (n *Node) TLSKeyPath() string {
+	return n.tlsKeyPath
 }
 
 // Register registers the node on the network if not already registered.
@@ -151,12 +174,8 @@ func (n *Node) Start(c *context.Context, errChan chan error) error {
 			return
 		}
 
-		// Define paths for TLS certificate and key files.
-		certPath := filepath.Join(c.HomeDir(), "tls.crt")
-		keyPath := filepath.Join(c.HomeDir(), "tls.key")
-
 		// Start the HTTPS server using the configured TLS certificates and router.
-		if err := utils.ListenAndServeTLS(n.ListenAddr(), certPath, keyPath, n.Router()); err != nil {
+		if err := utils.ListenAndServeTLS(n.ListenAddr(), n.TLSCertPath(), n.TLSKeyPath(), n.Router()); err != nil {
 			errChan <- fmt.Errorf("failed to listen and serve tls: %w", err)
 			return
 		}

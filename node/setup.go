@@ -77,8 +77,10 @@ func (n *Node) SetupScheduler(ctx *context.Context, cfg *config.Config) error {
 func (n *Node) Setup(ctx *context.Context, cfg *config.Config) error {
 	log.Info("Setting up node...")
 
-	// Set the listen address for the Node.
+	// Configure the Node's network and TLS settings.
 	n.WithListenAddr(cfg.Node.APIListenAddr())
+	n.WithTLSCertPath(cfg.Node.GetTLSCertPath())
+	n.WithTLSKeyPath(cfg.Node.GetTLSKeyPath())
 
 	// Set up the HTTP router.
 	if err := n.SetupRouter(ctx); err != nil {
