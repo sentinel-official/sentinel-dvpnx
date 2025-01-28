@@ -1,4 +1,9 @@
-.DEFAULT_GOAL := default
+.DEFAULT_GOAL := noop
+
+.PHONY: noop
+noop:
+	@:
+
 GIT_COMMIT := $(shell git log -1 --format='%H')
 GIT_TAG := $(shell git describe --tags | sed 's/^v//' | rev | cut -d - -f 2- | rev)
 
@@ -19,9 +24,6 @@ build:
 .PHONY: clean
 clean:
 	rm -rf ./bin ./vendor
-
-.PHONY: default
-default: clean build
 
 .PHONY: install
 install:
