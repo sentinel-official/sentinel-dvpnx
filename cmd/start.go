@@ -69,6 +69,8 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return fmt.Errorf("failed to start node: %w", err)
 			}
 
+			log.Info("Node started successfully")
+
 			// Channel to capture OS signals (SIGINT, SIGTERM).
 			signalChan := make(chan os.Signal, 1)
 			signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)

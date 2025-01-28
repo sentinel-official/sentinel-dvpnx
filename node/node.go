@@ -158,28 +158,25 @@ func (n *Node) Start(c *context.Context, errChan chan error) error {
 	}()
 
 	go func() {
-		// Register the node and update its details.
-		if err := n.Register(c); err != nil {
-			errChan <- fmt.Errorf("failed to register node: %w", err)
-			return
-		}
-		if err := n.UpdateDetails(c); err != nil {
-			errChan <- fmt.Errorf("failed to update node details: %w", err)
-			return
-		}
-
-		// Start the cron scheduler to execute periodic tasks.
-		if err := n.Scheduler().Start(); err != nil {
-			errChan <- fmt.Errorf("failed to start scheduler: %w", err)
-			return
-		}
-
 		// Start the HTTPS server using the configured TLS certificates and router.
 		if err := utils.ListenAndServeTLS(n.ListenAddr(), n.TLSCertPath(), n.TLSKeyPath(), n.Router()); err != nil {
 			errChan <- fmt.Errorf("failed to listen and serve tls: %w", err)
 			return
 		}
 	}()
+
+	// Register the node and update its details.
+	if err := n.Register(c); err != nil {
+		return fmt.Errorf("failed to register node: %w", err)
+	}
+	if err := n.UpdateDetails(c); err != nil {
+		return fmt.Errorf("failed to update node details: %w", err)
+	}
+
+	// Start the cron scheduler to execute periodic tasks.
+	if err := n.Scheduler().Start(); err != nil {
+		return fmt.Errorf("failed to start scheduler: %w", err)
+	}
 
 	return nil
 }
