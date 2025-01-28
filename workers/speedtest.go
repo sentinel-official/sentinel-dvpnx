@@ -20,8 +20,6 @@ func NewSpeedtestWorker(c *context.Context, interval time.Duration) cron.Worker 
 
 	// Handler function that performs the speed test and updates the context.
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Run the speed test to measure download and upload speeds.
 		dlSpeed, ulSpeed, err := speedtest.Run()
 		if err != nil {

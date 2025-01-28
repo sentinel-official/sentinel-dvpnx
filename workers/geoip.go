@@ -19,8 +19,6 @@ func NewGeoIPLocationWorker(c *context.Context, interval time.Duration) cron.Wor
 
 	// Handler function that fetches the GeoIP location and updates the context.
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Fetch the GeoIP location using the GeoIP client.
 		location, err := c.GeoIPClient().Get("")
 		if err != nil {
