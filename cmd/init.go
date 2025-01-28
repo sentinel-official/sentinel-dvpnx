@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sentinel-official/sentinel-go-sdk/libs/tls"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -14,6 +15,10 @@ import (
 
 // NewInitCmd creates and returns a new Cobra command for initializing the application configuration.
 func NewInitCmd() *cobra.Command {
+	// Declare variables for flags
+	var force bool
+	var withTLS bool
+
 	// Initialize default configuration
 	cfg := config.DefaultConfig()
 
@@ -23,6 +28,25 @@ func NewInitCmd() *cobra.Command {
 		Long: `Creates the application home directory and generates a default config.toml file.
 If a configuration file already exists, this command will abort unless the "force" flag
 is set to overwrite the existing configuration.`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Get the home directory
+			homeDir := viper.GetString("home")
+
+			// Update the keyring configuration
+			cfg.Keyring.HomeDir = homeDir
+			cfg.Keyring.Input = cmd.InOrStdin()
+
+			// Set TLS paths in the configuration
+			cfg.Node.TLSCertPath = filepath.Join(homeDir, "tls.crt")
+			cfg.Node.TLSKeyPath = filepath.Join(homeDir, "tls.key")
+
+			// Validate the configuration.
+			if err := cfg.Validate(); err != nil {
+				return fmt.Errorf("invalid configuration: %w", err)
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Create the home directory if it doesn't exist
 			homeDir := viper.GetString("home")
@@ -40,25 +64,25 @@ is set to overwrite the existing configuration.`,
 					return fmt.Errorf("failed to stat config file: %w", err)
 				}
 			} else {
-				// If the file exists, check if the `force` flag is set
-				force, err := cmd.Flags().GetBool("force")
-				if err != nil {
-					return fmt.Errorf("failed to get 'force' flag: %w", err)
-				}
-
 				if !force {
 					return errors.New("config file already exists")
 				}
 			}
 
-			// Validate the configuration.
-			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("invalid configuration: %w", err)
-			}
-
 			// Write the default configuration to the configuration file
 			if err := cfg.WriteToFile(cfgFile); err != nil {
 				return fmt.Errorf("failed to write config file: %w", err)
+			}
+
+			// Generate TLS keys if "withTLS" is enabled
+			if withTLS {
+				cert := tls.NewCertificate().
+					WithCertPath(cfg.Node.GetTLSCertPath()).
+					WithKeyPath(cfg.Node.GetTLSKeyPath())
+
+				if err := cert.Generate(); err != nil {
+					return fmt.Errorf("failed to generate TLS keys: %w", err)
+				}
 			}
 
 			cmd.Println("Configuration initialized successfully")
@@ -69,8 +93,9 @@ is set to overwrite the existing configuration.`,
 	// Set configuration flags using the default configuration.
 	cfg.SetForFlags(cmd.Flags())
 
-	// Add a flag to allow overwriting the existing configuration file
-	cmd.Flags().Bool("force", false, "overwrite the existing configuration file if it exists")
+	// Bind command-line flags to variables
+	cmd.Flags().BoolVar(&force, "force", force, "overwrite the existing configuration file if it exists")
+	cmd.Flags().BoolVar(&withTLS, "with-tls", withTLS, "generate tls keys for secure communication")
 
 	return cmd
 }
