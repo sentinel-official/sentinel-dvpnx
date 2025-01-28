@@ -14,13 +14,10 @@ import (
 )
 
 // NewInitCmd creates and returns a new Cobra command for initializing the application configuration.
-func NewInitCmd() *cobra.Command {
+func NewInitCmd(cfg *config.Config) *cobra.Command {
 	// Declare variables for flags
 	var force bool
 	var withTLS bool
-
-	// Initialize default configuration
-	cfg := config.DefaultConfig()
 
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -29,17 +26,6 @@ func NewInitCmd() *cobra.Command {
 If a configuration file already exists, this command will abort unless the "force" flag
 is set to overwrite the existing configuration.`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Get the home directory
-			homeDir := viper.GetString("home")
-
-			// Update the keyring configuration
-			cfg.Keyring.HomeDir = homeDir
-			cfg.Keyring.Input = cmd.InOrStdin()
-
-			// Set TLS paths in the configuration
-			cfg.Node.TLSCertPath = filepath.Join(homeDir, "tls.crt")
-			cfg.Node.TLSKeyPath = filepath.Join(homeDir, "tls.key")
-
 			// Validate the configuration.
 			if err := cfg.Validate(); err != nil {
 				return fmt.Errorf("invalid configuration: %w", err)

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sentinel-official/sentinel-go-sdk/cmd"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/sentinel-official/dvpn-node/config"
@@ -30,8 +32,36 @@ tools for key management and node initialization, ensuring privacy, performance,
 			DisableDefaultCmd: true,
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			// Get the home directory
-			homeDir := viper.GetString("home")
+			// Initialize viper instance
+			v := viper.New()
+
+			// Skip loading if the config file does not exist
+			cfgPath := filepath.Join(homeDir, "config.toml")
+			if _, err := os.Stat(cfgPath); err != nil {
+				if !os.IsNotExist(err) {
+					return fmt.Errorf("failed to stat config file: %w", err)
+				}
+			} else {
+				// Read the config from the specified file
+				v.SetConfigFile(cfgPath)
+				if err := v.ReadInConfig(); err != nil {
+					return fmt.Errorf("failed to read config file: %w", err)
+				}
+			}
+
+			// Bind flags to Viper with normalized keys
+			r := strings.NewReplacer("-", "_")
+			cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+				_ = v.BindPFlag(r.Replace(f.Name), f)
+			})
+			cmd.Flags().VisitAll(func(f *pflag.Flag) {
+				_ = v.BindPFlag(r.Replace(f.Name), f)
+			})
+
+			// Unmarshal configuration into the config object
+			if err := v.Unmarshal(cfg); err != nil {
+				return fmt.Errorf("failed to unmarshal config file: %w", err)
+			}
 
 			// Update the keyring configuration
 			cfg.Keyring.HomeDir = homeDir
@@ -41,38 +71,6 @@ tools for key management and node initialization, ensuring privacy, performance,
 			cfg.Node.TLSCertPath = filepath.Join(homeDir, "tls.crt")
 			cfg.Node.TLSKeyPath = filepath.Join(homeDir, "tls.key")
 
-			// Skip loading if the config file does not exist
-			cfgPath := filepath.Join(homeDir, "config.toml")
-			if _, err := os.Stat(cfgPath); err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
-
-				return fmt.Errorf("failed to stat config file: %w", err)
-			}
-
-			// Create a new Viper instance for reading the config file
-			v := viper.New()
-			v.SetConfigFile(cfgPath)
-
-			// Bind persistent flags to viper
-			if err := v.BindPFlags(cmd.PersistentFlags()); err != nil {
-				return fmt.Errorf("failed to bind persistent flags: %w", err)
-			}
-
-			// Bind normal (non-persistent) flags to viper as well
-			if err := v.BindPFlags(cmd.Flags()); err != nil {
-				return fmt.Errorf("failed to bind flags: %w", err)
-			}
-
-			// Attempt to read and unmarshal the config file
-			if err := v.ReadInConfig(); err != nil {
-				return fmt.Errorf("failed to read config file: %w", err)
-			}
-			if err := v.Unmarshal(cfg); err != nil {
-				return fmt.Errorf("failed to unmarshal config file: %w", err)
-			}
-
 			return nil
 		},
 	}
@@ -81,12 +79,12 @@ tools for key management and node initialization, ensuring privacy, performance,
 	rootCmd.AddCommand(
 		cmd.NewKeysCmd(cfg.Keyring),
 		cmd.NewVersionCmd(),
-		NewInitCmd(),
+		NewInitCmd(cfg),
 		NewStartCmd(cfg),
 	)
 
 	// Add persistent flags
-	rootCmd.PersistentFlags().String("home", homeDir, "home directory for application config and data")
+	rootCmd.PersistentFlags().StringVar(&homeDir, "home", homeDir, "home directory for application config and data")
 	_ = viper.BindPFlag("home", rootCmd.PersistentFlags().Lookup("home"))
 
 	return rootCmd
