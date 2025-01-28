@@ -16,6 +16,7 @@ import (
 
 // Node represents the application node, holding its context, router, and scheduler.
 type Node struct {
+	*context.Context
 	listenAddr  string          // Address the Node listens on for incoming requests.
 	router      *gin.Engine     // HTTP router for handling API requests.
 	scheduler   *cron.Scheduler // Scheduler for managing periodic tasks.
@@ -24,8 +25,8 @@ type Node struct {
 }
 
 // New creates a new Node with the provided context.
-func New() *Node {
-	return &Node{}
+func New(ctx *context.Context) *Node {
+	return &Node{Context: ctx}
 }
 
 // WithListenAddr sets the listen address for the Node and returns the updated Node.
@@ -84,8 +85,8 @@ func (n *Node) TLSKeyPath() string {
 }
 
 // Register registers the node on the network if not already registered.
-func (n *Node) Register(c *context.Context) error {
-	node, err := c.Client().Node(gocontext.TODO(), c.NodeAddr())
+func (n *Node) Register() error {
+	node, err := n.Client().Node(gocontext.TODO(), n.NodeAddr())
 	if err != nil {
 		return fmt.Errorf("failed to query node: %w", err)
 	}
@@ -97,14 +98,14 @@ func (n *Node) Register(c *context.Context) error {
 
 	// Prepare a message to register the node.
 	msg := v3.NewMsgRegisterNodeRequest(
-		c.AccAddr(),
-		c.GigabytePrices(),
-		c.HourlyPrices(),
-		c.APIAddrs()[0],
+		n.AccAddr(),
+		n.GigabytePrices(),
+		n.HourlyPrices(),
+		n.APIAddrs()[0],
 	)
 
 	// Broadcast the registration transaction.
-	res, err := c.BroadcastTx(gocontext.TODO(), msg)
+	res, err := n.BroadcastTx(gocontext.TODO(), msg)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast register node tx: %w", err)
 	}
@@ -117,19 +118,19 @@ func (n *Node) Register(c *context.Context) error {
 }
 
 // UpdateDetails updates the node's pricing and address details on the network.
-func (n *Node) UpdateDetails(c *context.Context) error {
+func (n *Node) UpdateDetails() error {
 	log.Info("Updating node details...")
 
 	// Prepare a message to update the node's details.
 	msg := v3.NewMsgUpdateNodeDetailsRequest(
-		c.NodeAddr(),
-		c.GigabytePrices(),
-		c.HourlyPrices(),
-		c.APIAddrs()[0],
+		n.NodeAddr(),
+		n.GigabytePrices(),
+		n.HourlyPrices(),
+		n.APIAddrs()[0],
 	)
 
 	// Broadcast the update transaction.
-	res, err := c.BroadcastTx(gocontext.TODO(), msg)
+	res, err := n.BroadcastTx(gocontext.TODO(), msg)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast update node details tx: %w", err)
 	}
@@ -142,16 +143,16 @@ func (n *Node) UpdateDetails(c *context.Context) error {
 }
 
 // Start initializes the Node's services, scheduler, and HTTPS server.
-func (n *Node) Start(c *context.Context, errChan chan error) error {
+func (n *Node) Start(errChan chan error) error {
 	log.Info("Starting node...")
 
 	go func() {
 		// Bring up the service by running pre-defined tasks.
-		if err := c.Service().Up(gocontext.TODO()); err != nil {
+		if err := n.Service().Up(gocontext.TODO()); err != nil {
 			errChan <- fmt.Errorf("failed to run service up task: %w", err)
 			return
 		}
-		if err := c.Service().PostUp(); err != nil {
+		if err := n.Service().PostUp(); err != nil {
 			errChan <- fmt.Errorf("failed to run service post-up task: %w", err)
 			return
 		}
@@ -166,10 +167,10 @@ func (n *Node) Start(c *context.Context, errChan chan error) error {
 	}()
 
 	// Register the node and update its details.
-	if err := n.Register(c); err != nil {
+	if err := n.Register(); err != nil {
 		return fmt.Errorf("failed to register node: %w", err)
 	}
-	if err := n.UpdateDetails(c); err != nil {
+	if err := n.UpdateDetails(); err != nil {
 		return fmt.Errorf("failed to update node details: %w", err)
 	}
 
@@ -182,14 +183,14 @@ func (n *Node) Start(c *context.Context, errChan chan error) error {
 }
 
 // Stop gracefully stops the Node's operations.
-func (n *Node) Stop(c *context.Context) error {
-	if err := c.Service().PreDown(); err != nil {
+func (n *Node) Stop() error {
+	if err := n.Service().PreDown(); err != nil {
 		return fmt.Errorf("failed to run service pre-down task: %w", err)
 	}
-	if err := c.Service().Down(gocontext.TODO()); err != nil {
+	if err := n.Service().Down(gocontext.TODO()); err != nil {
 		return fmt.Errorf("failed to run service down task: %w", err)
 	}
-	if err := c.Service().PostDown(); err != nil {
+	if err := n.Service().PostDown(); err != nil {
 		return fmt.Errorf("failed to run service post-up task: %w", err)
 	}
 

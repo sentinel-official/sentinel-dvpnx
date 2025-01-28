@@ -56,8 +56,8 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			ctx.Seal()
 
 			// Create and setup the node.
-			n := node.New()
-			if err := n.Setup(ctx, cfg); err != nil {
+			n := node.New(ctx)
+			if err := n.Setup(cfg); err != nil {
 				return fmt.Errorf("failed to setup node: %w", err)
 			}
 
@@ -65,7 +65,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			errChan := make(chan error, 1)
 
 			// Start the node and handle any startup errors.
-			if err := n.Start(ctx, errChan); err != nil {
+			if err := n.Start(errChan); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
 			}
 
@@ -83,7 +83,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			}
 
 			// Stop the node gracefully.
-			if err := n.Stop(ctx); err != nil {
+			if err := n.Stop(); err != nil {
 				return fmt.Errorf("failed to stop node: %w", err)
 			}
 

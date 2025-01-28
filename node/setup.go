@@ -11,7 +11,6 @@ import (
 
 	"github.com/sentinel-official/dvpn-node/api"
 	"github.com/sentinel-official/dvpn-node/config"
-	"github.com/sentinel-official/dvpn-node/context"
 	"github.com/sentinel-official/dvpn-node/workers"
 )
 
@@ -21,7 +20,7 @@ func init() {
 }
 
 // SetupRouter sets up the HTTP router with necessary middlewares and routes.
-func (n *Node) SetupRouter(ctx *context.Context) error {
+func (n *Node) SetupRouter(_ *config.Config) error {
 	log.Info("Setting up router")
 
 	// Define middlewares to be used by the router.
@@ -39,7 +38,7 @@ func (n *Node) SetupRouter(ctx *context.Context) error {
 	r.Use(middlewares...)
 
 	// Register API routes to the router.
-	api.RegisterRoutes(ctx, r)
+	api.RegisterRoutes(n.Context, r)
 
 	// Attach the configured router to the Node.
 	n.WithRouter(r)
@@ -47,19 +46,19 @@ func (n *Node) SetupRouter(ctx *context.Context) error {
 }
 
 // SetupScheduler sets up the cron scheduler with various workers.
-func (n *Node) SetupScheduler(ctx *context.Context, cfg *config.Config) error {
+func (n *Node) SetupScheduler(cfg *config.Config) error {
 	log.Info("Setting up scheduler")
 
 	// Define the list of cron workers with their respective handlers and intervals.
 	items := []cron.Worker{
-		workers.NewBestRPCAddrWorker(ctx, cfg.Node.GetIntervalBestRPCAddr()),
-		workers.NewGeoIPLocationWorker(ctx, cfg.Node.GetIntervalGeoIPLocation()),
-		workers.NewSessionUsageSyncWithBlockchainWorker(ctx, cfg.Node.GetIntervalSessionUsageSyncWithBlockchain()),
-		workers.NewSessionUsageSyncWithDatabaseWorker(ctx, cfg.Node.GetIntervalSessionUsageSyncWithDatabase()),
-		workers.NewSessionUsageValidateWorker(ctx, cfg.Node.GetIntervalSessionUsageValidate()),
-		workers.NewSessionValidateWorker(ctx, cfg.Node.GetIntervalSessionValidate()),
-		workers.NewSpeedtestWorker(ctx, cfg.Node.GetIntervalSpeedtest()),
-		workers.NewNodeStatusUpdateWorker(ctx, cfg.Node.GetIntervalStatusUpdate()),
+		workers.NewBestRPCAddrWorker(n.Context, cfg.Node.GetIntervalBestRPCAddr()),
+		workers.NewGeoIPLocationWorker(n.Context, cfg.Node.GetIntervalGeoIPLocation()),
+		workers.NewNodeStatusUpdateWorker(n.Context, cfg.Node.GetIntervalStatusUpdate()),
+		workers.NewSessionUsageSyncWithBlockchainWorker(n.Context, cfg.Node.GetIntervalSessionUsageSyncWithBlockchain()),
+		workers.NewSessionUsageSyncWithDatabaseWorker(n.Context, cfg.Node.GetIntervalSessionUsageSyncWithDatabase()),
+		workers.NewSessionUsageValidateWorker(n.Context, cfg.Node.GetIntervalSessionUsageValidate()),
+		workers.NewSessionValidateWorker(n.Context, cfg.Node.GetIntervalSessionValidate()),
+		workers.NewSpeedtestWorker(n.Context, cfg.Node.GetIntervalSpeedtest()),
 	}
 
 	// Create a new cron scheduler and register the workers.
@@ -74,7 +73,7 @@ func (n *Node) SetupScheduler(ctx *context.Context, cfg *config.Config) error {
 }
 
 // Setup sets up both the router and scheduler for the Node.
-func (n *Node) Setup(ctx *context.Context, cfg *config.Config) error {
+func (n *Node) Setup(cfg *config.Config) error {
 	log.Info("Setting up node...")
 
 	// Configure the Node's network and TLS settings.
@@ -83,12 +82,12 @@ func (n *Node) Setup(ctx *context.Context, cfg *config.Config) error {
 	n.WithTLSKeyPath(cfg.Node.GetTLSKeyPath())
 
 	// Set up the HTTP router.
-	if err := n.SetupRouter(ctx); err != nil {
+	if err := n.SetupRouter(cfg); err != nil {
 		return fmt.Errorf("failed to setup router: %w", err)
 	}
 
 	// Set up the cron scheduler.
-	if err := n.SetupScheduler(ctx, cfg); err != nil {
+	if err := n.SetupScheduler(cfg); err != nil {
 		return fmt.Errorf("failed to setup scheduler: %w", err)
 	}
 

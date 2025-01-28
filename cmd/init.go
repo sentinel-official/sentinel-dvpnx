@@ -63,6 +63,7 @@ is set to overwrite the existing configuration.`,
 			// Generate TLS keys if "withTLS" is enabled
 			if withTLS {
 				cert := tls.NewCertificate().
+					WithAddrs(cfg.Node.GetRemoteAddrs()).
 					WithCertPath(cfg.Node.GetTLSCertPath()).
 					WithKeyPath(cfg.Node.GetTLSKeyPath())
 

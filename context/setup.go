@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/sentinel-official/sentinel-go-sdk/client"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
@@ -22,27 +20,14 @@ import (
 func (c *Context) SetupClient(cfg *config.Config) error {
 	log.Info("Setting up client")
 
-	// Create a codec for encoding/decoding protocol buffer messages.
-	protoCodec := types.NewProtoCodec()
-	txConfig := tx.NewTxConfig(protoCodec, tx.DefaultSignModes)
-
-	// Create a keyring to manage cryptographic keys.
-	kr, err := keyring.New(cfg.Keyring.GetName(), cfg.Keyring.GetBackend(), c.HomeDir(), c.Input(), protoCodec)
-	if err != nil {
-		return fmt.Errorf("failed to create keyring: %w", err)
-	}
-
 	// Initialize the base client with the provided configurations.
 	bc := client.NewBaseClient().
 		WithChainID(cfg.Tx.GetChainID()).
-		WithKeyring(kr).
-		WithProtoCodec(protoCodec).
 		WithQueryProve(cfg.Query.GetProve()).
 		WithQueryRetries(cfg.Query.GetRetries()).
 		WithQueryRetryDelay(cfg.Query.GetRetryDelay()).
 		WithRPCAddr(c.RPCAddr()).
 		WithRPCTimeout(cfg.RPC.GetTimeout()).
-		WithTxConfig(txConfig).
 		WithTxFeeGranterAddr(cfg.Tx.GetFeeGranterAddr()).
 		WithTxFees(nil).
 		WithTxFromName(cfg.Tx.GetFromName()).
@@ -52,6 +37,11 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		WithTxMemo("").
 		WithTxSimulateAndExecute(cfg.Tx.GetSimulateAndExecute()).
 		WithTxTimeoutHeight(0)
+
+	// Setup the keyring for the base client
+	if err := bc.SetupKeyring(cfg.Keyring); err != nil {
+		return fmt.Errorf("failed to setup keyring: %w", err)
+	}
 
 	// Assign the initialized client to the context.
 	c.WithClient(bc)
@@ -210,7 +200,7 @@ func (c *Context) Setup(cfg *config.Config) error {
 	c.WithGigabytePrices(cfg.Node.GetGigabytePrices())
 	c.WithHourlyPrices(cfg.Node.GetHourlyPrices())
 	c.WithMoniker(cfg.Node.GetMoniker())
-	c.WithRemoteAddrs(cfg.Node.RemoteAddrs)
+	c.WithRemoteAddrs(cfg.Node.GetRemoteAddrs())
 	c.WithRPCAddrs(cfg.RPC.GetAddrs())
 
 	// Set up the client for blockchain communication.
