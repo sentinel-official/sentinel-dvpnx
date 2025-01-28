@@ -37,6 +37,10 @@ tools for key management and node initialization, ensuring privacy, performance,
 			cfg.Keyring.HomeDir = homeDir
 			cfg.Keyring.Input = cmd.InOrStdin()
 
+			// Set TLS paths in the configuration
+			cfg.Node.TLSCertPath = filepath.Join(homeDir, "tls.crt")
+			cfg.Node.TLSKeyPath = filepath.Join(homeDir, "tls.key")
+
 			// Skip loading if the config file does not exist
 			cfgPath := filepath.Join(homeDir, "config.toml")
 			if _, err := os.Stat(cfgPath); err != nil {
