@@ -24,8 +24,6 @@ func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worke
 
 	// Handler function that measures RPC address latencies and updates the context.
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Retrieve the list of RPC addresses from the context.
 		addrs := c.RPCAddrs()
 		if len(addrs) == 0 {

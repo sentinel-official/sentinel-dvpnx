@@ -23,8 +23,6 @@ func NewNodeStatusUpdateWorker(c *context.Context, interval time.Duration) cron.
 
 	// Handler function that updates the node's status to active.
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Create a message to update the node's status to active.
 		msg := v3.NewMsgUpdateNodeStatusRequest(
 			c.AccAddr().Bytes(),

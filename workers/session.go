@@ -30,8 +30,6 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 	log := logger.With("name", nameSessionUsageSyncWithBlockchain)
 
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
@@ -94,8 +92,6 @@ func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Dur
 	log := logger.With("name", nameSessionUsageSyncWithDatabase)
 
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Create a context with a timeout to fetch peer statistics.
 		ctx, cancel := gocontext.WithTimeout(gocontext.TODO(), 5*time.Second)
 		defer cancel()
@@ -155,8 +151,6 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 	log := logger.With("name", nameSessionUsageValidate)
 
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
@@ -218,8 +212,6 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 	log := logger.With("name", nameSessionValidate)
 
 	handlerFunc := func() error {
-		log.Info("Running scheduler worker")
-
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
