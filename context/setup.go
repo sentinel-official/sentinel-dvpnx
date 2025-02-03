@@ -22,11 +22,11 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 
 	// Initialize the base client with the provided configurations.
 	bc := client.NewBaseClient().
-		WithChainID(cfg.Tx.GetChainID()).
 		WithQueryProve(cfg.Query.GetProve()).
 		WithQueryRetries(cfg.Query.GetRetries()).
 		WithQueryRetryDelay(cfg.Query.GetRetryDelay()).
 		WithRPCAddr(c.RPCAddr()).
+		WithRPCChainID(cfg.RPC.GetChainID()).
 		WithRPCTimeout(cfg.RPC.GetTimeout()).
 		WithTxFeeGranterAddr(cfg.Tx.GetFeeGranterAddr()).
 		WithTxFees(nil).
