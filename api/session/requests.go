@@ -7,37 +7,32 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gin-gonic/gin"
+	"github.com/sentinel-official/sentinel-go-sdk/types/api"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
 )
 
-// RequestAddSession represents the request for adding a session.
-type RequestAddSession struct {
+// AddSessionRequest represents the request for adding a session.
+type AddSessionRequest struct {
+	Body *api.AddSessionRequestBody
+
 	Data      []byte
 	PubKey    types.PubKey
 	Signature []byte
-
-	// Inline struct for the request body
-	Body struct {
-		Data      string `json:"data" binding:"required,base64,gt=0"`
-		ID        uint64 `json:"id" binding:"required,gt=0"`
-		PubKey    string `json:"pub_key" binding:"required,gt=0"`
-		Signature string `json:"signature" binding:"required,base64,gt=0"`
-	}
 }
 
 // Msg generates the message from the session request.
-func (r *RequestAddSession) Msg() []byte {
+func (r *AddSessionRequest) Msg() []byte {
 	return append(cosmossdk.Uint64ToBigEndian(r.Body.ID), r.Data...)
 }
 
 // AccAddr returns the account address derived from the public key.
-func (r *RequestAddSession) AccAddr() cosmossdk.AccAddress {
+func (r *AddSessionRequest) AccAddr() cosmossdk.AccAddress {
 	return r.PubKey.Address().Bytes()
 }
 
-// newRequestAddSession binds and decodes the incoming request.
-func newRequestAddSession(c *gin.Context) (req *RequestAddSession, err error) {
-	req = &RequestAddSession{}
+// newAddSessionRequest binds and decodes the incoming request.
+func newAddSessionRequest(c *gin.Context) (req *AddSessionRequest, err error) {
+	req = &AddSessionRequest{}
 	if err = c.ShouldBindJSON(&req.Body); err != nil {
 		return nil, fmt.Errorf("failed to bind json body: %w", err)
 	}
