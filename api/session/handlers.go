@@ -1,8 +1,6 @@
 package session
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -51,7 +49,7 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 		var peerKey string
 		if c.Service().Type() == types.ServiceTypeV2Ray {
 			var r v2ray.AddPeerRequest
-			if err = json.Unmarshal(req.Data, &r); err != nil {
+			if err = req.Body.DecodeData(&r); err != nil {
 				err = fmt.Errorf("failed to decode v2ray add peer request: %w", err)
 				ctx.JSON(http.StatusBadRequest, types.NewResponseError(4, err))
 				return
@@ -61,7 +59,7 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 		}
 		if c.Service().Type() == types.ServiceTypeWireGuard {
 			var r wireguard.AddPeerRequest
-			if err = json.Unmarshal(req.Data, &r); err != nil {
+			if err = req.Body.DecodeData(&r); err != nil {
 				err = fmt.Errorf("failed to decode wireguard add peer request: %w", err)
 				ctx.JSON(http.StatusBadRequest, types.NewResponseError(4, err))
 				return
@@ -114,21 +112,16 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
 			return
 		}
-		if !req.AccAddr().Equals(accAddr) {
-			err = fmt.Errorf("account address mismatch; got %s, expected %s", req.AccAddr(), accAddr)
+		if got := req.AccAddr(); !got.Equals(accAddr) {
+			err = fmt.Errorf("account address mismatch; got %s, expected %s", got, accAddr)
 			ctx.JSON(http.StatusUnauthorized, types.NewResponseError(7, err))
-			return
-		}
-		if ok := req.PubKey.VerifySignature(req.Msg(), req.Signature); !ok {
-			err = errors.New("signature verification failed")
-			ctx.JSON(http.StatusBadRequest, types.NewResponseError(7, err))
 			return
 		}
 
 		var data interface{}
 		if c.Service().Type() == types.ServiceTypeV2Ray {
 			var r v2ray.AddPeerRequest
-			if err = json.Unmarshal(req.Data, &r); err != nil {
+			if err = req.Body.DecodeData(&r); err != nil {
 				err = fmt.Errorf("failed to decode v2ray add peer request: %w", err)
 				ctx.JSON(http.StatusBadRequest, types.NewResponseError(8, err))
 				return
@@ -143,7 +136,7 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 		}
 		if c.Service().Type() == types.ServiceTypeWireGuard {
 			var r wireguard.AddPeerRequest
-			if err = json.Unmarshal(req.Data, &r); err != nil {
+			if err = req.Body.DecodeData(&r); err != nil {
 				err = fmt.Errorf("failed to decode wireguard add peer request: %w", err)
 				ctx.JSON(http.StatusBadRequest, types.NewResponseError(8, err))
 				return
@@ -155,6 +148,16 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(8, err))
 				return
 			}
+		}
+
+		res := &node.AddSessionResult{
+			Addrs: c.RemoteAddrs(),
+		}
+
+		if err = res.EncodeData(data); err != nil {
+			err = fmt.Errorf("failed to encode add peer response: %w", err)
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(9, err))
+			return
 		}
 
 		item := models.NewSession().
@@ -172,13 +175,8 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 
 		if err = operations.SessionInsertOne(c.Database(), item); err != nil {
 			err = fmt.Errorf("failed to insert session into database: %w", err)
-			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(9, err))
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(10, err))
 			return
-		}
-
-		res := &node.AddSessionResult{
-			Addrs: c.RemoteAddrs(),
-			Data:  data,
 		}
 
 		ctx.JSON(http.StatusOK, types.NewResponseResult(res))
