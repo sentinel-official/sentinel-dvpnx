@@ -7,13 +7,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gin-gonic/gin"
-	"github.com/sentinel-official/sentinel-go-sdk/types/api"
+	"github.com/sentinel-official/sentinel-go-sdk/node"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
 )
 
 // AddSessionRequest represents the request for adding a session.
 type AddSessionRequest struct {
-	Body *api.AddSessionRequestBody
+	Body *node.AddSessionRequestBody
 
 	Data      []byte
 	PubKey    types.PubKey

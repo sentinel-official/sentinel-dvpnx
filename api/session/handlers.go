@@ -10,8 +10,8 @@ import (
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gin-gonic/gin"
 	"github.com/sentinel-official/hub/v12/types/v1"
+	"github.com/sentinel-official/sentinel-go-sdk/node"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
-	"github.com/sentinel-official/sentinel-go-sdk/types/api"
 	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
 	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 
@@ -28,7 +28,7 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 		req, err := newAddSessionRequest(ctx)
 		if err != nil {
 			err = fmt.Errorf("invalid request format: %w", err)
-			ctx.JSON(http.StatusBadRequest, api.NewResponseError(2, err))
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(2, err))
 			return
 		}
 
@@ -39,12 +39,12 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 		record, err := operations.SessionFindOne(c.Database(), query)
 		if err != nil {
 			err = fmt.Errorf("failed to retrieve session from database for id %d: %w", req.Body.ID, err)
-			ctx.JSON(http.StatusInternalServerError, api.NewResponseError(3, err))
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(3, err))
 			return
 		}
 		if record != nil {
 			err = fmt.Errorf("session already exists for id %d", req.Body.ID)
-			ctx.JSON(http.StatusConflict, api.NewResponseError(3, err))
+			ctx.JSON(http.StatusConflict, types.NewResponseError(3, err))
 			return
 		}
 
@@ -53,7 +53,7 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 			var r v2ray.AddPeerRequest
 			if err = json.Unmarshal(req.Data, &r); err != nil {
 				err = fmt.Errorf("failed to decode v2ray add peer request: %w", err)
-				ctx.JSON(http.StatusBadRequest, api.NewResponseError(4, err))
+				ctx.JSON(http.StatusBadRequest, types.NewResponseError(4, err))
 				return
 			}
 
@@ -63,7 +63,7 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 			var r wireguard.AddPeerRequest
 			if err = json.Unmarshal(req.Data, &r); err != nil {
 				err = fmt.Errorf("failed to decode wireguard add peer request: %w", err)
-				ctx.JSON(http.StatusBadRequest, api.NewResponseError(4, err))
+				ctx.JSON(http.StatusBadRequest, types.NewResponseError(4, err))
 				return
 			}
 
@@ -77,51 +77,51 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 		record, err = operations.SessionFindOne(c.Database(), query)
 		if err != nil {
 			err = fmt.Errorf("failed to retrieve session from database for peer_key %s: %w", peerKey, err)
-			ctx.JSON(http.StatusInternalServerError, api.NewResponseError(5, err))
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err))
 			return
 		}
 		if record != nil {
 			err = fmt.Errorf("session already exists for peer_key %s", peerKey)
-			ctx.JSON(http.StatusConflict, api.NewResponseError(5, err))
+			ctx.JSON(http.StatusConflict, types.NewResponseError(5, err))
 			return
 		}
 
 		session, err := c.Client().Session(ctx, req.Body.ID)
 		if err != nil {
 			err = fmt.Errorf("failed to query session %d from blockchain: %w", req.Body.ID, err)
-			ctx.JSON(http.StatusInternalServerError, api.NewResponseError(6, err))
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(6, err))
 			return
 		}
 		if session == nil {
 			err = fmt.Errorf("session %d does not exist", req.Body.ID)
-			ctx.JSON(http.StatusNotFound, api.NewResponseError(6, err))
+			ctx.JSON(http.StatusNotFound, types.NewResponseError(6, err))
 			return
 		}
 		if !session.GetStatus().Equal(v1.StatusActive) {
 			err = fmt.Errorf("invalid session status; got %s, expected %s", session.GetStatus(), v1.StatusActive)
-			ctx.JSON(http.StatusBadRequest, api.NewResponseError(6, err))
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(6, err))
 			return
 		}
 		if session.GetNodeAddress() != c.NodeAddr().String() {
 			err = fmt.Errorf("node address mismatch; got %s, expected %s", session.GetNodeAddress(), c.NodeAddr())
-			ctx.JSON(http.StatusBadRequest, api.NewResponseError(6, err))
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(6, err))
 			return
 		}
 
 		accAddr, err := cosmossdk.AccAddressFromBech32(session.GetAccAddress())
 		if err != nil {
 			err = fmt.Errorf("invalid account address format: %w", err)
-			ctx.JSON(http.StatusInternalServerError, api.NewResponseError(7, err))
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
 			return
 		}
 		if !req.AccAddr().Equals(accAddr) {
 			err = fmt.Errorf("account address mismatch; got %s, expected %s", req.AccAddr(), accAddr)
-			ctx.JSON(http.StatusUnauthorized, api.NewResponseError(7, err))
+			ctx.JSON(http.StatusUnauthorized, types.NewResponseError(7, err))
 			return
 		}
 		if ok := req.PubKey.VerifySignature(req.Msg(), req.Signature); !ok {
 			err = errors.New("signature verification failed")
-			ctx.JSON(http.StatusBadRequest, api.NewResponseError(7, err))
+			ctx.JSON(http.StatusBadRequest, types.NewResponseError(7, err))
 			return
 		}
 
@@ -130,14 +130,14 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 			var r v2ray.AddPeerRequest
 			if err = json.Unmarshal(req.Data, &r); err != nil {
 				err = fmt.Errorf("failed to decode v2ray add peer request: %w", err)
-				ctx.JSON(http.StatusBadRequest, api.NewResponseError(8, err))
+				ctx.JSON(http.StatusBadRequest, types.NewResponseError(8, err))
 				return
 			}
 
 			data, err = c.Service().AddPeer(ctx, &r)
 			if err != nil {
 				err = fmt.Errorf("failed to add v2ray peer: %w", err)
-				ctx.JSON(http.StatusInternalServerError, api.NewResponseError(8, err))
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(8, err))
 				return
 			}
 		}
@@ -145,14 +145,14 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 			var r wireguard.AddPeerRequest
 			if err = json.Unmarshal(req.Data, &r); err != nil {
 				err = fmt.Errorf("failed to decode wireguard add peer request: %w", err)
-				ctx.JSON(http.StatusBadRequest, api.NewResponseError(8, err))
+				ctx.JSON(http.StatusBadRequest, types.NewResponseError(8, err))
 				return
 			}
 
 			data, err = c.Service().AddPeer(ctx, &r)
 			if err != nil {
 				err = fmt.Errorf("failed to add wireguard peer: %w", err)
-				ctx.JSON(http.StatusInternalServerError, api.NewResponseError(8, err))
+				ctx.JSON(http.StatusInternalServerError, types.NewResponseError(8, err))
 				return
 			}
 		}
@@ -172,15 +172,15 @@ func handlerAddSession(c *context.Context) gin.HandlerFunc {
 
 		if err = operations.SessionInsertOne(c.Database(), item); err != nil {
 			err = fmt.Errorf("failed to insert session into database: %w", err)
-			ctx.JSON(http.StatusInternalServerError, api.NewResponseError(9, err))
+			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(9, err))
 			return
 		}
 
-		res := &api.AddSessionResult{
+		res := &node.AddSessionResult{
 			Addrs: c.RemoteAddrs(),
 			Data:  data,
 		}
 
-		ctx.JSON(http.StatusOK, api.NewResponseResult(res))
+		ctx.JSON(http.StatusOK, types.NewResponseResult(res))
 	}
 }

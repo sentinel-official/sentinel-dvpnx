@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/sentinel-official/sentinel-go-sdk/client"
+	"github.com/sentinel-official/sentinel-go-sdk/core"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
@@ -21,7 +21,7 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 	log.Info("Setting up client")
 
 	// Initialize the base client with the provided configurations.
-	bc := client.NewBaseClient().
+	cc := core.NewClient().
 		WithQueryProve(cfg.Query.GetProve()).
 		WithQueryRetries(cfg.Query.GetRetries()).
 		WithQueryRetryDelay(cfg.Query.GetRetryDelay()).
@@ -39,12 +39,12 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		WithTxTimeoutHeight(0)
 
 	// Setup the keyring for the base client
-	if err := bc.SetupKeyring(cfg.Keyring); err != nil {
+	if err := cc.SetupKeyring(cfg.Keyring); err != nil {
 		return fmt.Errorf("failed to setup keyring: %w", err)
 	}
 
 	// Assign the initialized client to the context.
-	c.WithClient(bc)
+	c.WithClient(cc)
 	return nil
 }
 
