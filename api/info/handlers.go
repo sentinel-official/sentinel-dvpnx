@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
-	"github.com/sentinel-official/sentinel-go-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/types/api"
 	"github.com/sentinel-official/sentinel-go-sdk/version"
 
 	"github.com/sentinel-official/dvpn-node/context"
@@ -18,7 +18,7 @@ func handlerGetInfo(c *context.Context) gin.HandlerFunc {
 		loc := c.Location()
 
 		// Construct the result structure with node information.
-		res := ResultGetInfo{
+		res := &api.GetInfoResult{
 			Addr:         c.NodeAddr().String(),
 			DownLink:     downLink.String(),
 			HandshakeDNS: false,
@@ -36,6 +36,6 @@ func handlerGetInfo(c *context.Context) gin.HandlerFunc {
 		}
 
 		// Send the result as a JSON response with HTTP status 200.
-		ctx.JSON(http.StatusOK, types.NewResponseResult(res))
+		ctx.JSON(http.StatusOK, api.NewResponseResult(res))
 	}
 }
