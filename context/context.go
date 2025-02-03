@@ -9,7 +9,7 @@ import (
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	sentinelhub "github.com/sentinel-official/hub/v12/types"
 	"github.com/sentinel-official/hub/v12/types/v1"
-	"github.com/sentinel-official/sentinel-go-sdk/client"
+	"github.com/sentinel-official/sentinel-go-sdk/core"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	sentinelsdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	"gorm.io/gorm"
@@ -19,7 +19,7 @@ import (
 type Context struct {
 	accAddr        cosmossdk.AccAddress
 	apiAddrs       []string
-	client         *client.BaseClient
+	client         *core.Client
 	database       *gorm.DB
 	dlSpeed        math.Int
 	geoIPClient    geoip.Client
@@ -54,7 +54,7 @@ func (c *Context) APIAddrs() []string {
 }
 
 // Client returns the client instance set in the context.
-func (c *Context) Client() *client.BaseClient {
+func (c *Context) Client() *core.Client {
 	return c.client.WithRPCAddr(c.RPCAddr())
 }
 
@@ -181,7 +181,7 @@ func (c *Context) WithAPIAddrs(addrs []string) *Context {
 }
 
 // WithClient sets the base client in the context and returns the updated context.
-func (c *Context) WithClient(client *client.BaseClient) *Context {
+func (c *Context) WithClient(client *core.Client) *Context {
 	c.checkSealed()
 	c.client = client
 	return c
