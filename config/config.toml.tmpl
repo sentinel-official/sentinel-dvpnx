@@ -42,17 +42,17 @@ retry_delay = "{{ .Query.RetryDelay }}"
 # Example: ["http://rpc1.example.com", "http://rpc2.example.com"]
 addrs = [{{ range .RPC.Addrs }}"{{ . }}", {{ end }}]
 
+# Specifies the unique identifier for the blockchain network where transactions are executed.
+# Valid values: Any string
+# Example: "sentinelhub-2"
+chain_id = "{{ .RPC.ChainID }}"
+
 # Specifies the maximum duration allowed for completing an RPC query.
 # Valid values: Duration string
 # Example: "2s"
 timeout = "{{ .RPC.Timeout }}"
 
 [tx]
-# Specifies the unique identifier for the blockchain network where transactions are executed.
-# Valid values: Any string
-# Example: "sentinelhub-2"
-chain_id = "{{ .Tx.ChainID }}"
-
 # Specifies the address of the entity granting fees for transactions.
 # Valid values: Any valid blockchain address starting with "sent"
 # Example: "sent1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3nv8w3n"
