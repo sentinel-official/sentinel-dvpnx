@@ -2,7 +2,6 @@ package workers
 
 import (
 	gocontext "context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -30,13 +29,9 @@ func NewNodeStatusUpdateWorker(c *context.Context, interval time.Duration) cron.
 		)
 
 		// Broadcast the transaction message to the blockchain.
-		res, err := c.BroadcastTx(gocontext.TODO(), msg)
+		_, err := c.Client().BroadcastTxBlock(gocontext.TODO(), msg)
 		if err != nil {
 			return fmt.Errorf("failed to broadcast update node status tx: %w", err)
-		}
-		if !res.TxResult.IsOK() {
-			err := errors.New(res.TxResult.Log)
-			return fmt.Errorf("update node status tx failed with code %d: %w", res.TxResult.Code, err)
 		}
 
 		return nil

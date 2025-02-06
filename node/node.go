@@ -2,7 +2,6 @@ package node
 
 import (
 	gocontext "context"
-	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -105,13 +104,9 @@ func (n *Node) Register() error {
 	)
 
 	// Broadcast the registration transaction.
-	res, err := n.BroadcastTx(gocontext.TODO(), msg)
+	_, err = n.Client().BroadcastTxBlock(gocontext.TODO(), msg)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast register node tx: %w", err)
-	}
-	if !res.TxResult.IsOK() {
-		err := errors.New(res.TxResult.Log)
-		return fmt.Errorf("register node tx failed with code %d: %w", res.TxResult.Code, err)
 	}
 
 	return nil
@@ -130,13 +125,9 @@ func (n *Node) UpdateDetails() error {
 	)
 
 	// Broadcast the update transaction.
-	res, err := n.BroadcastTx(gocontext.TODO(), msg)
+	_, err := n.Client().BroadcastTxBlock(gocontext.TODO(), msg)
 	if err != nil {
 		return fmt.Errorf("failed to broadcast update node details tx: %w", err)
-	}
-	if !res.TxResult.IsOK() {
-		err := errors.New(res.TxResult.Log)
-		return fmt.Errorf("update node deatils tx failed with code %d: %w", res.TxResult.Code, err)
 	}
 
 	return nil

@@ -6,13 +6,11 @@ replace github.com/apernet/hysteria/core/v2 v2.4.5 => github.com/JimmyHuang454/h
 
 require (
 	cosmossdk.io/math v1.5.0
-	github.com/avast/retry-go/v4 v4.6.0
-	github.com/cometbft/cometbft v0.37.13
 	github.com/cosmos/cosmos-sdk v0.47.15
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-gonic/gin v1.10.0
 	github.com/sentinel-official/hub/v12 v12.0.0-rc9
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc6.0.20250203193147-f0198785a881
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc6.0.20250206161702-02d0f5075fb9
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
@@ -34,6 +32,7 @@ require (
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
+	github.com/avast/retry-go/v4 v4.6.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
@@ -48,6 +47,7 @@ require (
 	github.com/cockroachdb/pebble v1.1.0 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
+	github.com/cometbft/cometbft v0.37.13 // indirect
 	github.com/cometbft/cometbft-db v0.12.0 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
