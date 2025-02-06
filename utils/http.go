@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
 
@@ -39,15 +41,27 @@ func ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) err
 
 	// Serve TLS traffic
 	go func() {
+		// Create an HTTP server specifically for TLS connections.
+		// Suppress error logging to prevent spam from TLS handshake failures.
+		server := &http.Server{
+			Handler:  handler,
+			ErrorLog: log.New(io.Discard, "", 0),
+		}
+
 		tlsMux := tls.NewListener(tlsMux, cfg)
-		if err := http.Serve(tlsMux, handler); err != nil {
+		if err := server.Serve(tlsMux); err != nil {
 			panic(fmt.Errorf("failed to serve tls: %w", err))
 		}
 	}()
 
 	// Serve non-TLS traffic
 	go func() {
-		if err := http.Serve(anyMux, handler); err != nil {
+		// Create a standard HTTP server for unencrypted traffic.
+		server := &http.Server{
+			Handler: handler,
+		}
+
+		if err := server.Serve(anyMux); err != nil {
 			panic(fmt.Errorf("failed to serve any: %w", err))
 		}
 	}()
