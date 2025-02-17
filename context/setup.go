@@ -23,18 +23,22 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 	// Initialize the base client with the provided configurations.
 	cc := core.NewClient().
 		WithQueryProve(cfg.Query.GetProve()).
-		WithQueryRetries(cfg.Query.GetRetries()).
+		WithQueryRetryAttempts(cfg.Query.GetRetryAttempts()).
 		WithQueryRetryDelay(cfg.Query.GetRetryDelay()).
 		WithRPCAddr(c.RPCAddr()).
 		WithRPCChainID(cfg.RPC.GetChainID()).
 		WithRPCTimeout(cfg.RPC.GetTimeout()).
+		WithTxBroadcastRetryAttempts(cfg.Tx.GetBroadcastRetryAttempts()).
+		WithTxBroadcastRetryDelay(cfg.Tx.GetBroadcastRetryDelay()).
 		WithTxFeeGranterAddr(cfg.Tx.GetFeeGranterAddr()).
 		WithTxFees(nil).
 		WithTxFromName(cfg.Tx.GetFromName()).
-		WithTxGas(cfg.Tx.GetGas()).
 		WithTxGasAdjustment(cfg.Tx.GetGasAdjustment()).
+		WithTxGas(cfg.Tx.GetGas()).
 		WithTxGasPrices(cfg.Tx.GetGasPrices()).
 		WithTxMemo("").
+		WithTxQueryRetryAttempts(cfg.Tx.GetQueryRetryAttempts()).
+		WithTxQueryRetryDelay(cfg.Tx.GetQueryRetryDelay()).
 		WithTxSimulateAndExecute(cfg.Tx.GetSimulateAndExecute()).
 		WithTxTimeoutHeight(0)
 

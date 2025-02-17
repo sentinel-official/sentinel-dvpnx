@@ -29,7 +29,7 @@ func NewNodeStatusUpdateWorker(c *context.Context, interval time.Duration) cron.
 		)
 
 		// Broadcast the transaction message to the blockchain.
-		_, err := c.Client().BroadcastTxBlock(gocontext.TODO(), msg)
+		_, _, err := c.Client().BroadcastTxBlock(gocontext.TODO(), msg)
 		if err != nil {
 			return fmt.Errorf("failed to broadcast update node status tx: %w", err)
 		}
