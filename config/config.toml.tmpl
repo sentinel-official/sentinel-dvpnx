@@ -26,12 +26,12 @@ level = "{{ .Log.Level }}"
 # Example: true
 prove = {{ .Query.Prove }}
 
-# Specifies the number of retries for queries.
+# Specifies the number of retry attempts for queries.
 # Valid values: Any positive integer
 # Example: 3
-retries = {{ .Query.Retries }}
+retry_attempts = {{ .Query.RetryAttempts }}
 
-# Specifies the duration to wait between retry attempts for failed queries.
+# Specifies the duration to wait between retry attempts for queries.
 # Valid values: Duration string
 # Example: "500ms"
 retry_delay = "{{ .Query.RetryDelay }}"
@@ -53,6 +53,16 @@ chain_id = "{{ .RPC.ChainID }}"
 timeout = "{{ .RPC.Timeout }}"
 
 [tx]
+# Specifies the number of retry attempts for broadcasting a transaction.
+# Valid values: Any positive integer
+# Example: 3
+broadcast_retry_attempts = {{ .Tx.BroadcastRetryAttempts }}
+
+# Specifies the duration to wait between broadcast transaction retry attempts.
+# Valid values: Duration string
+# Example: "500ms"
+broadcast_retry_delay = "{{ .Tx.BroadcastRetryDelay }}"
+
 # Specifies the address of the entity granting fees for transactions.
 # Valid values: Any valid blockchain address starting with "sent"
 # Example: "sent1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3nv8w3n"
@@ -77,6 +87,16 @@ gas_adjustment = {{ .Tx.GasAdjustment }}
 # Valid values: Any valid coin string
 # Example: "0.1udvpn"
 gas_prices = "{{ .Tx.GasPrices }}"
+
+# Specifies the number of retry attempts for querying a transaction.
+# Valid values: Any positive integer
+# Example: 3
+query_retry_attempts = {{ .Tx.QueryRetryAttempts }}
+
+# Specifies the duration to wait between query transaction retry attempts.
+# Valid values: Duration string
+# Example: "500ms"
+query_retry_delay = "{{ .Tx.QueryRetryDelay }}"
 
 # Indicates whether the transaction should be simulated before execution to estimate gas and fees.
 # Valid values: true, false

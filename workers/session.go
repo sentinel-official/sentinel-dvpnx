@@ -59,7 +59,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 		}
 
 		// Broadcast the prepared messages as a transaction.
-		_, err = c.Client().BroadcastTxBlock(gocontext.TODO(), msgs...)
+		_, _, err = c.Client().BroadcastTxBlock(gocontext.TODO(), msgs...)
 		if err != nil {
 			return fmt.Errorf("failed to broadcast update session tx: %w", err)
 		}
