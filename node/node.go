@@ -104,8 +104,7 @@ func (n *Node) Register() error {
 	)
 
 	// Broadcast the registration transaction.
-	_, _, err = n.Client().BroadcastTxBlock(gocontext.TODO(), msg)
-	if err != nil {
+	if err := n.BroadcastTx(gocontext.TODO(), msg); err != nil {
 		return fmt.Errorf("failed to broadcast register node tx: %w", err)
 	}
 
@@ -125,8 +124,7 @@ func (n *Node) UpdateDetails() error {
 	)
 
 	// Broadcast the update transaction.
-	_, _, err := n.Client().BroadcastTxBlock(gocontext.TODO(), msg)
-	if err != nil {
+	if err := n.BroadcastTx(gocontext.TODO(), msg); err != nil {
 		return fmt.Errorf("failed to broadcast update node details tx: %w", err)
 	}
 
