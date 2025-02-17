@@ -34,8 +34,10 @@ type Context struct {
 	service        sentinelsdk.ServerService
 	ulSpeed        math.Int
 
-	rw     sync.RWMutex
 	sealed bool
+
+	fm  sync.RWMutex
+	txm sync.Mutex
 }
 
 // New creates a new Context instance with default values.
@@ -90,8 +92,8 @@ func (c *Context) Input() io.Reader {
 
 // Location returns the geo-location data set in the context.
 func (c *Context) Location() *geoip.Location {
-	c.rw.RLock()
-	defer c.rw.RUnlock()
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.location
 }
 
@@ -121,8 +123,8 @@ func (c *Context) RPCAddr() string {
 
 // RPCAddrs returns the RPC addresses used for queries in the context.
 func (c *Context) RPCAddrs() []string {
-	c.rw.RLock()
-	defer c.rw.RUnlock()
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.rpcAddrs
 }
 
@@ -139,30 +141,30 @@ func (c *Context) Service() sentinelsdk.ServerService {
 
 // SetLocation sets the geo-location data in the context.
 func (c *Context) SetLocation(location *geoip.Location) {
-	c.rw.Lock()
-	defer c.rw.Unlock()
+	c.fm.Lock()
+	defer c.fm.Unlock()
 	c.location = location
 }
 
 // SetRPCAddrs sets the RPC addresses in the context and allows for thread-safe updates.
 func (c *Context) SetRPCAddrs(addrs []string) {
-	c.rw.Lock()
-	defer c.rw.Unlock()
+	c.fm.Lock()
+	defer c.fm.Unlock()
 	c.rpcAddrs = addrs
 }
 
 // SetSpeedtestResults sets the download and upload speeds in the context.
 func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed math.Int) {
-	c.rw.Lock()
-	defer c.rw.Unlock()
+	c.fm.Lock()
+	defer c.fm.Unlock()
 	c.dlSpeed = dlSpeed
 	c.ulSpeed = ulSpeed
 }
 
 // SpeedtestResults returns the download and upload speeds set in the context.
 func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed math.Int) {
-	c.rw.RLock()
-	defer c.rw.RUnlock()
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.dlSpeed, c.ulSpeed
 }
 
