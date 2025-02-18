@@ -63,6 +63,11 @@ tools for key management and node initialization, ensuring privacy, performance,
 				return fmt.Errorf("failed to unmarshal config file: %w", err)
 			}
 
+			// Write the updated configuration to the file
+			if err := cfg.WriteToFile(cfgPath); err != nil {
+				return fmt.Errorf("failed to write config file: %w", err)
+			}
+
 			// Update the keyring configuration
 			cfg.Keyring.HomeDir = homeDir
 			cfg.Keyring.Input = cmd.InOrStdin()
