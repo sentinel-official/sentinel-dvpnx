@@ -177,6 +177,10 @@ func (s *Session) GetServiceType() sentinelsdk.ServiceType {
 
 // GetSignature returns the Signature field as a byte slice.
 func (s *Session) GetSignature() []byte {
+	if s.Signature == "" {
+		return nil
+	}
+
 	buf, err := base64.StdEncoding.DecodeString(s.Signature)
 	if err != nil {
 		panic(err)
