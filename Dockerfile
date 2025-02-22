@@ -11,10 +11,10 @@ RUN --mount=target=/go/pkg/mod,type=cache \
 
 FROM alpine:3.21
 
-COPY --from=build /go/bin/dvpnx /usr/local/bin/dvpnx
+COPY --from=build /go/bin/sentinel-dvpnx /usr/local/bin/sentinel-dvpnx
 COPY --from=build /root/hnsd/hnsd /usr/local/bin/hnsd
 
 RUN apk add --no-cache iptables unbound-libs v2ray wireguard-tools && \
     rm -rf /etc/v2ray/ /usr/share/v2ray/
 
-ENTRYPOINT ["dvpnx"]
+ENTRYPOINT ["sentinel-dvpnx"]

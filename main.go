@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// Define the default home directory for the application.
-	homeDir := filepath.Join(userDir, ".dvpnx")
+	homeDir := filepath.Join(userDir, ".sentinel-dvpnx")
 
 	// Initialize the root command for the application.
 	rootCmd := cmd.NewRootCmd(homeDir)

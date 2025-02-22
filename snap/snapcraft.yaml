@@ -1,4 +1,4 @@
-name: dvpnx
+name: sentinel-dvpnx
 base: core24
 adopt-info: metadata
 summary: Run and manage the Sentinel dVPN node
@@ -20,7 +20,7 @@ parts:
     override-build: |
       craftctl set version=$(git describe --tags --always | sed 's/^v//')
 
-  dvpnx:
+  sentinel-dvpnx:
     plugin: make
     source: .
     build-packages:
@@ -29,11 +29,11 @@ parts:
     override-build: |
       craftctl default
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      cp /bin/dvpnx $SNAPCRAFT_PART_INSTALL/bin/dvpnx
+      cp /bin/sentinel-dvpnx $SNAPCRAFT_PART_INSTALL/bin/sentinel-dvpnx
 
 apps:
-  dvpnx:
-    command: /bin/dvpnx
+  sentinel-dvpnx:
+    command: /bin/sentinel-dvpnx
     plugs:
       - network
       - network-bind

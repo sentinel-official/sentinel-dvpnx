@@ -19,7 +19,7 @@ benchmark:
 .PHONY: build
 build:
 	go build -ldflags="${LD_FLAGS}" -mod=readonly -tags="${TAGS}" -trimpath \
-		-o ./bin/dvpnx main.go
+		-o ./bin/sentinel-dvpnx main.go
 
 .PHONY: clean
 clean:
@@ -28,11 +28,11 @@ clean:
 .PHONY: install
 install:
 	go build -ldflags="${LD_FLAGS}" -mod=readonly -tags="${TAGS}" -trimpath \
-		-o "${GOPATH}/bin/dvpnx" main.go
+		-o "${GOPATH}/bin/sentinel-dvpnx" main.go
 
 .PHONY: build-image
 build-image:
-	@docker build --compress --file Dockerfile --force-rm --tag dvpnx .
+	@docker build --compress --file Dockerfile --force-rm --tag sentinel-dvpnx .
 
 .PHONY: go-lint
 go-lint:
