@@ -21,7 +21,7 @@ func NewRootCmd(homeDir string) *cobra.Command {
 
 	// Create the root command
 	rootCmd := &cobra.Command{
-		Use:   "dvpnx",
+		Use:   "sentinel-dvpnx",
 		Short: "Run and manage the Sentinel dVPN node",
 		Long: `The Sentinel dVPN node software lets users join the decentralized VPN network on the Sentinel Hub
 blockchain, providing secure, private, and censorship-resistant internet access while earning
