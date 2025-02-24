@@ -174,17 +174,7 @@ func (c *NodeConfig) GetMoniker() string {
 
 // GetRemoteAddrs returns the RemoteAddrs field.
 func (c *NodeConfig) GetRemoteAddrs() []string {
-	var addrs []string
-	for _, addr := range c.RemoteAddrs {
-		ip := net.ParseIP(addr)
-		if ip != nil && ip.To4() == nil && ip.To16() != nil {
-			addrs = append(addrs, fmt.Sprintf("[%s]", addr))
-		} else {
-			addrs = append(addrs, addr)
-		}
-	}
-
-	return addrs
+	return c.RemoteAddrs
 }
 
 // GetTLSCertPath returns the TLSCertPath field.
