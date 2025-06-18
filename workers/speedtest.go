@@ -8,7 +8,7 @@ import (
 	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/speedtest"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
 )
 
 const nameSpeedtest = "speedtest"

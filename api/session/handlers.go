@@ -7,15 +7,15 @@ import (
 	"cosmossdk.io/math"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gin-gonic/gin"
-	"github.com/sentinel-official/hub/v12/types/v1"
 	"github.com/sentinel-official/sentinel-go-sdk/node"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
 	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
+	"github.com/sentinel-official/sentinelhub/v12/types/v1"
 
-	"github.com/sentinel-official/dvpn-node/context"
-	"github.com/sentinel-official/dvpn-node/database/models"
-	"github.com/sentinel-official/dvpn-node/database/operations"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/database/models"
+	"github.com/sentinel-official/sentinel-dvpnx/database/operations"
 )
 
 // handlerAddSession returns a handler function to process the request for adding a session.

@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sentinel-official/dvpn-node/cmd"
+	"github.com/sentinel-official/sentinel-dvpnx/cmd"
 )
 
 func main() {

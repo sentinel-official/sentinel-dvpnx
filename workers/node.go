@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sentinel-official/hub/v12/types/v1"
-	"github.com/sentinel-official/hub/v12/x/node/types/v3"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinelhub/v12/types/v1"
+	"github.com/sentinel-official/sentinelhub/v12/x/node/types/v3"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
 )
 
 const nameNodeStatusUpdate = "node_status_update"

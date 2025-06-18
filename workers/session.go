@@ -7,12 +7,12 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types"
-	"github.com/sentinel-official/hub/v12/types/v1"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinelhub/v12/types/v1"
 
-	"github.com/sentinel-official/dvpn-node/context"
-	"github.com/sentinel-official/dvpn-node/database/operations"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/database/operations"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
 )
 
 const nameGeoIPLocation = "geoip_location"

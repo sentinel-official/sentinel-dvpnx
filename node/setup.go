@@ -9,9 +9,9 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
-	"github.com/sentinel-official/dvpn-node/api"
-	"github.com/sentinel-official/dvpn-node/config"
-	"github.com/sentinel-official/dvpn-node/workers"
+	"github.com/sentinel-official/sentinel-dvpnx/api"
+	"github.com/sentinel-official/sentinel-dvpnx/config"
+	"github.com/sentinel-official/sentinel-dvpnx/workers"
 )
 
 // init sets the Gin mode to ReleaseMode.

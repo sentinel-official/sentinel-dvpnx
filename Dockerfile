@@ -1,11 +1,11 @@
 FROM golang:1.22-alpine3.21 AS build
 
-COPY . /root/dvpn-node/
+COPY . /root/sentinel-dvpnx/
 
 RUN --mount=target=/go/pkg/mod,type=cache \
     --mount=target=/root/.cache/go-build,type=cache \
     apk add autoconf automake bash file g++ gcc git libtool linux-headers make musl-dev unbound-dev && \
-    cd /root/dvpn-node/ && make --jobs=$(nproc) install && \
+    cd /root/sentinel-dvpnx/ && make --jobs=$(nproc) install && \
     git clone --branch=master --depth=1 https://github.com/handshake-org/hnsd.git /root/hnsd && \
     cd /root/hnsd/ && bash autogen.sh && sh configure && make --jobs=$(nproc)
 

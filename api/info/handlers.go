@@ -9,7 +9,7 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/version"
 
-	"github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
 )
 
 // handlerGetInfo returns a handler function to retrieve node information.

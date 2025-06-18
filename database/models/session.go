@@ -7,9 +7,9 @@ import (
 
 	"cosmossdk.io/math"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
-	sentinelhub "github.com/sentinel-official/hub/v12/types"
-	"github.com/sentinel-official/hub/v12/x/session/types/v3"
 	sentinelsdk "github.com/sentinel-official/sentinel-go-sdk/types"
+	sentinelhub "github.com/sentinel-official/sentinelhub/v12/types"
+	"github.com/sentinel-official/sentinelhub/v12/x/session/types/v3"
 	"gorm.io/gorm"
 )
 

@@ -7,11 +7,11 @@ import (
 
 	"cosmossdk.io/math"
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
-	sentinelhub "github.com/sentinel-official/hub/v12/types"
-	"github.com/sentinel-official/hub/v12/types/v1"
 	"github.com/sentinel-official/sentinel-go-sdk/core"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	sentinelsdk "github.com/sentinel-official/sentinel-go-sdk/types"
+	sentinelhub "github.com/sentinel-official/sentinelhub/v12/types"
+	"github.com/sentinel-official/sentinelhub/v12/types/v1"
 	"gorm.io/gorm"
 )
 

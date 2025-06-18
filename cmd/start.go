@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/sentinel-official/dvpn-node/config"
-	"github.com/sentinel-official/dvpn-node/context"
-	"github.com/sentinel-official/dvpn-node/node"
+	"github.com/sentinel-official/sentinel-dvpnx/config"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/node"
 )
 
 // NewStartCmd creates and returns a new Cobra command to start the node application.

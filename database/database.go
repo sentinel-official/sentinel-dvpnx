@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/sentinel-official/dvpn-node/database/models"
+	"github.com/sentinel-official/sentinel-dvpnx/database/models"
 )
 
 // New initializes a new database connection with the specified file path and configuration.

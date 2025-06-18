@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sentinel-official/hub/v12/x/node/types/v3"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinelhub/v12/x/node/types/v3"
 
-	"github.com/sentinel-official/dvpn-node/context"
-	"github.com/sentinel-official/dvpn-node/utils"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/utils"
 )
 
 // Node represents the application node, holding its context, router, and scheduler.

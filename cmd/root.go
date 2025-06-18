@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/sentinel-official/dvpn-node/config"
+	"github.com/sentinel-official/sentinel-dvpnx/config"
 )
 
 // NewRootCmd returns the main/root command for the Sentinel dVPN node CLI.

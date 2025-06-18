@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sentinel-official/hub/v12/types/v1"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
+	"github.com/sentinel-official/sentinelhub/v12/types/v1"
 	"github.com/spf13/pflag"
 )
 

@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/sentinel-official/dvpn-node/config"
+	"github.com/sentinel-official/sentinel-dvpnx/config"
 )
 
 // NewInitCmd creates and returns a new Cobra command for initializing the application configuration.

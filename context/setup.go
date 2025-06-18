@@ -12,8 +12,8 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
 	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 
-	"github.com/sentinel-official/dvpn-node/config"
-	"github.com/sentinel-official/dvpn-node/database"
+	"github.com/sentinel-official/sentinel-dvpnx/config"
+	"github.com/sentinel-official/sentinel-dvpnx/database"
 )
 
 // SetupClient initializes the SDK client with the given configuration and assigns it to the context.

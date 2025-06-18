@@ -3,9 +3,9 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/sentinel-official/dvpn-node/api/info"
-	"github.com/sentinel-official/dvpn-node/api/session"
-	"github.com/sentinel-official/dvpn-node/context"
+	"github.com/sentinel-official/sentinel-dvpnx/api/info"
+	"github.com/sentinel-official/sentinel-dvpnx/api/session"
+	"github.com/sentinel-official/sentinel-dvpnx/context"
 )
 
 func RegisterRoutes(ctx *context.Context, r gin.IRouter) {

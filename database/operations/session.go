@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/sentinel-official/dvpn-node/database/models"
+	"github.com/sentinel-official/sentinel-dvpnx/database/models"
 )
 
 // SessionInsertOne inserts a single Session record into the database.
