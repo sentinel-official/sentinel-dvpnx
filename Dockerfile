@@ -9,7 +9,7 @@ RUN --mount=target=/go/pkg/mod,type=cache \
     git clone --branch=master --depth=1 https://github.com/handshake-org/hnsd.git /root/hnsd && \
     cd /root/hnsd/ && bash autogen.sh && sh configure && make --jobs=$(nproc)
 
-FROM alpine:3.21
+FROM alpine:3.22
 
 COPY --from=build /go/bin/sentinel-dvpnx /usr/local/bin/sentinel-dvpnx
 COPY --from=build /root/hnsd/hnsd /usr/local/bin/hnsd
