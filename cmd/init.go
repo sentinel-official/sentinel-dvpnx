@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sentinel-official/sentinel-go-sdk/libs/tls"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -62,14 +61,7 @@ is set to overwrite the existing configuration.`,
 
 			// Generate TLS keys if "withTLS" is enabled
 			if withTLS {
-				cert := tls.NewCertificate().
-					WithAddrs(cfg.Node.GetRemoteAddrs()).
-					WithCertPath(cfg.Node.GetTLSCertPath()).
-					WithKeyPath(cfg.Node.GetTLSKeyPath())
-
-				if err := cert.Generate(); err != nil {
-					return fmt.Errorf("failed to generate TLS keys: %w", err)
-				}
+				// todo: generate tls key and certificate
 			}
 
 			cmd.Println("Configuration initialized successfully")
