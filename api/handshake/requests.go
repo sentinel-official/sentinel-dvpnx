@@ -1,4 +1,4 @@
-package session
+package handshake
 
 import (
 	"fmt"
@@ -8,13 +8,13 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/node"
 )
 
-// AddSessionRequest represents the request for adding a session.
-type AddSessionRequest struct {
-	Body node.AddSessionRequestBody
+// InitHandshakeRequest represents the request for performing a handshake.
+type InitHandshakeRequest struct {
+	Body node.InitHandshakeRequestBody
 }
 
-// AccAddr returns the account address derived from the body.
-func (r *AddSessionRequest) AccAddr() types.AccAddress {
+// AccAddr returns the account address from the request body.
+func (r *InitHandshakeRequest) AccAddr() types.AccAddress {
 	addr, err := r.Body.AccAddr()
 	if err != nil {
 		panic(err)
@@ -23,9 +23,9 @@ func (r *AddSessionRequest) AccAddr() types.AccAddress {
 	return addr
 }
 
-// newAddSessionRequest parses, binds, and verifies the incoming JSON request.
-func newAddSessionRequest(c *gin.Context) (req *AddSessionRequest, err error) {
-	req = &AddSessionRequest{}
+// newInitHandshakeRequest parses, binds, and verifies the handshake request.
+func newInitHandshakeRequest(c *gin.Context) (req *InitHandshakeRequest, err error) {
+	req = &InitHandshakeRequest{}
 
 	// Bind JSON request to the struct.
 	if err := c.ShouldBindJSON(&req.Body); err != nil {

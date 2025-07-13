@@ -1,4 +1,4 @@
-package session
+package handshake
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,7 +6,7 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/context"
 )
 
-// RegisterRoutes registers the routes for the session API.
+// RegisterRoutes registers the routes for the handshake API.
 func RegisterRoutes(ctx *context.Context, r gin.IRouter) {
-	r.POST("/sessions", handlerAddSession(ctx))
+	r.POST("/", handlerInitHandshake(ctx))
 }

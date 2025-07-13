@@ -6,6 +6,7 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/context"
 )
 
+// RegisterRoutes registers the routes for the info API.
 func RegisterRoutes(ctx *context.Context, r gin.IRouter) {
 	r.GET("/", handlerGetInfo(ctx))
 }

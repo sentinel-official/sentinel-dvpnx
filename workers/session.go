@@ -177,8 +177,9 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 
 			// If the session exceeded any limits, remove the associated peer.
 			if removePeer {
-				if err := c.RemovePeerIfExistsForKey(gocontext.TODO(), item.PeerKey); err != nil {
-					return fmt.Errorf("failed to remove peer with key %s: %w", item.PeerKey, err)
+				req := item.GetServiceRequest()
+				if err := c.RemovePeerIfExists(gocontext.TODO(), req); err != nil {
+					return fmt.Errorf("failed to remove peer: %w", err)
 				}
 			}
 		}
@@ -239,8 +240,9 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 
 			// Remove the associated peer if validation fails.
 			if removePeer {
-				if err := c.RemovePeerIfExistsForKey(gocontext.TODO(), item.PeerKey); err != nil {
-					return fmt.Errorf("failed to remove peer with key %s: %w", item.PeerKey, err)
+				req := item.GetServiceRequest()
+				if err := c.RemovePeerIfExists(gocontext.TODO(), req); err != nil {
+					return fmt.Errorf("failed to remove peer: %w", err)
 				}
 			}
 

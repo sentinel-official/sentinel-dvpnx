@@ -18,17 +18,17 @@ type Session struct {
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"` // Timestamp when the record was created
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"` // Timestamp when the record was last updated
 
-	AccAddr       string `gorm:"column:acc_addr;not null"`             // Account address, cannot be null
-	DownloadBytes string `gorm:"column:download_bytes;not null"`       // Download bytes represented as a string
-	Duration      int64  `gorm:"column:duration;not null"`             // Duration of the session in nanoseconds
-	ID            uint64 `gorm:"column:id;not null;primaryKey"`        // Unique identifier for the session
-	MaxBytes      string `gorm:"column:max_bytes;not null"`            // Maximum bytes represented as a string
-	MaxDuration   int64  `gorm:"column:max_duration;not null"`         // Maximum allowed duration for the session in nanoseconds
-	NodeAddr      string `gorm:"column:node_addr;not null"`            // Address of the node associated with the session
-	PeerKey       string `gorm:"column:peer_key;not null;uniqueIndex"` // Unique key for the peer, indexed and cannot be null
-	ServiceType   string `gorm:"column:service_type;not null"`         // Type of service for the session
-	Signature     string `gorm:"column:signature;not null"`            // Signature associated with the session
-	UploadBytes   string `gorm:"column:upload_bytes;not null"`         // Upload bytes represented as a string
+	AccAddr        string `gorm:"column:acc_addr;not null"`                    // Account address, cannot be null
+	DownloadBytes  string `gorm:"column:download_bytes;not null"`              // Download bytes represented as a string
+	Duration       int64  `gorm:"column:duration;not null"`                    // Duration of the session in nanoseconds
+	ID             uint64 `gorm:"column:id;not null;primaryKey"`               // Unique identifier for the session
+	MaxBytes       string `gorm:"column:max_bytes;not null"`                   // Maximum bytes represented as a string
+	MaxDuration    int64  `gorm:"column:max_duration;not null"`                // Maximum allowed duration for the session in nanoseconds
+	NodeAddr       string `gorm:"column:node_addr;not null"`                   // Address of the node associated with the session
+	ServiceRequest string `gorm:"column:service_request;not null;uniqueIndex"` // Unique service request for the session, indexed and cannot be null
+	ServiceType    string `gorm:"column:service_type;not null"`                // Type of service for the session
+	Signature      string `gorm:"column:signature;not null"`                   // Signature associated with the session
+	UploadBytes    string `gorm:"column:upload_bytes;not null"`                // Upload bytes represented as a string
 }
 
 // NewSession creates and returns a new instance of the Session struct with default values.
@@ -78,9 +78,9 @@ func (s *Session) WithNodeAddr(v sentinelhub.NodeAddress) *Session {
 	return s
 }
 
-// WithPeerKey sets the PeerKey field and returns the updated Session instance.
-func (s *Session) WithPeerKey(v string) *Session {
-	s.PeerKey = v
+// WithServiceRequest sets the ServiceRequest field and returns the updated Session instance.
+func (s *Session) WithServiceRequest(v []byte) *Session {
+	s.ServiceRequest = base64.StdEncoding.EncodeToString(v)
 	return s
 }
 
@@ -165,9 +165,14 @@ func (s *Session) GetNodeAddr() sentinelhub.NodeAddress {
 	return addr
 }
 
-// GetPeerKey returns the PeerKey field.
-func (s *Session) GetPeerKey() string {
-	return s.PeerKey
+// GetServiceRequest returns the ServiceRequest field.
+func (s *Session) GetServiceRequest() []byte {
+	buf, err := base64.StdEncoding.DecodeString(s.ServiceRequest)
+	if err != nil {
+		panic(err)
+	}
+
+	return buf
 }
 
 // GetServiceType returns the ServiceType field as sentinelsdk.ServiceType.
