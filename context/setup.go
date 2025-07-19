@@ -8,6 +8,7 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/core"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/openvpn"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
 	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
@@ -112,86 +113,43 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 	return nil
 }
 
-// setupV2RayService configures the V2Ray service and assigns it to the context.
-func (c *Context) setupV2RayService(cfg *v2ray.ServerConfig) error {
-	// Initialize the peer manager and V2Ray service.
-	pm := v2ray.NewPeerManager()
-	service := v2ray.NewServer().
-		WithHomeDir(c.HomeDir()).
-		WithName("v2ray").
-		WithPeerManager(pm)
-
-	ok, err := service.IsUp(context.TODO())
-	if err != nil {
-		return fmt.Errorf("failed to check if v2ray service is up: %w", err)
-	}
-	if ok {
-		return fmt.Errorf("v2ray service is already up")
-	}
-
-	// Perform pre-start setup for the V2Ray service.
-	if err := service.PreUp(cfg); err != nil {
-		return fmt.Errorf("failed to run v2ray pre-up task: %w", err)
-	}
-
-	// Assign the service to the context.
-	c.WithService(service)
-	return nil
-}
-
-// setupWireGuardService configures the WireGuard service and assigns it to the context.
-func (c *Context) setupWireGuardService(cfg *wireguard.ServerConfig) error {
-	pools, err := cfg.IPPools()
-	if err != nil {
-		return fmt.Errorf("failed to get ip pools: %w", err)
-	}
-
-	// Initialize the peer manager and WireGuard service.
-	pm := wireguard.NewPeerManager(pools...)
-	service := wireguard.NewServer().
-		WithHomeDir(c.HomeDir()).
-		WithName(cfg.InInterface).
-		WithPeerManager(pm)
-
-	ok, err := service.IsUp(context.TODO())
-	if err != nil {
-		return fmt.Errorf("failed to check if wireguard service is up: %w", err)
-	}
-	if ok {
-		return fmt.Errorf("wireguard service is already up")
-	}
-
-	// Perform pre-start setup tasks for the WireGuard service.
-	if err := service.PreUp(cfg); err != nil {
-		return fmt.Errorf("failed to run wireguard pre-up task: %w", err)
-	}
-
-	// Assign the service to the context.
-	c.WithService(service)
-	return nil
-}
-
 // SetupService determines the service type and configures it accordingly.
 func (c *Context) SetupService(cfg *config.Config) error {
 	log.Info("Setting up service")
 
-	// Determine the type of service to set up.
-	t := cfg.Node.GetType()
-	switch t {
+	var (
+		service     types.ServerService         // The service instance to configure
+		serviceType = cfg.Node.GetServiceType() // Type of the service from configuration
+	)
+
+	// Determine the service type from the node configuration
+	switch cfg.Node.GetServiceType() {
 	case types.ServiceTypeV2Ray:
-		// Setup the V2Ray service.
-		if err := c.setupV2RayService(cfg.V2Ray); err != nil {
-			return fmt.Errorf("failed to setup v2ray service: %w", err)
-		}
+		service = v2ray.NewServer(c.HomeDir())
 	case types.ServiceTypeWireGuard:
-		// Setup the WireGuard service.
-		if err := c.setupWireGuardService(cfg.WireGuard); err != nil {
-			return fmt.Errorf("failed to setup wireguard service: %w", err)
-		}
+		service = wireguard.NewServer(c.HomeDir())
+	case types.ServiceTypeOpenVPN:
+		service = openvpn.NewServer(c.HomeDir())
 	default:
-		// Return an error for unsupported service types.
-		return fmt.Errorf("invalid service type %s", t)
+		return fmt.Errorf("invalid service type %s", serviceType)
 	}
+
+	// Check if the service is already running
+	ok, err := service.IsUp(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to check if service is up: %w", err)
+	}
+	if ok {
+		return fmt.Errorf("service is already up")
+	}
+
+	// Perform pre-start setup tasks for the service
+	if err := service.PreUp(nil); err != nil {
+		return fmt.Errorf("failed to run pre-up task: %w", err)
+	}
+
+	// Assign the service to the context
+	c.WithService(service)
 	return nil
 }
 
