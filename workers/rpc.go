@@ -53,7 +53,9 @@ func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worke
 					return
 				}
 
-				defer resp.Body.Close()
+				defer func() {
+					_ = resp.Body.Close()
+				}()
 
 				// Skip if the response status is not HTTP 200 OK.
 				if resp.StatusCode != http.StatusOK {

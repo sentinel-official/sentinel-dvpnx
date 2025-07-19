@@ -9,17 +9,6 @@ name = "{{ .Keyring.Name }}"
 # Example: "file"
 backend = "{{ .Keyring.Backend }}"
 
-[log]
-# Defines the format of log output.
-# Valid values: "json" (structured logs), "text" (plain-text logs)
-# Example: "json"
-format = "{{ .Log.Format }}"
-
-# Specifies the logging level, determining the verbosity of logs.
-# Valid values: "debug", "info", "warn", "error"
-# Example: "debug"
-level = "{{ .Log.Level }}"
-
 [query]
 # Specifies whether proof of validity should be included in query results.
 # Valid values: true, false
@@ -182,57 +171,13 @@ moniker = "{{ .Node.Moniker }}"
 # Example: ["http://node1.example.com", "http://node2.example.com"]
 remote_addrs = [{{ range .Node.RemoteAddrs }}"{{ . }}", {{ end }}]
 
-# Defines the type of node, determining its role and capabilities in the network.
-# Valid values: "v2ray", "wireguard"
+# Defines the type of node service, determining its role and capabilities in the network.
+# Valid values: "v2ray", "wireguard", "openvpn"
 # Example: "v2ray"
-type = "{{ .Node.Type }}"
+service_type = "{{ .Node.ServiceType }}"
 
 [qos]
 # Specifies the maximum number of peer connections allowed in Quality of Service (QoS).
 # Valid values: Any positive integer up to 252.
 # Example: 128
 max_peers = {{ .QOS.MaxPeers }}
-
-[v2ray]
-# Inbound field descriptions:
-# - port: The unique port number on which the inbound connection listens.
-#   It must not conflict with any other services running on the same machine.
-# - proxy: Specifies the proxy protocol for communication on the inbound connection.
-#   Must be either "vmess" (Virtual Machine Service) or "vless" (Virtual Light Service).
-# - security: Determines the security setting for the inbound connection.
-#   Can be "none" for no encryption, or "tls" for Transport Layer Security.
-# - tls_cert_path: The file path to the TLS certificate. This field is required if `security` is set to "tls".
-# - tls_key_path: The file path to the TLS key. This field is required if `security` is set to "tls".
-# - transport: Specifies the type of transport protocol to use for incoming requests.
-#   Must be one of the following: "domainsocket", "gun", "grpc", "http", "mkcp", "quic", "tcp", "websocket".
-
-{{- range $index, $inbound := .V2Ray.Inbounds }}
-
-[[v2ray.inbounds]]
-port = "{{ $inbound.Port }}"
-proxy = "{{ $inbound.Proxy }}"
-security = "{{ $inbound.Security }}"
-tls_cert_path = "{{ $inbound.TLSCertPath }}"
-tls_key_path = "{{ $inbound.TLSKeyPath }}"
-transport = "{{ $inbound.Transport }}"
-
-{{- end }}
-
-[wireguard]
-# Specifies the network interface used for establishing connections and handling traffic.
-in_interface = "{{ .WireGuard.InInterface }}"
-
-# Specifies the IPv4 address block for routing and networking.
-ipv4_addr = "{{ .WireGuard.IPv4Addr }}"
-
-# Specifies the IPv6 address block for routing and networking.
-ipv6_addr = "{{ .WireGuard.IPv6Addr }}"
-
-# Specifies the outbound network interface for NAT and routing.
-out_interface = "{{ .WireGuard.OutInterface }}"
-
-# Specifies the port number for incoming connections (typically UDP for WireGuard).
-port = "{{ .WireGuard.Port }}"
-
-# Specifies the private key for WireGuard encryption.
-private_key = "{{ .WireGuard.PrivateKey }}"

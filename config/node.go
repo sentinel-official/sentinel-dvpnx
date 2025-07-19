@@ -30,9 +30,9 @@ type NodeConfig struct {
 	IntervalStatusUpdate                   string   `mapstructure:"interval_status_update"`                      // IntervalStatusUpdate is the duration between updating the status of the node.
 	Moniker                                string   `mapstructure:"moniker"`                                     // Moniker is the name or identifier for the node.
 	RemoteAddrs                            []string `mapstructure:"remote_addrs"`                                // RemoteAddrs is a list of remote addresses for operations.
-	TLSCertPath                            string   `mapstructure:"-"`                                           // TLSCertPath is the file path to the TLS certificate.
-	TLSKeyPath                             string   `mapstructure:"-"`                                           // TLSKeyPath is the file path to the TLS private key.
-	Type                                   string   `mapstructure:"type"`                                        // Type is the service type of the node.
+	ServiceType                            string   `mapstructure:"service_type"`                                // ServiceType is the type of the service.
+	TLSCertPath                            string   `mapstructure:"tls_cert_path"`                               // TLSCertPath is the file path to the TLS certificate.
+	TLSKeyPath                             string   `mapstructure:"tls_key_path"`                                // TLSKeyPath is the file path to the TLS private key.
 }
 
 // APIAddrs generates the API addresses for the node.
@@ -177,6 +177,11 @@ func (c *NodeConfig) GetRemoteAddrs() []string {
 	return c.RemoteAddrs
 }
 
+// GetServiceType returns the ServiceType field.
+func (c *NodeConfig) GetServiceType() types.ServiceType {
+	return types.ServiceTypeFromString(c.ServiceType)
+}
+
 // GetTLSCertPath returns the TLSCertPath field.
 func (c *NodeConfig) GetTLSCertPath() string {
 	return c.TLSCertPath
@@ -185,11 +190,6 @@ func (c *NodeConfig) GetTLSCertPath() string {
 // GetTLSKeyPath returns the TLSKeyPath field.
 func (c *NodeConfig) GetTLSKeyPath() string {
 	return c.TLSKeyPath
-}
-
-// GetType returns the Type field.
-func (c *NodeConfig) GetType() types.ServiceType {
-	return types.ServiceTypeFromString(c.Type)
 }
 
 // Validate validates the node configuration.
@@ -255,6 +255,16 @@ func (c *NodeConfig) Validate() error {
 		}
 	}
 
+	// Validate the node type.
+	validServiceTypes := map[string]bool{
+		types.ServiceTypeV2Ray.String():     true,
+		types.ServiceTypeWireGuard.String(): true,
+		types.ServiceTypeOpenVPN.String():   true,
+	}
+	if !validServiceTypes[c.ServiceType] {
+		return errors.New("type must be one of: v2ray, wireguard, openvpn")
+	}
+
 	// Ensure the TLSCertPath field is not empty.
 	if c.TLSCertPath == "" {
 		return errors.New("tls_cert_path cannot be empty")
@@ -263,15 +273,6 @@ func (c *NodeConfig) Validate() error {
 	// Ensure the TLSKeyPath field is not empty.
 	if c.TLSKeyPath == "" {
 		return errors.New("tls_key_path cannot be empty")
-	}
-
-	// Validate the node type.
-	validTypes := map[string]bool{
-		types.ServiceTypeV2Ray.String():     true,
-		types.ServiceTypeWireGuard.String(): true,
-	}
-	if !validTypes[c.Type] {
-		return errors.New("type must be one of: v2ray, wireguard")
 	}
 
 	return nil
@@ -292,7 +293,7 @@ func (c *NodeConfig) SetForFlags(f *pflag.FlagSet) {
 	f.StringVar(&c.IntervalStatusUpdate, "node.interval-status-update", c.IntervalStatusUpdate, "interval for updating node status")
 	f.StringVar(&c.Moniker, "node.moniker", c.Moniker, "moniker (identifier) for the node")
 	f.StringSliceVar(&c.RemoteAddrs, "node.remote-addrs", c.RemoteAddrs, "list of remote addresses for the node")
-	f.StringVar(&c.Type, "node.type", c.Type, "service type of the node (e.g., v2ray, wireguard)")
+	f.StringVar(&c.ServiceType, "node.service-type", c.ServiceType, "service type of the node (e.g., v2ray, wireguard, openvpn)")
 }
 
 // DefaultNodeConfig returns a NodeConfig instance with default values.
@@ -311,17 +312,20 @@ func DefaultNodeConfig() *NodeConfig {
 		IntervalStatusUpdate:                   (1*time.Hour - 5*time.Minute).String(),
 		Moniker:                                randMoniker(),
 		RemoteAddrs:                            []string{},
+		ServiceType:                            randServiceType().String(),
 		TLSCertPath:                            "",
 		TLSKeyPath:                             "",
-		Type:                                   randServiceType().String(),
 	}
 }
 
 func randServiceType() types.ServiceType {
-	if rand.Int()%2 == 0 {
-		return types.ServiceTypeV2Ray
+	services := []types.ServiceType{
+		types.ServiceTypeWireGuard,
+		types.ServiceTypeV2Ray,
+		types.ServiceTypeOpenVPN,
 	}
-	return types.ServiceTypeWireGuard
+
+	return services[rand.IntN(len(services))]
 }
 
 func randMoniker() string {

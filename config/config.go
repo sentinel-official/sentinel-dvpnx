@@ -8,9 +8,6 @@ import (
 	"text/template"
 
 	"github.com/sentinel-official/sentinel-go-sdk/config"
-	"github.com/sentinel-official/sentinel-go-sdk/types"
-	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
-	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 	"github.com/spf13/pflag"
 )
 
@@ -22,11 +19,9 @@ var fs embed.FS
 // Config represents the overall configuration structure.
 type Config struct {
 	*config.Config `mapstructure:",squash"`
-	HandshakeDNS   *HandshakeDNSConfig     `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
-	Node           *NodeConfig             `mapstructure:"node"`          // Node contains node-specific configuration.
-	QOS            *QOSConfig              `mapstructure:"qos"`           // QOS contains Quality of Service configuration.
-	V2Ray          *v2ray.ServerConfig     `mapstructure:"v2ray"`         // V2Ray contains V2Ray server configuration.
-	WireGuard      *wireguard.ServerConfig `mapstructure:"wireguard"`     // WireGuard contains WireGuard server configuration.
+	HandshakeDNS   *HandshakeDNSConfig `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
+	Node           *NodeConfig         `mapstructure:"node"`          // Node contains node-specific configuration.
+	QOS            *QOSConfig          `mapstructure:"qos"`           // QOS contains Quality of Service configuration.
 }
 
 // Validate validates the entire configuration.
@@ -44,20 +39,6 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid qos: %w", err)
 	}
 
-	// Validate V2Ray configuration if the node type is V2Ray.
-	if c.Node.GetType() == types.ServiceTypeV2Ray {
-		if err := c.V2Ray.Validate(); err != nil {
-			return fmt.Errorf("invalid v2ray: %w", err)
-		}
-	}
-
-	// Validate WireGuard configuration if the node type is WireGuard.
-	if c.Node.GetType() == types.ServiceTypeWireGuard {
-		if err := c.WireGuard.Validate(); err != nil {
-			return fmt.Errorf("invalid wireguard: %w", err)
-		}
-	}
-
 	return nil
 }
 
@@ -67,8 +48,6 @@ func (c *Config) SetForFlags(f *pflag.FlagSet) {
 	c.HandshakeDNS.SetForFlags(f)
 	c.Node.SetForFlags(f)
 	c.QOS.SetForFlags(f)
-	c.V2Ray.SetForFlags(f)
-	c.WireGuard.SetForFlags(f)
 }
 
 // DefaultConfig returns a configuration instance with default values.
@@ -78,13 +57,11 @@ func DefaultConfig() *Config {
 		HandshakeDNS: DefaultHandshakeDNSConfig(),
 		Node:         DefaultNodeConfig(),
 		QOS:          DefaultQOSConfig(),
-		V2Ray:        v2ray.DefaultServerConfig(),
-		WireGuard:    wireguard.DefaultServerConfig(),
 	}
 }
 
-// WriteToFile writes the configuration to a file using a template.
-func (c *Config) WriteToFile(name string) error {
+// WriteAppConfig writes the application configuration to a file using a template.
+func (c *Config) WriteAppConfig(name string) error {
 	// Read the configuration template file.
 	text, err := fs.ReadFile("config.toml.tmpl")
 	if err != nil {
