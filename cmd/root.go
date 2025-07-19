@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/sentinel-official/sentinel-go-sdk/cmd"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -15,7 +16,14 @@ import (
 )
 
 // NewRootCmd returns the main/root command for the Sentinel dVPN node CLI.
-func NewRootCmd(homeDir string) *cobra.Command {
+func NewRootCmd(userDir string) *cobra.Command {
+	// Declare variables for CLI flags
+	var (
+		homeDir   = filepath.Join(userDir, ".sentinel-dvpnx")
+		logFormat = "text"
+		logLevel  = "info"
+	)
+
 	// Initialize default configuration
 	cfg := config.DefaultConfig()
 
@@ -32,18 +40,28 @@ tools for key management and node initialization, ensuring privacy, performance,
 			DisableDefaultCmd: true,
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			// Initialize viper instance
-			v := viper.New()
+			// Initialize logger with selected format and level
+			logger, err := log.NewLogger(cmd.OutOrStdout(), logFormat, logLevel)
+			if err != nil {
+				return fmt.Errorf("failed to initialize logger: %w", err)
+			}
 
-			// Skip loading if the config file does not exist
-			cfgPath := filepath.Join(homeDir, "config.toml")
-			if _, err := os.Stat(cfgPath); err != nil {
-				if !os.IsNotExist(err) {
-					return fmt.Errorf("failed to stat config file: %w", err)
-				}
-			} else {
-				// Read the config from the specified file
-				v.SetConfigFile(cfgPath)
+			// Set the global logger instance
+			log.SetLogger(logger)
+
+			// Construct the full path to the config file
+			cfgFile := filepath.Join(homeDir, "config.toml")
+
+			// Check if the config file exists at the specified path
+			cfgFileExists, err := utils.IsFileExists(cfgFile)
+			if err != nil {
+				return fmt.Errorf("failed to check if config file exists: %w", err)
+			}
+
+			// If the config file exists, proceed to read its contents
+			v := viper.New()
+			if cfgFileExists {
+				v.SetConfigFile(cfgFile)
 				if err := v.ReadInConfig(); err != nil {
 					return fmt.Errorf("failed to read config file: %w", err)
 				}
@@ -61,11 +79,6 @@ tools for key management and node initialization, ensuring privacy, performance,
 			// Unmarshal configuration into the config object
 			if err := v.Unmarshal(cfg); err != nil {
 				return fmt.Errorf("failed to unmarshal config file: %w", err)
-			}
-
-			// Write the updated configuration to the file
-			if err := cfg.WriteToFile(cfgPath); err != nil {
-				return fmt.Errorf("failed to write config file: %w", err)
 			}
 
 			// Update the keyring configuration
@@ -90,7 +103,12 @@ tools for key management and node initialization, ensuring privacy, performance,
 
 	// Add persistent flags
 	rootCmd.PersistentFlags().StringVar(&homeDir, "home", homeDir, "home directory for application config and data")
+	rootCmd.PersistentFlags().StringVar(&logFormat, "log.format", logFormat, "format of the log output (json or text)")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log.level", logLevel, "log level for output (debug, error, info, warn)")
+
 	_ = viper.BindPFlag("home", rootCmd.PersistentFlags().Lookup("home"))
+	_ = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("log.format"))
+	_ = viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("log.level"))
 
 	return rootCmd
 }

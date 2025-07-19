@@ -28,14 +28,6 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return fmt.Errorf("invalid configuration: %w", err)
 			}
 
-			// Initialize the logger based on the configuration.
-			logger, err := log.NewLogger(cmd.OutOrStderr(), cfg.Log.GetFormat(), cfg.Log.GetLevel())
-			if err != nil {
-				return fmt.Errorf("failed to initialize logger: %w", err)
-			}
-
-			// Set the global logger for the application.
-			log.SetLogger(logger)
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -47,7 +39,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				WithHomeDir(homeDir).
 				WithInput(cmd.InOrStdin())
 
-			// Setup the application context.
+			// Set up the application context.
 			if err := ctx.Setup(cfg); err != nil {
 				return fmt.Errorf("failed to setup context: %w", err)
 			}
@@ -55,7 +47,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			// Seal the context to prevent further modifications.
 			ctx.Seal()
 
-			// Create and setup the node.
+			// Create and set up the node.
 			n := node.New(ctx)
 			if err := n.Setup(cfg); err != nil {
 				return fmt.Errorf("failed to setup node: %w", err)
