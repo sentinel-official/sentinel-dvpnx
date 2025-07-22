@@ -72,8 +72,12 @@ is set to overwrite the existing configuration.`,
 					return fmt.Errorf("failed to initialize PKI: %w", err)
 				}
 
+				opts := []crypto.CertOption{
+					crypto.CertSAN(cfg.Node.GetRemoteAddrs()...),
+				}
+
 				// Issue a TLS certificate for the node
-				if _, _, err := pki.Issue("tls"); err != nil {
+				if _, _, err := pki.Issue("tls", opts...); err != nil {
 					return fmt.Errorf("failed to issue TLS key and certificate: %w", err)
 				}
 			}
