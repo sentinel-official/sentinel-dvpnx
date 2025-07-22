@@ -14,7 +14,7 @@ FROM alpine:3.22
 COPY --from=build /go/bin/sentinel-dvpnx /usr/local/bin/sentinel-dvpnx
 COPY --from=build /root/hnsd/hnsd /usr/local/bin/hnsd
 
-RUN apk add --no-cache iptables unbound-libs v2ray wireguard-tools && \
+RUN apk add --no-cache iptables openvpn unbound-libs v2ray wireguard-tools && \
     rm -rf /etc/v2ray/ /usr/share/v2ray/
 
 ENTRYPOINT ["sentinel-dvpnx"]
