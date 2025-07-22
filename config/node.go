@@ -300,8 +300,8 @@ func (c *NodeConfig) SetForFlags(f *pflag.FlagSet) {
 func DefaultNodeConfig() *NodeConfig {
 	return &NodeConfig{
 		APIPort:                                fmt.Sprintf("%d", utils.RandomPort()),
-		GigabytePrices:                         "0.01;0;udvpn",
-		HourlyPrices:                           "0.02;0;udvpn",
+		GigabytePrices:                         "udvpn:0.01,0",
+		HourlyPrices:                           "udvpn:0.02,0",
 		IntervalBestRPCAddr:                    (5 * time.Minute).String(),
 		IntervalGeoIPLocation:                  (6 * time.Hour).String(),
 		IntervalSessionUsageSyncWithBlockchain: (2*time.Hour - 5*time.Minute).String(),

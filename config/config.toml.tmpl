@@ -110,15 +110,15 @@ peers = {{ .HandshakeDNS.Peers }}
 api_port = "{{ .Node.APIPort }}"
 
 # Specifies the pricing for data usage per gigabyte.
-# Valid values: String in the format of "basevalue;quotevalue;denom", separated by commas for multiple entries.
-# Format: "<basevalue>;<quotevalue>;<denom>"
-# Example: "0.001;1000000;udvpn,0.001;2000;uatom"
+# Valid values: String in the format of "denom:base_value,quote_value", separated by semicolons for multiple entries.
+# Format: "<denom>:<base_value>,<quote_value>"
+# Example: "udvpn:0.001,1000000;uatom:0.001,2000"
 gigabyte_prices = "{{ .Node.GigabytePrices }}"
 
 # Specifies the pricing for hourly usage of the node's services.
-# Valid values: String in the format of "basevalue;quotevalue;denom", separated by commas for multiple entries.
-# Format: "<basevalue>;<quotevalue>;<denom>"
-# Example: "0.001;1000000;udvpn,0.001;2000;uatom"
+# Valid values: String in the format of "denom:base_value,quote_value", separated by semicolons for multiple entries.
+# Format: "<denom>:<base_value>,<quote_value>"
+# Example: "udvpn:0.001,1000000;uatom:0.001,2000"
 hourly_prices = "{{ .Node.HourlyPrices }}"
 
 # Defines the interval for determining the optimal RPC address.
