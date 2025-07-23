@@ -9,7 +9,7 @@ description: |
   tools for key management and node initialization, ensuring privacy, performance, and ease of use.
 
 grade: devel
-confinement: devmode
+confinement: classic
 
 parts:
   metadata:
@@ -21,19 +21,19 @@ parts:
       craftctl set version=$(git describe --tags --always | sed 's/^v//')
 
   sentinel-dvpnx:
+    after: [ metadata ]
     plugin: make
+    make-parameters:
+      - install
     source: .
     build-packages:
       - git
       - golang
     override-build: |
       craftctl default
-      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      cp /bin/sentinel-dvpnx $SNAPCRAFT_PART_INSTALL/bin/sentinel-dvpnx
+      mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin
+      cp /bin/sentinel-dvpnx ${SNAPCRAFT_PART_INSTALL}/bin/sentinel-dvpnx
 
 apps:
   sentinel-dvpnx:
-    command: /bin/sentinel-dvpnx
-    plugs:
-      - network
-      - network-bind
+    command: bin/sentinel-dvpnx
