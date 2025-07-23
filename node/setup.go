@@ -76,10 +76,8 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 func (n *Node) Setup(cfg *config.Config) error {
 	log.Info("Setting up node...")
 
-	// Configure the Node's network and TLS settings.
+	// Set the API listen address.
 	n.WithListenAddr(cfg.Node.APIListenAddr())
-	n.WithTLSCertPath(cfg.Node.GetTLSCertPath())
-	n.WithTLSKeyPath(cfg.Node.GetTLSKeyPath())
 
 	// Set up the HTTP router.
 	if err := n.SetupRouter(cfg); err != nil {

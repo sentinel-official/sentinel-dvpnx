@@ -92,6 +92,9 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to retrieve key: %w", err)
 	}
+	if key == nil {
+		return fmt.Errorf("key %s does not exist", cfg.Tx.GetFromName())
+	}
 
 	// Extract the address from the key.
 	addr, err := key.GetAddress()

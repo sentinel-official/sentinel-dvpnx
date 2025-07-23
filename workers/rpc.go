@@ -24,12 +24,7 @@ func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worke
 
 	// Handler function that measures RPC address latencies and updates the context.
 	handlerFunc := func() error {
-		// Retrieve the list of RPC addresses from the context.
-		addrs := c.RPCAddrs()
-		if len(addrs) == 0 {
-			return nil
-		}
-
+		addrs := c.RPCAddrs()                       // List of RPC addresses from the context.
 		latencies := make(map[string]time.Duration) // Maps each address to its latency.
 		mu := &sync.Mutex{}                         // Synchronizes access to shared resources.
 		wg := &sync.WaitGroup{}                     // Ensures all goroutines complete.
@@ -66,27 +61,29 @@ func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worke
 				latency := time.Since(start)
 
 				mu.Lock()
+				defer mu.Unlock()
+
 				latencies[addr] = latency
-				mu.Unlock()
 			}(addr)
 		}
 
 		// Wait for all goroutines to complete.
 		wg.Wait()
 
+		// Return early if no RPC addresses are available.
+		if len(latencies) == 0 {
+			return nil
+		}
+
 		// Sort the addresses by latency.
 		addrs = make([]string, 0, len(latencies))
 		for addr := range latencies {
 			addrs = append(addrs, addr)
 		}
+
 		sort.Slice(addrs, func(i, j int) bool {
 			return latencies[addrs[i]] < latencies[addrs[j]]
 		})
-
-		// Return early if no RPC addresses are available.
-		if len(addrs) == 0 {
-			return nil
-		}
 
 		// Update the context with the sorted list of RPC addresses.
 		c.SetRPCAddrs(addrs)

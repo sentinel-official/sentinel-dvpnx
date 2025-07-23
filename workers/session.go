@@ -34,9 +34,6 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 		if err != nil {
 			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
 		}
-		if len(items) == 0 {
-			return nil
-		}
 
 		var msgs []types.Msg
 		// Iterate over sessions and prepare messages for updates.
@@ -45,17 +42,13 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 			if err != nil {
 				return fmt.Errorf("failed to query session from the blockchain: %w", err)
 			}
-
-			if session != nil {
-				// Generate an update message for the session.
-				msg := item.MsgUpdateSessionRequest()
-				msgs = append(msgs, msg)
+			if session == nil {
+				continue
 			}
-		}
 
-		// If no update messages were generated, exit early.
-		if len(msgs) == 0 {
-			return nil
+			// Generate an update message for the session.
+			msg := item.MsgUpdateSessionRequest()
+			msgs = append(msgs, msg)
 		}
 
 		// Broadcast the prepared messages as a transaction.
@@ -94,9 +87,6 @@ func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Dur
 		items, err := c.Service().PeerStatistics(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to fetch peer statistics: %w", err)
-		}
-		if len(items) == 0 {
-			return nil
 		}
 
 		// Update the database with the fetched statistics.
@@ -150,9 +140,6 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 		if err != nil {
 			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
 		}
-		if len(items) == 0 {
-			return nil
-		}
 
 		// Validate session limits and remove peers if needed.
 		for _, item := range items {
@@ -160,7 +147,7 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 
 			// Check if the session exceeds the maximum allowed bytes.
 			maxBytes := item.GetMaxBytes()
-			if !maxBytes.IsZero() && item.GetBytes().GTE(maxBytes) {
+			if !maxBytes.IsZero() && item.GetTotalBytes().GTE(maxBytes) {
 				removePeer = true
 			}
 
@@ -211,9 +198,6 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
 			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
-		}
-		if len(items) == 0 {
-			return nil
 		}
 
 		// Validate session status and consistency.

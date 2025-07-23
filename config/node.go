@@ -31,8 +31,6 @@ type NodeConfig struct {
 	Moniker                                string   `mapstructure:"moniker"`                                     // Moniker is the name or identifier for the node.
 	RemoteAddrs                            []string `mapstructure:"remote_addrs"`                                // RemoteAddrs is a list of remote addresses for operations.
 	ServiceType                            string   `mapstructure:"service_type"`                                // ServiceType is the type of the service.
-	TLSCertPath                            string   `mapstructure:"tls_cert_path"`                               // TLSCertPath is the file path to the TLS certificate.
-	TLSKeyPath                             string   `mapstructure:"tls_key_path"`                                // TLSKeyPath is the file path to the TLS private key.
 }
 
 // APIAddrs generates the API addresses for the node.
@@ -49,7 +47,7 @@ func (c *NodeConfig) APIAddrs() []string {
 
 // APIListenAddr returns the API listen address.
 func (c *NodeConfig) APIListenAddr() string {
-	return fmt.Sprintf("0.0.0.0:%d", c.APIListenPort())
+	return fmt.Sprintf(":%d", c.APIListenPort())
 }
 
 // APIListenPort returns the API listen port.
@@ -182,16 +180,6 @@ func (c *NodeConfig) GetServiceType() types.ServiceType {
 	return types.ServiceTypeFromString(c.ServiceType)
 }
 
-// GetTLSCertPath returns the TLSCertPath field.
-func (c *NodeConfig) GetTLSCertPath() string {
-	return c.TLSCertPath
-}
-
-// GetTLSKeyPath returns the TLSKeyPath field.
-func (c *NodeConfig) GetTLSKeyPath() string {
-	return c.TLSKeyPath
-}
-
 // Validate validates the node configuration.
 func (c *NodeConfig) Validate() error {
 	// Ensure the API port is not empty and validate it.
@@ -265,16 +253,6 @@ func (c *NodeConfig) Validate() error {
 		return errors.New("type must be one of: v2ray, wireguard, openvpn")
 	}
 
-	// Ensure the TLSCertPath field is not empty.
-	if c.TLSCertPath == "" {
-		return errors.New("tls_cert_path cannot be empty")
-	}
-
-	// Ensure the TLSKeyPath field is not empty.
-	if c.TLSKeyPath == "" {
-		return errors.New("tls_key_path cannot be empty")
-	}
-
 	return nil
 }
 
@@ -313,8 +291,6 @@ func DefaultNodeConfig() *NodeConfig {
 		Moniker:                                randMoniker(),
 		RemoteAddrs:                            []string{},
 		ServiceType:                            randServiceType().String(),
-		TLSCertPath:                            "",
-		TLSKeyPath:                             "",
 	}
 }
 

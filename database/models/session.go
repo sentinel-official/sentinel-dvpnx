@@ -112,8 +112,8 @@ func (s *Session) GetAccAddr() cosmossdk.AccAddress {
 	return addr
 }
 
-// GetBytes returns the total number of bytes (download + upload) as math.Int.
-func (s *Session) GetBytes() math.Int {
+// GetTotalBytes returns the total number of bytes (download + upload) as math.Int.
+func (s *Session) GetTotalBytes() math.Int {
 	downloadBytes := s.GetDownloadBytes()
 	uploadBytes := s.GetUploadBytes()
 

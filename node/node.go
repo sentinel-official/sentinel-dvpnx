@@ -3,24 +3,23 @@ package node
 import (
 	gocontext "context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/cmux"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinelhub/v12/x/node/types/v3"
 
 	"github.com/sentinel-official/sentinel-dvpnx/context"
-	"github.com/sentinel-official/sentinel-dvpnx/utils"
 )
 
 // Node represents the application node, holding its context, router, and scheduler.
 type Node struct {
 	*context.Context
-	listenAddr  string          // Address the Node listens on for incoming requests.
-	router      *gin.Engine     // HTTP router for handling API requests.
-	scheduler   *cron.Scheduler // Scheduler for managing periodic tasks.
-	tlsCertPath string          // Path to the TLS certificate file.
-	tlsKeyPath  string          // Path to the TLS key file.
+	laddr     string          // Address the Node listens on for incoming requests.
+	router    *gin.Engine     // HTTP router for handling API requests.
+	scheduler *cron.Scheduler // Scheduler for managing periodic tasks.
 }
 
 // New creates a new Node with the provided context.
@@ -30,7 +29,7 @@ func New(ctx *context.Context) *Node {
 
 // WithListenAddr sets the listen address for the Node and returns the updated Node.
 func (n *Node) WithListenAddr(v string) *Node {
-	n.listenAddr = v
+	n.laddr = v
 	return n
 }
 
@@ -46,21 +45,9 @@ func (n *Node) WithScheduler(v *cron.Scheduler) *Node {
 	return n
 }
 
-// WithTLSCertPath sets the TLS certificate path for the Node and returns the updated Node.
-func (n *Node) WithTLSCertPath(v string) *Node {
-	n.tlsCertPath = v
-	return n
-}
-
-// WithTLSKeyPath sets the TLS key path for the Node and returns the updated Node.
-func (n *Node) WithTLSKeyPath(v string) *Node {
-	n.tlsKeyPath = v
-	return n
-}
-
 // ListenAddr returns the listen address of the Node.
 func (n *Node) ListenAddr() string {
-	return n.listenAddr
+	return n.laddr
 }
 
 // Router returns the router configured for the Node.
@@ -73,14 +60,14 @@ func (n *Node) Scheduler() *cron.Scheduler {
 	return n.scheduler
 }
 
-// TLSCertPath returns the TLS certificate path of the Node.
-func (n *Node) TLSCertPath() string {
-	return n.tlsCertPath
+// TLSCertFile returns the TLS certificate path of the Node.
+func (n *Node) TLSCertFile() string {
+	return filepath.Join(n.HomeDir(), "tls.crt")
 }
 
-// TLSKeyPath returns the TLS key path of the Node.
-func (n *Node) TLSKeyPath() string {
-	return n.tlsKeyPath
+// TLSKeyFile returns the TLS key path of the Node.
+func (n *Node) TLSKeyFile() string {
+	return filepath.Join(n.HomeDir(), "tls.key")
 }
 
 // Register registers the node on the network if not already registered.
@@ -149,7 +136,7 @@ func (n *Node) Start(errChan chan error) error {
 
 	go func() {
 		// Start the HTTPS server using the configured TLS certificates and router.
-		if err := utils.ListenAndServeTLS(n.ListenAddr(), n.TLSCertPath(), n.TLSKeyPath(), n.Router()); err != nil {
+		if err := cmux.ListenAndServeTLS(n.ListenAddr(), n.TLSCertFile(), n.TLSKeyFile(), n.Router()); err != nil {
 			errChan <- fmt.Errorf("failed to listen and serve tls: %w", err)
 			return
 		}

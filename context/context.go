@@ -57,7 +57,7 @@ func (c *Context) APIAddrs() []string {
 
 // Client returns the client instance set in the context.
 func (c *Context) Client() *core.Client {
-	return c.client.WithRPCAddr(c.RPCAddr())
+	return c.client.WithRPCAddr(c.RPCAddr()) // TODO: is it needed?
 }
 
 // Database returns the database connection set in the context.
@@ -114,7 +114,7 @@ func (c *Context) RemoteAddrs() []string {
 // RPCAddr returns the first RPC address from the list or an empty string if no addresses are available.
 func (c *Context) RPCAddr() string {
 	addrs := c.RPCAddrs()
-	if len(addrs) == 0 {
+	if len(addrs) == 0 { // TODO: is it needed?
 		return ""
 	}
 
@@ -262,6 +262,6 @@ func (c *Context) WithService(service sentinelsdk.ServerService) *Context {
 // checkSealed verifies if the context is sealed to prevent modification.
 func (c *Context) checkSealed() {
 	if c.sealed {
-		panic(errors.New("context is sealed and cannot be modified"))
+		panic(errors.New("context is sealed"))
 	}
 }
