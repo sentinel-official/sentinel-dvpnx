@@ -36,10 +36,10 @@ type NodeConfig struct {
 // APIAddrs generates the API addresses for the node.
 func (c *NodeConfig) APIAddrs() []string {
 	addrs := make([]string, len(c.RemoteAddrs))
-	port := c.GetAPIPort().OutFrom
+	port := fmt.Sprintf("%d", c.GetAPIPort().OutFrom)
 
 	for i, addr := range c.RemoteAddrs {
-		addrs[i] = fmt.Sprintf("https://%s:%d", addr, port)
+		addrs[i] = net.JoinHostPort(addr, port)
 	}
 
 	return addrs
