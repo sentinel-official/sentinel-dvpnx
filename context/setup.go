@@ -147,7 +147,7 @@ func (c *Context) SetupService(cfg *config.Config) error {
 	}
 
 	// Perform pre-start setup tasks for the service
-	if err := service.PreUp(nil); err != nil {
+	if err := service.PreUp(); err != nil {
 		return fmt.Errorf("failed to run pre-up task: %w", err)
 	}
 

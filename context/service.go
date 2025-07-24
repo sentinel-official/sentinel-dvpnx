@@ -19,11 +19,12 @@ func (c *Context) RemovePeerIfExists(ctx context.Context, req []byte) error {
 	}
 
 	// Remove the peer if it exists.
-	if err := c.Service().RemovePeer(ctx, req); err != nil {
+	id, err := c.Service().RemovePeer(ctx, req)
+	if err != nil {
 		return fmt.Errorf("failed to remove peer: %w", err)
 	}
 
-	log.Info("Peer has been removed from service", "request", string(req))
+	log.Info("Peer has been removed from service", "id", id)
 
 	return nil
 }

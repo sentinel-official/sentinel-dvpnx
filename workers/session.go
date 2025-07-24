@@ -95,9 +95,9 @@ func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Dur
 			downloadBytes := math.NewInt(item.DownloadBytes).String()
 			uploadBytes := math.NewInt(item.UploadBytes).String()
 
-			// Define query to find the session by peer key.
+			// Define query to find the session by peer id.
 			query := map[string]interface{}{
-				"peer_key": item.Key,
+				"peer_id": item.ID,
 			}
 
 			// Define updates to apply to the session record.
@@ -108,7 +108,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Dur
 
 			// Update the session in the database.
 			if _, err := operations.SessionFindOneAndUpdate(c.Database(), query, updates); err != nil {
-				return fmt.Errorf("failed to update session with peer key %s: %w", item.Key, err)
+				return fmt.Errorf("failed to update session with peer %s: %w", item.ID, err)
 			}
 		}
 
@@ -164,7 +164,7 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 
 			// If the session exceeded any limits, remove the associated peer.
 			if removePeer {
-				req := item.GetServiceRequest()
+				req := item.GetPeerRequest()
 				if err := c.RemovePeerIfExists(gocontext.TODO(), req); err != nil {
 					return fmt.Errorf("failed to remove peer: %w", err)
 				}
@@ -224,7 +224,7 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 
 			// Remove the associated peer if validation fails.
 			if removePeer {
-				req := item.GetServiceRequest()
+				req := item.GetPeerRequest()
 				if err := c.RemovePeerIfExists(gocontext.TODO(), req); err != nil {
 					return fmt.Errorf("failed to remove peer: %w", err)
 				}

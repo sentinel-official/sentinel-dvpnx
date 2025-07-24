@@ -18,17 +18,18 @@ type Session struct {
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"` // Timestamp when the record was created
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"` // Timestamp when the record was last updated
 
-	AccAddr        string `gorm:"column:acc_addr;not null"`                    // Account address, cannot be null
-	DownloadBytes  string `gorm:"column:download_bytes;not null"`              // Download bytes represented as a string
-	Duration       int64  `gorm:"column:duration;not null"`                    // Duration of the session in nanoseconds
-	ID             uint64 `gorm:"column:id;not null;primaryKey"`               // Unique identifier for the session
-	MaxBytes       string `gorm:"column:max_bytes;not null"`                   // Maximum bytes represented as a string
-	MaxDuration    int64  `gorm:"column:max_duration;not null"`                // Maximum allowed duration for the session in nanoseconds
-	NodeAddr       string `gorm:"column:node_addr;not null"`                   // Address of the node associated with the session
-	ServiceRequest string `gorm:"column:service_request;not null;uniqueIndex"` // Unique service request for the session, indexed and cannot be null
-	ServiceType    string `gorm:"column:service_type;not null"`                // Type of service for the session
-	Signature      string `gorm:"column:signature;not null"`                   // Signature associated with the session
-	UploadBytes    string `gorm:"column:upload_bytes;not null"`                // Upload bytes represented as a string
+	AccAddr       string `gorm:"column:acc_addr;not null"`                 // Account address, cannot be null
+	DownloadBytes string `gorm:"column:download_bytes;not null"`           // Download bytes represented as a string
+	Duration      int64  `gorm:"column:duration;not null"`                 // Duration of the session in nanoseconds
+	ID            uint64 `gorm:"column:id;not null;primaryKey"`            // Unique identifier for the session
+	MaxBytes      string `gorm:"column:max_bytes;not null"`                // Maximum bytes represented as a string
+	MaxDuration   int64  `gorm:"column:max_duration;not null"`             // Maximum allowed duration for the session in nanoseconds
+	NodeAddr      string `gorm:"column:node_addr;not null"`                // Address of the node associated with the session
+	PeerID        string `gorm:"column:peer_id;not null;uniqueIndex"`      // Unique identifier for the peer (e.g., public key, email, or name depending on protocol)
+	PeerRequest   string `gorm:"column:peer_request;not null;uniqueIndex"` // Unique peer request for the session, indexed and cannot be null
+	ServiceType   string `gorm:"column:service_type;not null"`             // Type of service for the session
+	Signature     string `gorm:"column:signature;not null"`                // Signature associated with the session
+	UploadBytes   string `gorm:"column:upload_bytes;not null"`             // Upload bytes represented as a string
 }
 
 // NewSession creates and returns a new instance of the Session struct with default values.
@@ -78,9 +79,15 @@ func (s *Session) WithNodeAddr(v sentinelhub.NodeAddress) *Session {
 	return s
 }
 
-// WithServiceRequest sets the ServiceRequest field and returns the updated Session instance.
-func (s *Session) WithServiceRequest(v []byte) *Session {
-	s.ServiceRequest = base64.StdEncoding.EncodeToString(v)
+// WithPeerID sets the PeerID field and returns the updated Session instance.
+func (s *Session) WithPeerID(v string) *Session {
+	s.PeerID = v
+	return s
+}
+
+// WithPeerRequest sets the PeerRequest field and returns the updated Session instance.
+func (s *Session) WithPeerRequest(v []byte) *Session {
+	s.PeerRequest = base64.StdEncoding.EncodeToString(v)
 	return s
 }
 
@@ -165,9 +172,14 @@ func (s *Session) GetNodeAddr() sentinelhub.NodeAddress {
 	return addr
 }
 
-// GetServiceRequest returns the ServiceRequest field.
-func (s *Session) GetServiceRequest() []byte {
-	buf, err := base64.StdEncoding.DecodeString(s.ServiceRequest)
+// GetPeerID returns the PeerID field.
+func (s *Session) GetPeerID() string {
+	return s.PeerID
+}
+
+// GetPeerRequest returns the PeerRequest field as a decoded byte slice.
+func (s *Session) GetPeerRequest() []byte {
+	buf, err := base64.StdEncoding.DecodeString(s.PeerRequest)
 	if err != nil {
 		panic(err)
 	}

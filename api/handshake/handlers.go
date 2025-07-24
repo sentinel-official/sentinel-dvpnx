@@ -49,9 +49,9 @@ func handlerInitHandshake(c *context.Context) gin.HandlerFunc {
 			return
 		}
 
-		// Check if a session already exists by service request data.
+		// Check if a session already exists by peer request data.
 		query = map[string]interface{}{
-			"service_request": base64.StdEncoding.EncodeToString(req.Body.Data),
+			"peer_request": base64.StdEncoding.EncodeToString(req.Body.Data),
 		}
 
 		record, err = operations.SessionFindOne(c.Database(), query)
@@ -61,7 +61,7 @@ func handlerInitHandshake(c *context.Context) gin.HandlerFunc {
 			return
 		}
 		if record != nil {
-			err = errors.New("session already exists for service request")
+			err = errors.New("session already exists for peer request")
 			ctx.JSON(http.StatusConflict, types.NewResponseError(4, err))
 			return
 		}
@@ -107,7 +107,7 @@ func handlerInitHandshake(c *context.Context) gin.HandlerFunc {
 		}
 
 		// Add the peer to the active service.
-		data, err := c.Service().AddPeer(ctx, req.Body.Data)
+		id, data, err := c.Service().AddPeer(ctx, req.Body.Data)
 		if err != nil {
 			err = fmt.Errorf("failed to add peer: %w", err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
@@ -124,17 +124,18 @@ func handlerInitHandshake(c *context.Context) gin.HandlerFunc {
 
 		// Insert the session record into the database.
 		item := models.NewSession().
-			WithID(session.GetID()).
 			WithAccAddr(accAddr).
-			WithNodeAddr(c.NodeAddr()).
 			WithDownloadBytes(math.ZeroInt()).
-			WithUploadBytes(math.ZeroInt()).
-			WithMaxBytes(session.GetMaxBytes()).
 			WithDuration(0).
+			WithID(session.GetID()).
+			WithMaxBytes(session.GetMaxBytes()).
 			WithMaxDuration(session.GetMaxDuration()).
+			WithNodeAddr(c.NodeAddr()).
+			WithPeerID(id).
+			WithPeerRequest(req.Body.Data).
+			WithServiceType(c.Service().Type()).
 			WithSignature(nil).
-			WithServiceRequest(req.Body.Data).
-			WithServiceType(c.Service().Type())
+			WithUploadBytes(math.ZeroInt())
 
 		if err = operations.SessionInsertOne(c.Database(), item); err != nil {
 			err = fmt.Errorf("failed to insert session into database: %w", err)

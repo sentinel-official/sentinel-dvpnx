@@ -7,8 +7,8 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.17
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc6.0.20250724094806-ee945c304f59
-	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc9.0.20250724093515-a6fd8b6f9ea9
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc6.0.20250724183040-c0be3200b9d1
+	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc9.0.20250724081315-9ff6fcf35896
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
 	github.com/spf13/viper v1.20.1
