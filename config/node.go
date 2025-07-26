@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sentinel-official/sentinel-go-sdk/libs/netip"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
 	"github.com/sentinel-official/sentinelhub/v12/types/v1"
@@ -56,8 +57,8 @@ func (c *NodeConfig) APIListenPort() uint16 {
 }
 
 // GetAPIPort returns the APIPort field.
-func (c *NodeConfig) GetAPIPort() types.Port {
-	v, err := types.NewPortFromString(c.APIPort)
+func (c *NodeConfig) GetAPIPort() *netip.Port {
+	v, err := netip.NewPortFromString(c.APIPort)
 	if err != nil {
 		panic(err)
 	}
@@ -186,7 +187,7 @@ func (c *NodeConfig) Validate() error {
 	if c.APIPort == "" {
 		return errors.New("api_port cannot be empty")
 	}
-	if _, err := types.NewPortFromString(c.APIPort); err != nil {
+	if _, err := netip.NewPortFromString(c.APIPort); err != nil {
 		return fmt.Errorf("invalid api_port: %w", err)
 	}
 
