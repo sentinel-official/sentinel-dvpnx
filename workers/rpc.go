@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"sort"
@@ -8,9 +9,8 @@ import (
 	"time"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
-	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
-	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
 const nameBestRPCAddr = "best_rpc_addr"
@@ -18,12 +18,11 @@ const nameBestRPCAddr = "best_rpc_addr"
 // NewBestRPCAddrWorker creates a worker that determines the best RPC address based on latency.
 // This worker periodically measures the latency of available RPC addresses,
 // sorts them in ascending order of latency, and updates the context.
-func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worker {
+func NewBestRPCAddrWorker(c *core.Context, interval time.Duration) cron.Worker {
 	client := &http.Client{Timeout: 5 * time.Second}
-	log := logger.With("name", nameBestRPCAddr)
 
 	// Handler function that measures RPC address latencies and updates the context.
-	handlerFunc := func() error {
+	handlerFunc := func(ctx context.Context) error {
 		addrs := c.RPCAddrs()                       // List of RPC addresses from the context.
 		latencies := make(map[string]time.Duration) // Maps each address to its latency.
 		mu := &sync.Mutex{}                         // Synchronizes access to shared resources.
@@ -93,7 +92,6 @@ func NewBestRPCAddrWorker(c *context.Context, interval time.Duration) cron.Worke
 
 	// Error handling function to log failures.
 	onErrorFunc := func(err error) bool {
-		log.Error("Failed to run scheduler worker", "msg", err)
 		return false
 	}
 

@@ -1,4 +1,4 @@
-package context
+package core
 
 import (
 	"errors"
@@ -19,6 +19,7 @@ import (
 type Context struct {
 	accAddr        cosmossdk.AccAddress
 	apiAddrs       []string
+	apiListenAddr  string
 	client         *core.Client
 	database       *gorm.DB
 	dlSpeed        math.Int
@@ -40,8 +41,8 @@ type Context struct {
 	txm sync.Mutex
 }
 
-// New creates a new Context instance with default values.
-func New() *Context {
+// NewContext creates a new Context instance with default values.
+func NewContext() *Context {
 	return &Context{}
 }
 
@@ -53,6 +54,11 @@ func (c *Context) AccAddr() cosmossdk.AccAddress {
 // APIAddrs returns the api addresses set in the context.
 func (c *Context) APIAddrs() []string {
 	return c.apiAddrs
+}
+
+// APIListenAddr returns the listen address of the node API.
+func (c *Context) APIListenAddr() string {
+	return c.apiListenAddr
 }
 
 // Client returns the client instance set in the context.
@@ -179,6 +185,13 @@ func (c *Context) WithAccAddr(addr cosmossdk.AccAddress) *Context {
 func (c *Context) WithAPIAddrs(addrs []string) *Context {
 	c.checkSealed()
 	c.apiAddrs = addrs
+	return c
+}
+
+// WithAPIListenAddr sets the listen address for the Node API and returns the updated context.
+func (c *Context) WithAPIListenAddr(addr string) *Context {
+	c.checkSealed()
+	c.apiListenAddr = addr
 	return c
 }
 

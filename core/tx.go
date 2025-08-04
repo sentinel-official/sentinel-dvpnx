@@ -1,9 +1,11 @@
-package context
+package core
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 )
 
 // BroadcastTx safely broadcasts a transaction with the provided messages.
@@ -18,10 +20,18 @@ func (c *Context) BroadcastTx(ctx context.Context, msgs ...types.Msg) error {
 	}
 
 	// Broadcast the transaction and wait for it to be included in a block.
-	_, _, err := c.Client().BroadcastTxBlock(ctx, msgs...)
+	txResp, txRes, err := c.Client().BroadcastTxBlock(ctx, msgs...)
 	if err != nil {
 		return err
 	}
 
+	log.Info(
+		"Transaction broadcasted successfully",
+		"code", fmt.Sprintf("%s/%d", txRes.TxResult.Codespace, txRes.TxResult.Code),
+		"gas", fmt.Sprintf("%d/%d", txRes.TxResult.GasUsed, txRes.TxResult.GasWanted),
+		"hash", txResp.Hash,
+		"height", txRes.Height,
+		"msgs", len(msgs),
+	)
 	return nil
 }

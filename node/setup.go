@@ -76,9 +76,6 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 func (n *Node) Setup(cfg *config.Config) error {
 	log.Info("Setting up node...")
 
-	// Set the API listen address.
-	n.WithListenAddr(cfg.Node.APIListenAddr())
-
 	// Set up the HTTP router.
 	if err := n.SetupRouter(cfg); err != nil {
 		return fmt.Errorf("failed to setup router: %w", err)

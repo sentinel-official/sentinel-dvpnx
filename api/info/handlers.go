@@ -9,11 +9,11 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/version"
 
-	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
 // handlerGetInfo returns a handler function to retrieve node information.
-func handlerGetInfo(c *context.Context) gin.HandlerFunc {
+func handlerGetInfo(c *core.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		dlSpeed, ulSpeed := c.SpeedtestResults()
 		loc := c.Location()
@@ -31,7 +31,7 @@ func handlerGetInfo(c *context.Context) gin.HandlerFunc {
 				Longitude: loc.Longitude,
 			},
 			Moniker:     c.Moniker(),
-			Peers:       c.Service().PeerCount(),
+			Peers:       c.Service().PeersLen(),
 			ServiceType: c.Service().Type().String(),
 			Version:     version.Get(),
 		}

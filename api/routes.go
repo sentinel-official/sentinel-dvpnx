@@ -5,10 +5,10 @@ import (
 
 	"github.com/sentinel-official/sentinel-dvpnx/api/handshake"
 	"github.com/sentinel-official/sentinel-dvpnx/api/info"
-	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
-func RegisterRoutes(ctx *context.Context, r gin.IRouter) {
-	handshake.RegisterRoutes(ctx, r)
-	info.RegisterRoutes(ctx, r)
+func RegisterRoutes(c *core.Context, r gin.IRouter) {
+	handshake.RegisterRoutes(c, r)
+	info.RegisterRoutes(c, r)
 }

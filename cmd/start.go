@@ -6,12 +6,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/sentinel-official/sentinel-dvpnx/config"
-	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 	"github.com/sentinel-official/sentinel-dvpnx/node"
 )
 
@@ -35,52 +35,56 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			homeDir := viper.GetString("home")
 
 			// Create and configure the application context.
-			ctx := context.New().
+			c := core.NewContext().
 				WithHomeDir(homeDir).
 				WithInput(cmd.InOrStdin())
 
 			// Set up the application context.
-			if err := ctx.Setup(cfg); err != nil {
+			if err := c.Setup(cfg); err != nil {
 				return fmt.Errorf("failed to setup context: %w", err)
 			}
 
 			// Seal the context to prevent further modifications.
-			ctx.Seal()
+			c.Seal()
 
 			// Create and set up the node.
-			n := node.New(ctx)
+			n := node.New(c)
 			if err := n.Setup(cfg); err != nil {
 				return fmt.Errorf("failed to setup node: %w", err)
 			}
 
-			// Channel to capture errors from the node.
-			errChan := make(chan error, 1)
-
-			// Start the node and handle any startup errors.
-			if err := n.Start(errChan); err != nil {
-				return fmt.Errorf("failed to start node: %w", err)
-			}
-
-			log.Info("Node started successfully")
-
 			// Channel to capture OS signals (SIGINT, SIGTERM).
-			signalChan := make(chan os.Signal, 1)
-			signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-			// Wait for a signal or an error.
-			select {
-			case <-signalChan:
-			case err := <-errChan:
-				log.Error(err.Error())
-			}
+			eg, ctx := errgroup.WithContext(cmd.Context())
+			eg.Go(func() error {
+				select {
+				case <-sigChan:
+				case <-ctx.Done():
+				}
 
-			// Stop the node gracefully.
-			if err := n.Stop(); err != nil {
-				return fmt.Errorf("failed to stop node: %w", err)
-			}
+				// Stop the node gracefully.
+				if err := n.Stop(); err != nil {
+					return fmt.Errorf("failed to stop node: %w", err)
+				}
 
-			log.Info("Node stopped successfully")
-			return nil
+				return nil
+			})
+
+			eg.Go(func() error {
+				// Start the node and handle any startup errors.
+				if err := n.Start(ctx); err != nil {
+					return fmt.Errorf("failed to start node: %w", err)
+				}
+				if err := n.Wait(); err != nil {
+					return fmt.Errorf("failed to wait node: %w", err)
+				}
+
+				return nil
+			})
+
+			return eg.Wait()
 		},
 	}
 

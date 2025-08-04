@@ -1,24 +1,22 @@
 package workers
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
-	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
-	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
 const nameGeoIPLocation = "geoip_location"
 
 // NewGeoIPLocationWorker creates a worker to periodically update the GeoIP location in the context.
 // This worker fetches the GeoIP location and updates the context at regular intervals.
-func NewGeoIPLocationWorker(c *context.Context, interval time.Duration) cron.Worker {
-	log := logger.With("name", nameGeoIPLocation)
-
+func NewGeoIPLocationWorker(c *core.Context, interval time.Duration) cron.Worker {
 	// Handler function that fetches the GeoIP location and updates the context.
-	handlerFunc := func() error {
+	handlerFunc := func(_ context.Context) error {
 		// Fetch the GeoIP location using the GeoIP client.
 		location, err := c.GeoIPClient().Get("")
 		if err != nil {
@@ -33,7 +31,6 @@ func NewGeoIPLocationWorker(c *context.Context, interval time.Duration) cron.Wor
 
 	// Error handling function to log failures.
 	onErrorFunc := func(err error) bool {
-		log.Error("Failed to run scheduler worker", "msg", err)
 		return false
 	}
 

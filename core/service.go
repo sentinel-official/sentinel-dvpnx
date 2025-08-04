@@ -1,4 +1,4 @@
-package context
+package core
 
 import (
 	"context"
@@ -25,6 +25,5 @@ func (c *Context) RemovePeerIfExists(ctx context.Context, req []byte) error {
 	}
 
 	log.Info("Peer has been removed from service", "id", id)
-
 	return nil
 }

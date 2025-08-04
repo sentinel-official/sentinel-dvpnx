@@ -1,17 +1,16 @@
 package workers
 
 import (
-	gocontext "context"
+	"context"
 	"fmt"
 	"time"
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
-	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinelhub/v12/types/v1"
 
-	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 	"github.com/sentinel-official/sentinel-dvpnx/database/operations"
 )
 
@@ -25,10 +24,8 @@ const (
 // NewSessionUsageSyncWithBlockchainWorker creates a worker that synchronizes session usage with the blockchain.
 // This worker retrieves session data from the database, validates it against the blockchain,
 // and broadcasts any updates as transactions.
-func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.Duration) cron.Worker {
-	log := logger.With("name", nameSessionUsageSyncWithBlockchain)
-
-	handlerFunc := func() error {
+func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Duration) cron.Worker {
+	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
@@ -38,7 +35,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 		var msgs []types.Msg
 		// Iterate over sessions and prepare messages for updates.
 		for _, item := range items {
-			session, err := c.Client().Session(gocontext.TODO(), item.GetID())
+			session, err := c.Client().Session(ctx, item.GetID())
 			if err != nil {
 				return fmt.Errorf("failed to query session from the blockchain: %w", err)
 			}
@@ -52,7 +49,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 		}
 
 		// Broadcast the prepared messages as a transaction.
-		if err := c.BroadcastTx(gocontext.TODO(), msgs...); err != nil {
+		if err := c.BroadcastTx(ctx, msgs...); err != nil {
 			return fmt.Errorf("failed to broadcast update session tx: %w", err)
 		}
 
@@ -61,7 +58,6 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 
 	// Error handling function to log failures.
 	onErrorFunc := func(err error) bool {
-		log.Error("Failed to run scheduler worker", "msg", err)
 		return false
 	}
 
@@ -75,29 +71,23 @@ func NewSessionUsageSyncWithBlockchainWorker(c *context.Context, interval time.D
 
 // NewSessionUsageSyncWithDatabaseWorker creates a worker that updates session usage in the database.
 // This worker fetches usage data from the peer service and updates the corresponding database records.
-func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Duration) cron.Worker {
-	log := logger.With("name", nameSessionUsageSyncWithDatabase)
-
-	handlerFunc := func() error {
-		// Create a context with a timeout to fetch peer statistics.
-		ctx, cancel := gocontext.WithTimeout(gocontext.TODO(), 5*time.Second)
-		defer cancel()
-
+func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Duration) cron.Worker {
+	handlerFunc := func(ctx context.Context) error {
 		// Fetch peer usage statistics from the service.
-		items, err := c.Service().PeerStatistics(ctx)
+		items, err := c.Service().PeerStatistics()
 		if err != nil {
 			return fmt.Errorf("failed to fetch peer statistics: %w", err)
 		}
 
 		// Update the database with the fetched statistics.
-		for _, item := range items {
+		for id, item := range items {
 			// Convert usage statistics to strings for database storage.
-			downloadBytes := math.NewInt(item.DownloadBytes).String()
-			uploadBytes := math.NewInt(item.UploadBytes).String()
+			downloadBytes := math.NewInt(item.RxBytes).String()
+			uploadBytes := math.NewInt(item.TxBytes).String()
 
 			// Define query to find the session by peer id.
 			query := map[string]interface{}{
-				"peer_id": item.ID,
+				"peer_id": id,
 			}
 
 			// Define updates to apply to the session record.
@@ -108,7 +98,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Dur
 
 			// Update the session in the database.
 			if _, err := operations.SessionFindOneAndUpdate(c.Database(), query, updates); err != nil {
-				return fmt.Errorf("failed to update session with peer %s: %w", item.ID, err)
+				return fmt.Errorf("failed to update session with peer %s: %w", id, err)
 			}
 		}
 
@@ -117,7 +107,6 @@ func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Dur
 
 	// Error handling function to log failures.
 	onErrorFunc := func(err error) bool {
-		log.Error("Failed to run scheduler worker", "msg", err)
 		return false
 	}
 
@@ -131,10 +120,8 @@ func NewSessionUsageSyncWithDatabaseWorker(c *context.Context, interval time.Dur
 
 // NewSessionUsageValidateWorker creates a worker that validates session usage limits and removes peers if necessary.
 // This worker checks if sessions exceed their maximum byte or duration limits and removes peers accordingly.
-func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) cron.Worker {
-	log := logger.With("name", nameSessionUsageValidate)
-
-	handlerFunc := func() error {
+func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron.Worker {
+	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
@@ -165,7 +152,7 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 			// If the session exceeded any limits, remove the associated peer.
 			if removePeer {
 				req := item.GetPeerRequest()
-				if err := c.RemovePeerIfExists(gocontext.TODO(), req); err != nil {
+				if err := c.RemovePeerIfExists(ctx, req); err != nil {
 					return fmt.Errorf("failed to remove peer: %w", err)
 				}
 			}
@@ -176,7 +163,6 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 
 	// Error handling function to log failures.
 	onErrorFunc := func(err error) bool {
-		log.Error("Failed to run scheduler worker", "msg", err)
 		return false
 	}
 
@@ -190,10 +176,8 @@ func NewSessionUsageValidateWorker(c *context.Context, interval time.Duration) c
 
 // NewSessionValidateWorker creates a worker that validates session status and removes peers if necessary.
 // This worker ensures sessions are active and consistent between the database and blockchain.
-func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.Worker {
-	log := logger.With("name", nameSessionValidate)
-
-	handlerFunc := func() error {
+func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Worker {
+	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
@@ -202,7 +186,7 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 
 		// Validate session status and consistency.
 		for _, item := range items {
-			session, err := c.Client().Session(gocontext.TODO(), item.GetID())
+			session, err := c.Client().Session(ctx, item.GetID())
 			if err != nil {
 				return fmt.Errorf("failed to query session from the blockchain: %w", err)
 			}
@@ -225,7 +209,7 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 			// Remove the associated peer if validation fails.
 			if removePeer {
 				req := item.GetPeerRequest()
-				if err := c.RemovePeerIfExists(gocontext.TODO(), req); err != nil {
+				if err := c.RemovePeerIfExists(ctx, req); err != nil {
 					return fmt.Errorf("failed to remove peer: %w", err)
 				}
 			}
@@ -254,7 +238,6 @@ func NewSessionValidateWorker(c *context.Context, interval time.Duration) cron.W
 
 	// Error handling function to log failures.
 	onErrorFunc := func(err error) bool {
-		log.Error("Failed to run scheduler worker", "msg", err)
 		return false
 	}
 

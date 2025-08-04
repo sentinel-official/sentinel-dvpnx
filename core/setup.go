@@ -1,4 +1,4 @@
-package context
+package core
 
 import (
 	"context"
@@ -138,7 +138,7 @@ func (c *Context) SetupService(cfg *config.Config) error {
 	}
 
 	// Check if the service is already running
-	ok, err := service.IsUp(context.TODO())
+	ok, err := service.IsUp()
 	if err != nil {
 		return fmt.Errorf("failed to check if service is up: %w", err)
 	}
@@ -147,7 +147,7 @@ func (c *Context) SetupService(cfg *config.Config) error {
 	}
 
 	// Perform pre-start setup tasks for the service
-	if err := service.PreUp(); err != nil {
+	if err := service.PreUp(context.TODO()); err != nil {
 		return fmt.Errorf("failed to run pre-up task: %w", err)
 	}
 
@@ -162,6 +162,7 @@ func (c *Context) Setup(cfg *config.Config) error {
 
 	// Assign configuration values to the context.
 	c.WithAPIAddrs(cfg.Node.APIAddrs())
+	c.WithAPIListenAddr(cfg.Node.APIListenAddr())
 	c.WithGigabytePrices(cfg.Node.GetGigabytePrices())
 	c.WithHourlyPrices(cfg.Node.GetHourlyPrices())
 	c.WithMoniker(cfg.Node.GetMoniker())

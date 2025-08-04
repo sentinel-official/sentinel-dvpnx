@@ -14,13 +14,13 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinelhub/v12/types/v1"
 
-	"github.com/sentinel-official/sentinel-dvpnx/context"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 	"github.com/sentinel-official/sentinel-dvpnx/database/models"
 	"github.com/sentinel-official/sentinel-dvpnx/database/operations"
 )
 
 // handlerInitHandshake returns a handler function to process the request for performing a handshake.
-func handlerInitHandshake(c *context.Context) gin.HandlerFunc {
+func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO: validate current peer count
 
