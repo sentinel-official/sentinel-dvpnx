@@ -117,6 +117,14 @@ func (n *Node) Start(ctx context.Context) error {
 	// Merge passed-in context with node's primary context
 	ctx, _ = utils.AnyDoneContext(n.ctx, ctx)
 
+	// Register the node and update its details.
+	if err := n.Register(ctx); err != nil {
+		return fmt.Errorf("failed to register node: %w", err)
+	}
+	if err := n.UpdateDetails(ctx); err != nil {
+		return fmt.Errorf("failed to update node details: %w", err)
+	}
+
 	// Launch the service stack as a background goroutine.
 	n.eg.Go(func() error {
 		if err := n.Service().Up(ctx); err != nil {
@@ -152,14 +160,6 @@ func (n *Node) Start(ctx context.Context) error {
 
 		return nil
 	})
-
-	// Register the node and update its details.
-	if err := n.Register(ctx); err != nil {
-		return fmt.Errorf("failed to register node: %w", err)
-	}
-	if err := n.UpdateDetails(ctx); err != nil {
-		return fmt.Errorf("failed to update node details: %w", err)
-	}
 
 	log.Info("Node started successfully")
 	return nil

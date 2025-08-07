@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
@@ -53,27 +53,27 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return fmt.Errorf("failed to setup node: %w", err)
 			}
 
-			// Channel to capture OS signals (SIGINT, SIGTERM).
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+			// Create a context that listens for SIGINT and SIGTERM signals.
+			ctx, cancel := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer cancel()
 
-			eg, ctx := errgroup.WithContext(cmd.Context())
+			// Create an errgroup with the signal-aware context.
+			eg, ctx := errgroup.WithContext(ctx)
+
+			// Launch goroutine to stop the node gracefully.
 			eg.Go(func() error {
-				select {
-				case <-sigChan:
-				case <-ctx.Done():
-				}
+				// Wait until signal is received
+				<-ctx.Done()
 
-				// Stop the node gracefully.
 				if err := n.Stop(); err != nil {
-					return fmt.Errorf("failed to stop node: %w", err)
+					log.Error("Failed to stop node", "cause", err)
 				}
 
 				return nil
 			})
 
+			// Launch goroutine to start the node and wait.
 			eg.Go(func() error {
-				// Start the node and handle any startup errors.
 				if err := n.Start(ctx); err != nil {
 					return fmt.Errorf("failed to start node: %w", err)
 				}
@@ -84,7 +84,12 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return nil
 			})
 
-			return eg.Wait()
+			// Wait for all goroutines to complete.
+			if err := eg.Wait(); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 
