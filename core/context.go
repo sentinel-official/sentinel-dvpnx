@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"io"
+	"path/filepath"
 	"sync"
 
 	"cosmossdk.io/math"
@@ -69,6 +70,11 @@ func (c *Context) Client() *core.Client {
 // Database returns the database connection set in the context.
 func (c *Context) Database() *gorm.DB {
 	return c.database
+}
+
+// DatabaseFile returns the database path of the node.
+func (c *Context) DatabaseFile() string {
+	return filepath.Join(c.HomeDir(), "data.db")
 }
 
 // GeoIPClient returns the GeoIP client set in the context.
@@ -145,6 +151,16 @@ func (c *Context) Service() sentinelsdk.ServerService {
 	return c.service
 }
 
+// TLSCertFile returns the TLS certificate path of the node API server.
+func (c *Context) TLSCertFile() string {
+	return filepath.Join(c.HomeDir(), "tls.crt")
+}
+
+// TLSKeyFile returns the TLS key path of the node API server.
+func (c *Context) TLSKeyFile() string {
+	return filepath.Join(c.HomeDir(), "tls.key")
+}
+
 // SetLocation sets the geo-location data in the context.
 func (c *Context) SetLocation(location *geoip.Location) {
 	c.fm.Lock()
@@ -188,7 +204,7 @@ func (c *Context) WithAPIAddrs(addrs []string) *Context {
 	return c
 }
 
-// WithAPIListenAddr sets the listen address for the Node API and returns the updated context.
+// WithAPIListenAddr sets the listen address for the node API and returns the updated context.
 func (c *Context) WithAPIListenAddr(addr string) *Context {
 	c.checkSealed()
 	c.apiListenAddr = addr

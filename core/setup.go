@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/sentinel-official/sentinel-go-sdk/core"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
@@ -57,11 +56,8 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 func (c *Context) SetupDatabase(_ *config.Config) error {
 	log.Info("Setting up database")
 
-	// Construct the database path within the home directory.
-	dbPath := filepath.Join(c.HomeDir(), "data.db")
-
 	// Initialize the database connection.
-	db, err := database.NewDefault(dbPath)
+	db, err := database.NewDefault(c.DatabaseFile())
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -147,8 +143,8 @@ func (c *Context) SetupService(cfg *config.Config) error {
 	}
 
 	// Perform pre-start setup tasks for the service
-	if err := service.PreUp(context.TODO()); err != nil {
-		return fmt.Errorf("failed to run pre-up task: %w", err)
+	if err := service.PreUp(nil); err != nil {
+		return fmt.Errorf("failed to run service pre-up task: %w", err)
 	}
 
 	// Assign the service to the context

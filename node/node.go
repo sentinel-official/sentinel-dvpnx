@@ -3,7 +3,6 @@ package node
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cmux"
@@ -62,16 +61,6 @@ func (n *Node) Scheduler() *cron.Scheduler {
 	return n.scheduler
 }
 
-// TLSCertFile returns the TLS certificate path of the Node.
-func (n *Node) TLSCertFile() string {
-	return filepath.Join(n.HomeDir(), "tls.crt")
-}
-
-// TLSKeyFile returns the TLS key path of the Node.
-func (n *Node) TLSKeyFile() string {
-	return filepath.Join(n.HomeDir(), "tls.key")
-}
-
 // Register registers the node on the network if not already registered.
 func (n *Node) Register(ctx context.Context) error {
 	// Query the network to check if the node is already registered.
@@ -128,14 +117,6 @@ func (n *Node) Start(ctx context.Context) error {
 	// Merge passed-in context with node's primary context
 	ctx, _ = utils.AnyDoneContext(n.ctx, ctx)
 
-	// Register the node and update its details.
-	if err := n.Register(ctx); err != nil {
-		return fmt.Errorf("failed to register node: %w", err)
-	}
-	if err := n.UpdateDetails(ctx); err != nil {
-		return fmt.Errorf("failed to update node details: %w", err)
-	}
-
 	// Launch the service stack as a background goroutine.
 	n.eg.Go(func() error {
 		if err := n.Service().Up(ctx); err != nil {
@@ -145,18 +126,7 @@ func (n *Node) Start(ctx context.Context) error {
 			return fmt.Errorf("failed to run service post-up task: %w", err)
 		}
 		if err := n.Service().Wait(); err != nil {
-			return fmt.Errorf("failed to wait for service: %w", err)
-		}
-
-		return nil
-	})
-
-	// Launch the API server using the configured TLS certificates and router.
-	n.eg.Go(func() error {
-		if err := cmux.ListenAndServeTLS(
-			ctx, n.APIListenAddr(), n.TLSCertFile(), n.TLSKeyFile(), n.Router(),
-		); err != nil {
-			return fmt.Errorf("failed to listen and serve tls: %w", err)
+			return fmt.Errorf("failed to wait service: %w", err)
 		}
 
 		return nil
@@ -168,11 +138,28 @@ func (n *Node) Start(ctx context.Context) error {
 			return fmt.Errorf("failed to start scheduler: %w", err)
 		}
 		if err := n.Scheduler().Wait(); err != nil {
-			return fmt.Errorf("failed to wait for scheduler: %w", err)
+			return fmt.Errorf("failed to wait scheduler: %w", err)
 		}
 
 		return nil
 	})
+
+	// Launch the API server using the configured TLS certificates and router.
+	n.eg.Go(func() error {
+		if err := cmux.ListenAndServeTLS(ctx, n.APIListenAddr(), n.TLSCertFile(), n.TLSKeyFile(), n.Router()); err != nil {
+			return fmt.Errorf("failed to listen and serve tls: %w", err)
+		}
+
+		return nil
+	})
+
+	// Register the node and update its details.
+	if err := n.Register(ctx); err != nil {
+		return fmt.Errorf("failed to register node: %w", err)
+	}
+	if err := n.UpdateDetails(ctx); err != nil {
+		return fmt.Errorf("failed to update node details: %w", err)
+	}
 
 	log.Info("Node started successfully")
 	return nil
