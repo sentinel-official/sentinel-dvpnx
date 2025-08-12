@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const MaxQOSMaxPeers = (1 << 8) - (1 << 2) // Maximum allowed value for MaxPeers.
+const MaxQOSMaxPeers = 250 // Maximum allowed value for MaxPeers.
 
 // QOSConfig represents the Quality of Service (QoS) configuration.
 type QOSConfig struct {
