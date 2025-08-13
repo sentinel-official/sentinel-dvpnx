@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/gin/middlewares"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
 	"github.com/sentinel-official/sentinel-dvpnx/api"
@@ -24,18 +25,19 @@ func (n *Node) SetupRouter(_ *config.Config) error {
 	log.Info("Setting up router")
 
 	// Define middlewares to be used by the router.
-	middlewares := []gin.HandlerFunc{
+	items := []gin.HandlerFunc{
 		cors.New(
 			cors.Config{
 				AllowAllOrigins: true,
 				AllowMethods:    []string{http.MethodGet, http.MethodPost},
 			},
 		),
+		middlewares.RateLimiter(nil),
 	}
 
 	// Create a new Gin router and apply the middlewares.
 	r := gin.New()
-	r.Use(middlewares...)
+	r.Use(items...)
 
 	// Register API routes to the router.
 	api.RegisterRoutes(n.Context, r)
