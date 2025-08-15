@@ -3,7 +3,6 @@ package handshake
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -25,9 +24,9 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		// TODO: validate current peer count
 
 		// Parse and verify the request.
-		req, err := newInitHandshakeRequest(ctx)
+		req, err := NewInitHandshakeRequest(ctx)
 		if err != nil {
-			err = fmt.Errorf("invalid request format: %w", err)
+			err = fmt.Errorf("parsing request from context: %w", err)
 			ctx.JSON(http.StatusBadRequest, types.NewResponseError(2, err))
 			return
 		}
@@ -39,29 +38,30 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 
 		record, err := operations.SessionFindOne(c.Database(), query)
 		if err != nil {
-			err = fmt.Errorf("failed to retrieve session from database: %w", err)
+			err = fmt.Errorf("retrieving session %d from database: %w", req.Body.ID, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(3, err))
 			return
 		}
 		if record != nil {
-			err = fmt.Errorf("session already exists for id %d", req.Body.ID)
+			err = fmt.Errorf("session %d already exists in database", req.Body.ID)
 			ctx.JSON(http.StatusConflict, types.NewResponseError(3, err))
 			return
 		}
 
 		// Check if a session already exists by peer request data.
+		peerReq := base64.StdEncoding.EncodeToString(req.Body.Data)
 		query = map[string]interface{}{
-			"peer_request": base64.StdEncoding.EncodeToString(req.Body.Data),
+			"peer_request": peerReq,
 		}
 
 		record, err = operations.SessionFindOne(c.Database(), query)
 		if err != nil {
-			err = fmt.Errorf("failed to retrieve session from database: %w", err)
+			err = fmt.Errorf("retrieving session for peer request %q from database: %w", peerReq, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(4, err))
 			return
 		}
 		if record != nil {
-			err = errors.New("session already exists for peer request")
+			err = fmt.Errorf("session already exists for peer request %q", peerReq)
 			ctx.JSON(http.StatusConflict, types.NewResponseError(4, err))
 			return
 		}
@@ -69,26 +69,26 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		// Fetch session details from blockchain.
 		session, err := c.Client().Session(ctx, req.Body.ID)
 		if err != nil {
-			err = fmt.Errorf("failed to query session from blockchain: %w", err)
+			err = fmt.Errorf("querying session %d on blockchain: %w", req.Body.ID, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err))
 			return
 		}
 		if session == nil {
-			err = fmt.Errorf("session %d does not exist", req.Body.ID)
+			err = fmt.Errorf("session %d does not exist on blockchain", req.Body.ID)
 			ctx.JSON(http.StatusNotFound, types.NewResponseError(5, err))
 			return
 		}
 
 		// Validate session status.
 		if !session.GetStatus().Equal(v1.StatusActive) {
-			err = fmt.Errorf("invalid session status; got %s, expected %s", session.GetStatus(), v1.StatusActive)
+			err = fmt.Errorf("invalid session status %q, expected %q", session.GetStatus(), v1.StatusActive)
 			ctx.JSON(http.StatusBadRequest, types.NewResponseError(5, err))
 			return
 		}
 
 		// Validate node address.
 		if session.GetNodeAddress() != c.NodeAddr().String() {
-			err = fmt.Errorf("node address mismatch; got %s, expected %s", session.GetNodeAddress(), c.NodeAddr())
+			err = fmt.Errorf("node address mismatch: got %q, expected %q", session.GetNodeAddress(), c.NodeAddr())
 			ctx.JSON(http.StatusBadRequest, types.NewResponseError(6, err))
 			return
 		}
@@ -96,12 +96,12 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		// Validate account address.
 		accAddr, err := cosmossdk.AccAddressFromBech32(session.GetAccAddress())
 		if err != nil {
-			err = fmt.Errorf("invalid account address format: %w", err)
+			err = fmt.Errorf("decoding Bech32 account addr %q: %w", session.GetAccAddress(), err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(6, err))
 			return
 		}
 		if got := req.AccAddr(); !got.Equals(accAddr) {
-			err = fmt.Errorf("account address mismatch; got %s, expected %s", got, accAddr)
+			err = fmt.Errorf("account addr mismatch; got %q, expected %q", got, accAddr)
 			ctx.JSON(http.StatusUnauthorized, types.NewResponseError(6, err))
 			return
 		}
@@ -109,7 +109,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		// Add the peer to the active service.
 		id, data, err := c.Service().AddPeer(ctx, req.Body.Data)
 		if err != nil {
-			err = fmt.Errorf("failed to add peer: %w", err)
+			err = fmt.Errorf("adding peer to service: %w", err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
 			return
 		}
@@ -117,7 +117,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		// Encode and prepare the handshake response.
 		res := &node.InitHandshakeResult{Addrs: c.RemoteAddrs()}
 		if res.Data, err = json.Marshal(data); err != nil {
-			err = fmt.Errorf("failed to encode response: %w", err)
+			err = fmt.Errorf("encoding add-peer service response: %w", err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(8, err))
 			return
 		}
@@ -125,7 +125,6 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		// Insert the session record into the database.
 		item := models.NewSession().
 			WithAccAddr(accAddr).
-			WithDownloadBytes(math.ZeroInt()).
 			WithDuration(0).
 			WithID(session.GetID()).
 			WithMaxBytes(session.GetMaxBytes()).
@@ -133,12 +132,13 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 			WithNodeAddr(c.NodeAddr()).
 			WithPeerID(id).
 			WithPeerRequest(req.Body.Data).
+			WithRxBytes(math.ZeroInt()).
 			WithServiceType(c.Service().Type()).
 			WithSignature(nil).
-			WithUploadBytes(math.ZeroInt())
+			WithTxBytes(math.ZeroInt())
 
 		if err = operations.SessionInsertOne(c.Database(), item); err != nil {
-			err = fmt.Errorf("failed to insert session into database: %w", err)
+			err = fmt.Errorf("inserting session %d into database: %w", item.GetID(), err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(9, err))
 			return
 		}

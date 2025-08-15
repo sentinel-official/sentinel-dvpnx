@@ -7,8 +7,8 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.17
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc6.0.20250815152325-d531c8a89fb4
-	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc9.0.20250724081315-9ff6fcf35896
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc.6.0.20250816150754-3266e10d7a0d
+	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc.11
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
 	github.com/spf13/viper v1.20.1
@@ -21,7 +21,7 @@ require (
 	cosmossdk.io/api v0.3.1 // indirect
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
-	cosmossdk.io/errors v1.0.1 // indirect
+	cosmossdk.io/errors v1.0.2 // indirect
 	cosmossdk.io/log v1.6.0 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect

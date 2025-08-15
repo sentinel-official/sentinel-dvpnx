@@ -29,7 +29,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
+			return fmt.Errorf("retrieving sessions from database: %w", err)
 		}
 
 		var msgs []types.Msg
@@ -37,7 +37,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 		for _, item := range items {
 			session, err := c.Client().Session(ctx, item.GetID())
 			if err != nil {
-				return fmt.Errorf("failed to query session from the blockchain: %w", err)
+				return fmt.Errorf("querying session %d on blockchain: %w", item.GetID(), err)
 			}
 			if session == nil {
 				continue
@@ -50,7 +50,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 
 		// Broadcast the prepared messages as a transaction.
 		if err := c.BroadcastTx(ctx, msgs...); err != nil {
-			return fmt.Errorf("failed to broadcast update session tx: %w", err)
+			return fmt.Errorf("broadcasting tx: %w", err)
 		}
 
 		return nil
@@ -76,14 +76,14 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 		// Fetch peer usage statistics from the service.
 		items, err := c.Service().PeerStatistics()
 		if err != nil {
-			return fmt.Errorf("failed to fetch peer statistics: %w", err)
+			return fmt.Errorf("retrieving peer statistics from service: %w", err)
 		}
 
 		// Update the database with the fetched statistics.
 		for id, item := range items {
 			// Convert usage statistics to strings for database storage.
-			downloadBytes := math.NewInt(item.RxBytes).String()
-			uploadBytes := math.NewInt(item.TxBytes).String()
+			rxBytes := math.NewInt(item.RxBytes).String()
+			txBytes := math.NewInt(item.TxBytes).String()
 
 			// Define query to find the session by peer id.
 			query := map[string]interface{}{
@@ -92,13 +92,13 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 
 			// Define updates to apply to the session record.
 			updates := map[string]interface{}{
-				"download_bytes": downloadBytes,
-				"upload_bytes":   uploadBytes,
+				"rx_bytes": rxBytes,
+				"tx_bytes": txBytes,
 			}
 
 			// Update the session in the database.
 			if _, err := operations.SessionFindOneAndUpdate(c.Database(), query, updates); err != nil {
-				return fmt.Errorf("failed to update session with peer %s: %w", id, err)
+				return fmt.Errorf("updating session for peer %q in database: %w", id, err)
 			}
 		}
 
@@ -125,7 +125,7 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
+			return fmt.Errorf("retrieving sessions from database: %w", err)
 		}
 
 		// Validate session limits and remove peers if needed.
@@ -153,7 +153,7 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 			if removePeer {
 				req := item.GetPeerRequest()
 				if err := c.RemovePeerIfExists(ctx, req); err != nil {
-					return fmt.Errorf("failed to remove peer: %w", err)
+					return fmt.Errorf("removing peer for session %d from service: %w", item.GetID(), err)
 				}
 			}
 		}
@@ -181,14 +181,14 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 		// Retrieve session records from the database.
 		items, err := operations.SessionFind(c.Database(), nil)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve sessions from the database: %w", err)
+			return fmt.Errorf("retrieving sessions from database: %w", err)
 		}
 
 		// Validate session status and consistency.
 		for _, item := range items {
 			session, err := c.Client().Session(ctx, item.GetID())
 			if err != nil {
-				return fmt.Errorf("failed to query session from the blockchain: %w", err)
+				return fmt.Errorf("querying session %d on blockchain: %w", item.GetID(), err)
 			}
 
 			removePeer := false
@@ -210,7 +210,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 			if removePeer {
 				req := item.GetPeerRequest()
 				if err := c.RemovePeerIfExists(ctx, req); err != nil {
-					return fmt.Errorf("failed to remove peer: %w", err)
+					return fmt.Errorf("removing peer for session %d from service: %w", item.GetID(), err)
 				}
 			}
 
@@ -228,7 +228,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 				}
 
 				if _, err := operations.SessionFindOneAndDelete(c.Database(), query); err != nil {
-					return fmt.Errorf("failed to delete session %d: %w", item.ID, err)
+					return fmt.Errorf("deleting session %d from database: %w", item.ID, err)
 				}
 			}
 		}

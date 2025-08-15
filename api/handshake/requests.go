@@ -23,18 +23,18 @@ func (r *InitHandshakeRequest) AccAddr() types.AccAddress {
 	return addr
 }
 
-// newInitHandshakeRequest parses, binds, and verifies the handshake request.
-func newInitHandshakeRequest(c *gin.Context) (req *InitHandshakeRequest, err error) {
+// NewInitHandshakeRequest parses, binds, and verifies the handshake request.
+func NewInitHandshakeRequest(c *gin.Context) (req *InitHandshakeRequest, err error) {
 	req = &InitHandshakeRequest{}
 
 	// Bind JSON request to the struct.
 	if err := c.ShouldBindJSON(&req.Body); err != nil {
-		return nil, fmt.Errorf("failed to bind json body: %w", err)
+		return nil, fmt.Errorf("binding JSON request body: %w", err)
 	}
 
 	// Verify the request body.
 	if err := req.Body.Verify(); err != nil {
-		return nil, fmt.Errorf("failed to verify body: %w", err)
+		return nil, fmt.Errorf("verifying request body: %w", err)
 	}
 
 	return req, nil

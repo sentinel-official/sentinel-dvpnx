@@ -18,18 +18,18 @@ type Session struct {
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"` // Timestamp when the record was created
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"` // Timestamp when the record was last updated
 
-	AccAddr       string `gorm:"column:acc_addr;not null"`                 // Account address, cannot be null
-	DownloadBytes string `gorm:"column:download_bytes;not null"`           // Download bytes represented as a string
-	Duration      int64  `gorm:"column:duration;not null"`                 // Duration of the session in nanoseconds
-	ID            uint64 `gorm:"column:id;not null;primaryKey"`            // Unique identifier for the session
-	MaxBytes      string `gorm:"column:max_bytes;not null"`                // Maximum bytes represented as a string
-	MaxDuration   int64  `gorm:"column:max_duration;not null"`             // Maximum allowed duration for the session in nanoseconds
-	NodeAddr      string `gorm:"column:node_addr;not null"`                // Address of the node associated with the session
-	PeerID        string `gorm:"column:peer_id;not null;uniqueIndex"`      // Unique identifier for the peer (e.g., public key, email, or name depending on protocol)
-	PeerRequest   string `gorm:"column:peer_request;not null;uniqueIndex"` // Unique peer request for the session, indexed and cannot be null
-	ServiceType   string `gorm:"column:service_type;not null"`             // Type of service for the session
-	Signature     string `gorm:"column:signature;not null"`                // Signature associated with the session
-	UploadBytes   string `gorm:"column:upload_bytes;not null"`             // Upload bytes represented as a string
+	AccAddr     string `gorm:"column:acc_addr;not null"`                 // Account address, cannot be null
+	Duration    int64  `gorm:"column:duration;not null"`                 // Duration of the session in nanoseconds
+	ID          uint64 `gorm:"column:id;not null;primaryKey"`            // Unique identifier for the session
+	MaxBytes    string `gorm:"column:max_bytes;not null"`                // Maximum bytes represented as a string
+	MaxDuration int64  `gorm:"column:max_duration;not null"`             // Maximum allowed duration for the session in nanoseconds
+	NodeAddr    string `gorm:"column:node_addr;not null"`                // Address of the node associated with the session
+	PeerID      string `gorm:"column:peer_id;not null;uniqueIndex"`      // Unique identifier for the peer (e.g., public key, email, or name depending on protocol)
+	PeerRequest string `gorm:"column:peer_request;not null;uniqueIndex"` // Unique peer request for the session, indexed and cannot be null
+	RxBytes     string `gorm:"column:rx_bytes;not null"`                 // Rx bytes represented as a string
+	ServiceType string `gorm:"column:service_type;not null"`             // Type of service for the session
+	Signature   string `gorm:"column:signature;not null"`                // Signature associated with the session
+	TxBytes     string `gorm:"column:tx_bytes;not null"`                 // Tx bytes represented as a string
 }
 
 // NewSession creates and returns a new instance of the Session struct with default values.
@@ -40,12 +40,6 @@ func NewSession() *Session {
 // WithAccAddr sets the AccAddr field and returns the updated Session instance.
 func (s *Session) WithAccAddr(v cosmossdk.AccAddress) *Session {
 	s.AccAddr = v.String()
-	return s
-}
-
-// WithDownloadBytes sets the DownloadBytes field from math.Int and returns the updated Session instance.
-func (s *Session) WithDownloadBytes(v math.Int) *Session {
-	s.DownloadBytes = v.String()
 	return s
 }
 
@@ -91,6 +85,12 @@ func (s *Session) WithPeerRequest(v []byte) *Session {
 	return s
 }
 
+// WithRxBytes sets the RxBytes field from math.Int and returns the updated Session instance.
+func (s *Session) WithRxBytes(v math.Int) *Session {
+	s.RxBytes = v.String()
+	return s
+}
+
 // WithServiceType sets the ServiceType field and returns the updated Session instance.
 func (s *Session) WithServiceType(v sentinelsdk.ServiceType) *Session {
 	s.ServiceType = v.String()
@@ -103,9 +103,9 @@ func (s *Session) WithSignature(v []byte) *Session {
 	return s
 }
 
-// WithUploadBytes sets the UploadBytes field from math.Int and returns the updated Session instance.
-func (s *Session) WithUploadBytes(v math.Int) *Session {
-	s.UploadBytes = v.String()
+// WithTxBytes sets the TxBytes field from math.Int and returns the updated Session instance.
+func (s *Session) WithTxBytes(v math.Int) *Session {
+	s.TxBytes = v.String()
 	return s
 }
 
@@ -119,22 +119,12 @@ func (s *Session) GetAccAddr() cosmossdk.AccAddress {
 	return addr
 }
 
-// GetTotalBytes returns the total number of bytes (download + upload) as math.Int.
+// GetTotalBytes returns the total number of bytes (rx + tx) as math.Int.
 func (s *Session) GetTotalBytes() math.Int {
-	downloadBytes := s.GetDownloadBytes()
-	uploadBytes := s.GetUploadBytes()
+	rxBytes := s.GetRxBytes()
+	txBytes := s.GetTxBytes()
 
-	return downloadBytes.Add(uploadBytes)
-}
-
-// GetDownloadBytes returns the DownloadBytes field as math.Int.
-func (s *Session) GetDownloadBytes() math.Int {
-	v, ok := math.NewIntFromString(s.DownloadBytes)
-	if !ok {
-		panic(fmt.Errorf("invalid download_bytes %s", s.DownloadBytes))
-	}
-
-	return v
+	return rxBytes.Add(txBytes)
 }
 
 // GetDuration returns the Duration field as time.Duration.
@@ -187,6 +177,16 @@ func (s *Session) GetPeerRequest() []byte {
 	return buf
 }
 
+// GetRxBytes returns the RxBytes field as math.Int.
+func (s *Session) GetRxBytes() math.Int {
+	v, ok := math.NewIntFromString(s.RxBytes)
+	if !ok {
+		panic(fmt.Errorf("invalid rx_bytes %s", s.RxBytes))
+	}
+
+	return v
+}
+
 // GetServiceType returns the ServiceType field as sentinelsdk.ServiceType.
 func (s *Session) GetServiceType() sentinelsdk.ServiceType {
 	return sentinelsdk.ServiceTypeFromString(s.ServiceType)
@@ -206,11 +206,11 @@ func (s *Session) GetSignature() []byte {
 	return buf
 }
 
-// GetUploadBytes returns the UploadBytes field as math.Int.
-func (s *Session) GetUploadBytes() math.Int {
-	v, ok := math.NewIntFromString(s.UploadBytes)
+// GetTxBytes returns the TxBytes field as math.Int.
+func (s *Session) GetTxBytes() math.Int {
+	v, ok := math.NewIntFromString(s.TxBytes)
 	if !ok {
-		panic(fmt.Errorf("invalid upload_bytes %s", s.UploadBytes))
+		panic(fmt.Errorf("invalid tx_bytes %s", s.TxBytes))
 	}
 
 	return v
@@ -222,7 +222,7 @@ func (s *Session) BeforeUpdate(db *gorm.DB) (err error) {
 		return nil
 	}
 
-	if db.Statement.Changed("download_bytes", "upload_bytes") {
+	if db.Statement.Changed("rx_bytes", "tx_bytes") {
 		duration := time.Since(s.CreatedAt).Nanoseconds()
 		db.Statement.SetColumn("duration", duration)
 	}
@@ -235,8 +235,8 @@ func (s *Session) MsgUpdateSessionRequest() *v3.MsgUpdateSessionRequest {
 	return v3.NewMsgUpdateSessionRequest(
 		s.GetNodeAddr(),
 		s.GetID(),
-		s.GetDownloadBytes(),
-		s.GetUploadBytes(),
+		s.GetTxBytes(),
+		s.GetRxBytes(),
 		s.GetDuration(),
 		s.GetSignature(),
 	)
