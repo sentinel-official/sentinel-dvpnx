@@ -102,7 +102,7 @@ func (c *Context) Input() io.Reader {
 	return c.input
 }
 
-// Location returns the geo-location data set in the context.
+// Location returns the geolocation data set in the context.
 func (c *Context) Location() *geoip.Location {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
@@ -161,7 +161,7 @@ func (c *Context) TLSKeyFile() string {
 	return filepath.Join(c.HomeDir(), "tls.key")
 }
 
-// SetLocation sets the geo-location data in the context.
+// SetLocation sets the geolocation data in the context.
 func (c *Context) SetLocation(location *geoip.Location) {
 	c.fm.Lock()
 	defer c.fm.Unlock()

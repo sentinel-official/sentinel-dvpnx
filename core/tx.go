@@ -20,7 +20,7 @@ func (c *Context) BroadcastTx(ctx context.Context, msgs ...types.Msg) error {
 	}
 
 	// Broadcast the transaction and wait for it to be included in a block.
-	txResp, txRes, err := c.Client().BroadcastTxBlock(ctx, msgs...)
+	txResp, txRes, err := c.Client().BroadcastTxCommit(ctx, msgs...)
 	if err != nil {
 		return err
 	}

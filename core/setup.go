@@ -42,7 +42,7 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		WithTxSimulateAndExecute(cfg.Tx.GetSimulateAndExecute()).
 		WithTxTimeoutHeight(0)
 
-	// Setup the keyring for the base client
+	// Set up the keyring for the base client
 	if err := cc.SetupKeyring(cfg.Keyring); err != nil {
 		return fmt.Errorf("failed to setup keyring: %w", err)
 	}
