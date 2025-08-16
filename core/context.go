@@ -44,7 +44,10 @@ type Context struct {
 
 // NewContext creates a new Context instance with default values.
 func NewContext() *Context {
-	return &Context{}
+	return &Context{
+		dlSpeed: math.ZeroInt(),
+		ulSpeed: math.ZeroInt(),
+	}
 }
 
 // AccAddr returns the transaction sender address set in the context.
