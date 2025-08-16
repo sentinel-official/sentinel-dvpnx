@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
@@ -39,7 +40,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				WithHomeDir(homeDir).
 				WithInput(cmd.InOrStdin())
 
-			// Set up the application context.
+			log.Info("Setting up node context")
 			if err := c.Setup(cfg); err != nil {
 				return fmt.Errorf("failed to setup context: %w", err)
 			}
@@ -49,6 +50,8 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 
 			// Create and set up the node.
 			n := node.New(c)
+
+			log.Info("Setting up node")
 			if err := n.Setup(cfg); err != nil {
 				return fmt.Errorf("failed to setup node: %w", err)
 			}
@@ -60,35 +63,63 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			// Create an errgroup with the signal-aware context.
 			eg, ctx := errgroup.WithContext(ctx)
 
+			start := sync.WaitGroup{}
+			start.Add(2)
+
 			// Launch goroutine to stop the node gracefully.
 			eg.Go(func() error {
-				// Wait until signal is received
-				<-ctx.Done()
+				log.Info("Starting stop signal catch routine")
+				defer start.Done()
 
-				if err := n.Stop(); err != nil {
-					log.Error("Failed to stop node", "cause", err)
-				}
+				eg.Go(func() error {
+					defer log.Info("Exiting stop signal catch routine")
+
+					// Wait until signal is received
+					<-ctx.Done()
+
+					log.Info("Stop signal received, stopping node")
+					if err := n.Stop(); err != nil {
+						return fmt.Errorf("failed to stop node: %w", err)
+					}
+
+					return nil
+				})
 
 				return nil
 			})
 
 			// Launch goroutine to start the node and wait.
 			eg.Go(func() error {
+				log.Info("Starting node routine")
+				defer start.Done()
+
+				log.Info("Starting node")
 				if err := n.Start(ctx); err != nil {
 					return fmt.Errorf("failed to start node: %w", err)
 				}
-				if err := n.Wait(); err != nil {
-					return fmt.Errorf("failed to wait node: %w", err)
-				}
+
+				eg.Go(func() error {
+					defer log.Info("Exiting node routine")
+					if err := n.Wait(); err != nil {
+						return fmt.Errorf("failed to wait node: %w", err)
+					}
+
+					return nil
+				})
 
 				return nil
 			})
+
+			// Wait until all routines started
+			start.Wait()
+			log.Info("Node started successfully")
 
 			// Wait for all goroutines to complete.
 			if err := eg.Wait(); err != nil {
 				return err
 			}
 
+			log.Info("Node stopped successfully")
 			return nil
 		},
 	}

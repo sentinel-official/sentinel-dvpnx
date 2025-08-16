@@ -22,8 +22,6 @@ func init() {
 
 // SetupRouter sets up the HTTP router with necessary middlewares and routes.
 func (n *Node) SetupRouter(_ *config.Config) error {
-	log.Info("Setting up router")
-
 	// Define middlewares to be used by the router.
 	items := []gin.HandlerFunc{
 		cors.New(
@@ -49,8 +47,6 @@ func (n *Node) SetupRouter(_ *config.Config) error {
 
 // SetupScheduler sets up the cron scheduler with various workers.
 func (n *Node) SetupScheduler(cfg *config.Config) error {
-	log.Info("Setting up scheduler")
-
 	// Define the list of cron workers with their respective handlers and intervals.
 	items := []cron.Worker{
 		workers.NewBestRPCAddrWorker(n.Context, cfg.Node.GetIntervalBestRPCAddr()),
@@ -65,6 +61,8 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 
 	// Create a new cron scheduler and register the workers.
 	s := cron.NewScheduler()
+
+	log.Info("Registering scheduler workers", "count", len(items))
 	if err := s.RegisterWorkers(items...); err != nil {
 		return fmt.Errorf("failed to register workers: %w", err)
 	}
@@ -76,14 +74,12 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 
 // Setup sets up both the router and scheduler for the Node.
 func (n *Node) Setup(cfg *config.Config) error {
-	log.Info("Setting up node...")
-
-	// Set up the HTTP router.
+	log.Info("Setting up router")
 	if err := n.SetupRouter(cfg); err != nil {
 		return fmt.Errorf("failed to setup router: %w", err)
 	}
 
-	// Set up the cron scheduler.
+	log.Info("Setting up scheduler")
 	if err := n.SetupScheduler(cfg); err != nil {
 		return fmt.Errorf("failed to setup scheduler: %w", err)
 	}

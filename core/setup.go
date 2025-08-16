@@ -18,9 +18,11 @@ import (
 
 // SetupClient initializes the SDK client with the given configuration and assigns it to the context.
 func (c *Context) SetupClient(cfg *config.Config) error {
-	log.Info("Setting up client")
-
-	// Initialize the base client with the provided configurations.
+	log.Info("Initializing blockchain client",
+		"rpc.chain_id", cfg.RPC.GetChainID(),
+		"rpc.addr", cfg.RPC.GetAddr(),
+		"tx.from_name", cfg.Tx.GetFromName(),
+	)
 	cc := core.NewClient().
 		WithQueryProve(cfg.Query.GetProve()).
 		WithQueryRetryAttempts(cfg.Query.GetRetryAttempts()).
@@ -42,7 +44,10 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		WithTxSimulateAndExecute(cfg.Tx.GetSimulateAndExecute()).
 		WithTxTimeoutHeight(0)
 
-	// Set up the keyring for the base client
+	log.Info("Setting up keyring",
+		"backend", cfg.Keyring.GetBackend(),
+		"name", cfg.Keyring.GetName(),
+	)
 	if err := cc.SetupKeyring(cfg.Keyring); err != nil {
 		return fmt.Errorf("failed to setup keyring: %w", err)
 	}
@@ -54,9 +59,8 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 
 // SetupDatabase creates and configures the database, then assigns it to the context.
 func (c *Context) SetupDatabase(_ *config.Config) error {
-	log.Info("Setting up database")
+	log.Info("Initializing database connection", "file", c.DatabaseFile())
 
-	// Initialize the database connection.
 	db, err := database.NewDefault(c.DatabaseFile())
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
@@ -69,9 +73,7 @@ func (c *Context) SetupDatabase(_ *config.Config) error {
 
 // SetupGeoIPClient initializes the GeoIP client and assigns it to the context.
 func (c *Context) SetupGeoIPClient(_ *config.Config) error {
-	log.Info("Setting up geoip client")
-
-	// Create a default GeoIP client instance.
+	log.Info("Initializing GeoIP client")
 	v := geoip.NewDefaultClient()
 
 	// Assign the GeoIP client to the context.
@@ -81,9 +83,8 @@ func (c *Context) SetupGeoIPClient(_ *config.Config) error {
 
 // SetupAccAddr retrieves the account address for transactions and assigns it to the context.
 func (c *Context) SetupAccAddr(cfg *config.Config) error {
-	log.Info("Setting up account address")
+	log.Info("Retrieving addr for key", "name", cfg.Tx.GetFromName())
 
-	// Retrieve the key associated with the configured account name.
 	key, err := c.Client().Key(cfg.Tx.GetFromName())
 	if err != nil {
 		return fmt.Errorf("failed to retrieve key: %w", err)
@@ -98,7 +99,8 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 		return fmt.Errorf("failed to retrieve address from key: %w", err)
 	}
 
-	// Query the account to ensure it exists and is valid.
+	log.Info("Querying account information", "addr", addr)
+
 	acc, err := c.Client().Account(context.TODO(), addr)
 	if err != nil {
 		return fmt.Errorf("failed to query account: %w", err)
@@ -114,14 +116,13 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 
 // SetupService determines the service type and configures it accordingly.
 func (c *Context) SetupService(cfg *config.Config) error {
-	log.Info("Setting up service")
-
 	var (
 		service     types.ServerService         // The service instance to configure
 		serviceType = cfg.Node.GetServiceType() // Type of the service from configuration
 	)
 
-	// Determine the service type from the node configuration
+	log.Info("Initializing service", "type", serviceType)
+
 	switch cfg.Node.GetServiceType() {
 	case types.ServiceTypeV2Ray:
 		service = v2ray.NewServer(c.HomeDir())
@@ -133,7 +134,8 @@ func (c *Context) SetupService(cfg *config.Config) error {
 		return fmt.Errorf("invalid service type %s", serviceType)
 	}
 
-	// Check if the service is already running
+	log.Info("Checking service status")
+
 	ok, err := service.IsUp()
 	if err != nil {
 		return fmt.Errorf("failed to check if service is up: %w", err)
@@ -142,7 +144,7 @@ func (c *Context) SetupService(cfg *config.Config) error {
 		return fmt.Errorf("service is already up")
 	}
 
-	// Perform pre-start setup tasks for the service
+	log.Info("Running service pre-up task")
 	if err := service.PreUp(nil); err != nil {
 		return fmt.Errorf("failed to run service pre-up task: %w", err)
 	}
@@ -154,8 +156,6 @@ func (c *Context) SetupService(cfg *config.Config) error {
 
 // Setup initializes all components of the node context.
 func (c *Context) Setup(cfg *config.Config) error {
-	log.Info("Setting up node context...")
-
 	// Assign configuration values to the context.
 	c.WithAPIAddrs(cfg.Node.APIAddrs())
 	c.WithAPIListenAddr(cfg.Node.APIListenAddr())
@@ -165,29 +165,29 @@ func (c *Context) Setup(cfg *config.Config) error {
 	c.WithRemoteAddrs(cfg.Node.GetRemoteAddrs())
 	c.WithRPCAddrs(cfg.RPC.GetAddrs())
 
-	// Set up the client for blockchain communication.
+	log.Info("Setting up blockchain client")
 	if err := c.SetupClient(cfg); err != nil {
 		return fmt.Errorf("failed to setup client: %w", err)
 	}
 
-	// Set up the local database for storing data.
+	log.Info("Setting up database")
 	if err := c.SetupDatabase(cfg); err != nil {
 		return fmt.Errorf("failed to setup database: %w", err)
 	}
 
-	// Set up the GeoIP client for geographical location resolution.
+	log.Info("Setting up GeoIP client")
 	if err := c.SetupGeoIPClient(cfg); err != nil {
 		return fmt.Errorf("failed to setup geoip client: %w", err)
 	}
 
-	// Set up the appropriate service (e.g., V2Ray or WireGuard).
+	log.Info("Setting up service")
 	if err := c.SetupService(cfg); err != nil {
 		return fmt.Errorf("failed to setup service: %w", err)
 	}
 
-	// Retrieve and configure the account address for transactions.
+	log.Info("Setting up account addr")
 	if err := c.SetupAccAddr(cfg); err != nil {
-		return fmt.Errorf("failed to setup account address: %w", err)
+		return fmt.Errorf("failed to setup account addr: %w", err)
 	}
 
 	return nil
