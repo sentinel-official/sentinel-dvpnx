@@ -1,13 +1,12 @@
 package config
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
 	"os"
-	"text/template"
 
 	"github.com/sentinel-official/sentinel-go-sdk/config"
+	"github.com/sentinel-official/sentinel-go-sdk/utils"
 	"github.com/spf13/pflag"
 )
 
@@ -21,7 +20,7 @@ type Config struct {
 	*config.Config `mapstructure:",squash"`
 	HandshakeDNS   *HandshakeDNSConfig `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
 	Node           *NodeConfig         `mapstructure:"node"`          // Node contains node-specific configuration.
-	QOS            *QOSConfig          `mapstructure:"qos"`           // QOS contains Quality of Service configuration.
+	QoS            *QoSConfig          `mapstructure:"qos"`           // QoS contains Quality of Service configuration.
 }
 
 // Validate validates the entire configuration.
@@ -30,13 +29,13 @@ func (c *Config) Validate() error {
 		return err
 	}
 	if err := c.HandshakeDNS.Validate(); err != nil {
-		return fmt.Errorf("invalid handshake_dns: %w", err)
+		return fmt.Errorf("validating handshake_dns config: %w", err)
 	}
 	if err := c.Node.Validate(); err != nil {
-		return fmt.Errorf("invalid node: %w", err)
+		return fmt.Errorf("validating node config: %w", err)
 	}
-	if err := c.QOS.Validate(); err != nil {
-		return fmt.Errorf("invalid qos: %w", err)
+	if err := c.QoS.Validate(); err != nil {
+		return fmt.Errorf("validating QoS config: %w", err)
 	}
 
 	return nil
@@ -47,7 +46,7 @@ func (c *Config) SetForFlags(f *pflag.FlagSet) {
 	c.Config.SetForFlags(f)
 	c.HandshakeDNS.SetForFlags(f)
 	c.Node.SetForFlags(f)
-	c.QOS.SetForFlags(f)
+	c.QoS.SetForFlags(f)
 }
 
 // DefaultConfig returns a configuration instance with default values.
@@ -56,30 +55,27 @@ func DefaultConfig() *Config {
 		Config:       config.DefaultConfig(),
 		HandshakeDNS: DefaultHandshakeDNSConfig(),
 		Node:         DefaultNodeConfig(),
-		QOS:          DefaultQOSConfig(),
+		QoS:          DefaultQoSConfig(),
 	}
 }
 
 // WriteAppConfig writes the application configuration to a file using a template.
-func (c *Config) WriteAppConfig(name string) error {
+func (c *Config) WriteAppConfig(filename string) error {
 	// Read the configuration template file.
 	text, err := fs.ReadFile("config.toml.tmpl")
 	if err != nil {
-		return err
+		return fmt.Errorf("reading config template: %w", err)
 	}
 
-	// Parse the template file.
-	tmpl, err := template.New("config").Parse(string(text))
-	if err != nil {
-		return err
+	// Render the template with Config data and write the result to the specified file.
+	if err := utils.ExecTemplateToFile(string(text), c, filename); err != nil {
+		return fmt.Errorf("executing config template to file %q: %w", filename, err)
 	}
 
-	// Execute the template and write the output to a buffer.
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, c); err != nil {
-		return err
+	// Restrict file permissions to owner read/write only.
+	if err := os.Chmod(filename, 0600); err != nil {
+		return fmt.Errorf("setting permissions for file %q: %w", filename, err)
 	}
 
-	// Write the buffer contents to the specified file.
-	return os.WriteFile(name, buf.Bytes(), 0644)
+	return nil
 }

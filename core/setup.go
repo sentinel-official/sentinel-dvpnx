@@ -152,7 +152,7 @@ func (c *Context) Setup(cfg *config.Config) error {
 	c.WithAPIListenAddr(cfg.Node.APIListenAddr())
 	c.WithGigabytePrices(cfg.Node.GetGigabytePrices())
 	c.WithHourlyPrices(cfg.Node.GetHourlyPrices())
-	c.WithMaxPeers(cfg.QOS.GetMaxPeers())
+	c.WithMaxPeers(cfg.QoS.GetMaxPeers())
 	c.WithMoniker(cfg.Node.GetMoniker())
 	c.WithRemoteAddrs(cfg.Node.GetRemoteAddrs())
 	c.WithRPCAddrs(cfg.RPC.GetAddrs())

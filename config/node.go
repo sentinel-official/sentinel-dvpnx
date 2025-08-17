@@ -188,43 +188,45 @@ func (c *NodeConfig) Validate() error {
 		return errors.New("api_port cannot be empty")
 	}
 	if _, err := netip.NewPortFromString(c.APIPort); err != nil {
-		return fmt.Errorf("invalid api_port: %w", err)
+		return fmt.Errorf("parsing api_port %q: %w", c.APIPort, err)
 	}
 
 	// Validate the GigabytePrices field.
 	if _, err := v1.NewPricesFromString(c.GigabytePrices); err != nil {
-		return fmt.Errorf("invalid gigabyte_prices: %w", err)
+		return fmt.Errorf("parsing gigabyte_prices %q: %w", c.GigabytePrices, err)
 	}
 
 	// Validate the HourlyPrices field.
 	if _, err := v1.NewPricesFromString(c.HourlyPrices); err != nil {
-		return fmt.Errorf("invalid hourly_prices: %w", err)
+		return fmt.Errorf("parsing hourly_prices %q: %w", c.HourlyPrices, err)
 	}
 
 	// Validate interval fields.
 	if _, err := time.ParseDuration(c.IntervalBestRPCAddr); err != nil {
-		return fmt.Errorf("invalid interval_best_rpc_addr: %w", err)
+		return fmt.Errorf("parsing interval_best_rpc_addr %q: %w", c.IntervalBestRPCAddr, err)
 	}
 	if _, err := time.ParseDuration(c.IntervalGeoIPLocation); err != nil {
-		return fmt.Errorf("invalid interval_geoip_location: %w", err)
+		return fmt.Errorf("parsing interval_geoip_location %q: %w", c.IntervalGeoIPLocation, err)
 	}
 	if _, err := time.ParseDuration(c.IntervalSessionUsageSyncWithBlockchain); err != nil {
-		return fmt.Errorf("invalid interval_session_usage_sync_with_blockchain: %w", err)
+		return fmt.Errorf("parsing interval_session_usage_sync_with_blockchain %q: %w",
+			c.IntervalSessionUsageSyncWithBlockchain, err)
 	}
 	if _, err := time.ParseDuration(c.IntervalSessionUsageSyncWithDatabase); err != nil {
-		return fmt.Errorf("invalid interval_session_usage_sync_with_database: %w", err)
+		return fmt.Errorf("parsing interval_session_usage_sync_with_database %q: %w",
+			c.IntervalSessionUsageSyncWithDatabase, err)
 	}
 	if _, err := time.ParseDuration(c.IntervalSessionUsageValidate); err != nil {
-		return fmt.Errorf("invalid interval_session_usage_validate: %w", err)
+		return fmt.Errorf("parsing interval_session_usage_validate %q: %w", c.IntervalSessionUsageValidate, err)
 	}
 	if _, err := time.ParseDuration(c.IntervalSessionValidate); err != nil {
-		return fmt.Errorf("invalid interval_session_validate: %w", err)
+		return fmt.Errorf("parsing interval_session_validate %q: %w", c.IntervalSessionValidate, err)
 	}
 	if _, err := time.ParseDuration(c.IntervalSpeedtest); err != nil {
-		return fmt.Errorf("invalid interval_speedtest: %w", err)
+		return fmt.Errorf("parsing interval_speedtest %q: %w", c.IntervalSpeedtest, err)
 	}
 	if _, err := time.ParseDuration(c.IntervalStatusUpdate); err != nil {
-		return fmt.Errorf("invalid interval_status_update: %w", err)
+		return fmt.Errorf("parsing interval_status_update %q: %w", c.IntervalStatusUpdate, err)
 	}
 
 	// Ensure the Moniker field is not empty.
@@ -240,7 +242,7 @@ func (c *NodeConfig) Validate() error {
 	// Validate each address in the RemoteAddrs field.
 	for _, addr := range c.RemoteAddrs {
 		if err := validateRemoteAddr(addr); err != nil {
-			return fmt.Errorf("invalid remote_addr %s: %w", addr, err)
+			return fmt.Errorf("parsing remote_addr %q: %w", addr, err)
 		}
 	}
 
@@ -251,7 +253,7 @@ func (c *NodeConfig) Validate() error {
 		types.ServiceTypeOpenVPN.String():   true,
 	}
 	if !validServiceTypes[c.ServiceType] {
-		return errors.New("type must be one of: v2ray, wireguard, openvpn")
+		return fmt.Errorf("unsupported service_type %q (allowed: v2ray, wireguard, openvpn)", c.ServiceType)
 	}
 
 	return nil
@@ -296,13 +298,11 @@ func DefaultNodeConfig() *NodeConfig {
 }
 
 func randServiceType() types.ServiceType {
-	services := []types.ServiceType{
+	return [...]types.ServiceType{
 		types.ServiceTypeWireGuard,
 		types.ServiceTypeV2Ray,
 		types.ServiceTypeOpenVPN,
-	}
-
-	return services[rand.IntN(len(services))]
+	}[rand.IntN(3)]
 }
 
 func randMoniker() string {
@@ -329,7 +329,7 @@ func validateRemoteAddr(addr string) error {
 		return errors.New("addr cannot be empty")
 	}
 	if len(addr) > MaxRemoteAddrLen {
-		return fmt.Errorf("addr cannot be longer than %d chars", MaxRemoteAddrLen)
+		return fmt.Errorf("addr length cannot be greater than %d", MaxRemoteAddrLen)
 	}
 
 	// Validate the IP address format.
@@ -341,7 +341,7 @@ func validateRemoteAddr(addr string) error {
 			return nil
 		}
 
-		return errors.New("invalid ip addr")
+		return errors.New("addr is neither IPv4 nor IPv6")
 	}
 
 	return nil
