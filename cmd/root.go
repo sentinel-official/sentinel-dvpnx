@@ -43,7 +43,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 			// Initialize logger with selected format and level
 			logger, err := log.NewLogger(cmd.OutOrStdout(), logFormat, logLevel)
 			if err != nil {
-				return fmt.Errorf("failed to initialize logger: %w", err)
+				return fmt.Errorf("initializing logger: %w", err)
 			}
 
 			// Set the global logger instance
@@ -55,7 +55,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 			// Check if the config file exists at the specified path
 			cfgFileExists, err := utils.IsFileExists(cfgFile)
 			if err != nil {
-				return fmt.Errorf("failed to check if config file exists: %w", err)
+				return fmt.Errorf("checking if config file %q exists: %w", cfgFile, err)
 			}
 
 			// If the config file exists, proceed to read its contents
@@ -63,7 +63,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 			if cfgFileExists {
 				v.SetConfigFile(cfgFile)
 				if err := v.ReadInConfig(); err != nil {
-					return fmt.Errorf("failed to read config file: %w", err)
+					return fmt.Errorf("reading config file %q: %w", cfgFile, err)
 				}
 			}
 
@@ -78,7 +78,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 
 			// Unmarshal configuration into the config object
 			if err := v.Unmarshal(cfg); err != nil {
-				return fmt.Errorf("failed to unmarshal config file: %w", err)
+				return fmt.Errorf("unmarshalling config file %q: %w", cfgFile, err)
 			}
 
 			// Update the keyring configuration

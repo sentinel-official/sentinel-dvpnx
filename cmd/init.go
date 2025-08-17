@@ -34,9 +34,9 @@ func NewInitCmd(cfg *config.Config) *cobra.Command {
 If a configuration file already exists, this command will abort unless the "force" flag
 is set to overwrite the existing configuration.`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Validate the provided configuration.
+			log.Info("Validating configuration")
 			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("invalid configuration: %w", err)
+				return fmt.Errorf("validating configuration: %w", err)
 			}
 
 			return nil
@@ -45,7 +45,7 @@ is set to overwrite the existing configuration.`,
 			// Create the home directory if it doesn't exist
 			homeDir := viper.GetString("home")
 			if err := os.MkdirAll(homeDir, 0755); err != nil {
-				return fmt.Errorf("failed to create application directory: %w", err)
+				return fmt.Errorf("creating application directory %q: %w", homeDir, err)
 			}
 
 			// Construct the full path to the config file
@@ -54,31 +54,33 @@ is set to overwrite the existing configuration.`,
 			// Check if the config file exists at the specified path
 			cfgFileExists, err := utils.IsFileExists(cfgFile)
 			if err != nil {
-				return fmt.Errorf("failed to check if config file exists: %w", err)
+				return fmt.Errorf("checking if config file %q exists: %w", cfgFile, err)
 			}
 
 			// Write default config only if file doesn't exist or force flag is set
 			if !cfgFileExists || force {
+				log.Info("Writing app config", "file", cfgFile)
 				if err := cfg.WriteAppConfig(cfgFile); err != nil {
-					return fmt.Errorf("failed to write config file: %w", err)
+					return fmt.Errorf("writing config file %q: %w", cfgFile, err)
 				}
 			}
 
 			// Generate TLS keys if "skipTLS" is disabled
 			if !skipTLS {
-				// Initialize PKI and create private key and certificate authority
+				log.Info("Initializing PKI with CA certificate and key", "dir", homeDir)
+
 				pki := crypto.NewPKI(homeDir)
 				if err := pki.Init(); err != nil {
-					return fmt.Errorf("failed to initialize PKI: %w", err)
+					return fmt.Errorf("initializing PKI: %w", err)
 				}
 
 				opts := []crypto.CertOption{
 					crypto.CertSAN(cfg.Node.GetRemoteAddrs()...),
 				}
 
-				// Issue a TLS certificate for the node
+				log.Info("Issuing certificate and key", "name", "tls")
 				if _, _, err := pki.Issue("tls", opts...); err != nil {
-					return fmt.Errorf("failed to issue TLS key and certificate: %w", err)
+					return fmt.Errorf("issuing TLS certificate and key: %w", err)
 				}
 			}
 
@@ -89,7 +91,8 @@ is set to overwrite the existing configuration.`,
 					serviceType = cfg.Node.GetServiceType() // Get the service type from config
 				)
 
-				// Determine and instantiate the correct service implementation
+				log.Info("Initializing service", "type", serviceType)
+
 				switch serviceType {
 				case types.ServiceTypeV2Ray:
 					service = v2ray.NewServer(homeDir)
@@ -98,12 +101,12 @@ is set to overwrite the existing configuration.`,
 				case types.ServiceTypeOpenVPN:
 					service = openvpn.NewServer(homeDir)
 				default:
-					return fmt.Errorf("invalid service type %s", serviceType)
+					return fmt.Errorf("unsupported service type %q", serviceType)
 				}
 
-				// Initialize the selected service
+				log.Info("Running service init task")
 				if err := service.Init(force); err != nil {
-					return fmt.Errorf("failed to initialize service: %w", err)
+					return fmt.Errorf("running service init task: %w", err)
 				}
 			}
 

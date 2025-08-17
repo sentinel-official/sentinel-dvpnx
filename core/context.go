@@ -30,6 +30,7 @@ type Context struct {
 	hourlyPrices   v1.Prices
 	input          io.Reader
 	location       *geoip.Location
+	maxPeers       uint
 	moniker        string
 	remoteAddrs    []string
 	rpcAddrs       []string
@@ -110,6 +111,11 @@ func (c *Context) Location() *geoip.Location {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
 	return c.location
+}
+
+// MaxPeers returns the maximum peers for the service.
+func (c *Context) MaxPeers() uint {
+	return c.maxPeers
 }
 
 // Moniker returns the name or identifier for the node.
@@ -260,6 +266,13 @@ func (c *Context) WithHourlyPrices(prices v1.Prices) *Context {
 func (c *Context) WithInput(input io.Reader) *Context {
 	c.checkSealed()
 	c.input = input
+	return c
+}
+
+// WithMaxPeers sets maximum peers for the service and returns the updated context.
+func (c *Context) WithMaxPeers(maxPeers uint) *Context {
+	c.checkSealed()
+	c.maxPeers = maxPeers
 	return c
 }
 

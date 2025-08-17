@@ -49,7 +49,7 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		"name", cfg.Keyring.GetName(),
 	)
 	if err := cc.SetupKeyring(cfg.Keyring); err != nil {
-		return fmt.Errorf("failed to setup keyring: %w", err)
+		return fmt.Errorf("setting up keyring: %w", err)
 	}
 
 	// Assign the initialized client to the context.
@@ -63,7 +63,7 @@ func (c *Context) SetupDatabase(_ *config.Config) error {
 
 	db, err := database.NewDefault(c.DatabaseFile())
 	if err != nil {
-		return fmt.Errorf("failed to initialize database: %w", err)
+		return fmt.Errorf("initializing database %q: %w", c.DatabaseFile(), err)
 	}
 
 	// Assign the database instance to the context.
@@ -85,25 +85,16 @@ func (c *Context) SetupGeoIPClient(_ *config.Config) error {
 func (c *Context) SetupAccAddr(cfg *config.Config) error {
 	log.Info("Retrieving addr for key", "name", cfg.Tx.GetFromName())
 
-	key, err := c.Client().Key(cfg.Tx.GetFromName())
+	addr, err := c.Client().KeyAddr(cfg.Tx.GetFromName())
 	if err != nil {
-		return fmt.Errorf("failed to retrieve key: %w", err)
-	}
-	if key == nil {
-		return fmt.Errorf("key %s does not exist", cfg.Tx.GetFromName())
-	}
-
-	// Extract the address from the key.
-	addr, err := key.GetAddress()
-	if err != nil {
-		return fmt.Errorf("failed to retrieve address from key: %w", err)
+		return fmt.Errorf("getting addr for key %q: %w", cfg.Tx.GetFromName(), err)
 	}
 
 	log.Info("Querying account information", "addr", addr)
 
 	acc, err := c.Client().Account(context.TODO(), addr)
 	if err != nil {
-		return fmt.Errorf("failed to query account: %w", err)
+		return fmt.Errorf("querying account %q: %w", addr, err)
 	}
 	if acc == nil {
 		return fmt.Errorf("account %s does not exist", addr)
@@ -131,14 +122,14 @@ func (c *Context) SetupService(cfg *config.Config) error {
 	case types.ServiceTypeOpenVPN:
 		service = openvpn.NewServer(c.HomeDir())
 	default:
-		return fmt.Errorf("invalid service type %s", serviceType)
+		return fmt.Errorf("unsupported service type %q", serviceType)
 	}
 
 	log.Info("Checking service status")
 
 	ok, err := service.IsUp()
 	if err != nil {
-		return fmt.Errorf("failed to check if service is up: %w", err)
+		return fmt.Errorf("checking service status: %w", err)
 	}
 	if ok {
 		return fmt.Errorf("service is already up")
@@ -146,7 +137,7 @@ func (c *Context) SetupService(cfg *config.Config) error {
 
 	log.Info("Running service pre-up task")
 	if err := service.PreUp(nil); err != nil {
-		return fmt.Errorf("failed to run service pre-up task: %w", err)
+		return fmt.Errorf("running service pre-up task: %w", err)
 	}
 
 	// Assign the service to the context
@@ -161,33 +152,34 @@ func (c *Context) Setup(cfg *config.Config) error {
 	c.WithAPIListenAddr(cfg.Node.APIListenAddr())
 	c.WithGigabytePrices(cfg.Node.GetGigabytePrices())
 	c.WithHourlyPrices(cfg.Node.GetHourlyPrices())
+	c.WithMaxPeers(cfg.QOS.GetMaxPeers())
 	c.WithMoniker(cfg.Node.GetMoniker())
 	c.WithRemoteAddrs(cfg.Node.GetRemoteAddrs())
 	c.WithRPCAddrs(cfg.RPC.GetAddrs())
 
 	log.Info("Setting up blockchain client")
 	if err := c.SetupClient(cfg); err != nil {
-		return fmt.Errorf("failed to setup client: %w", err)
+		return fmt.Errorf("setting up client: %w", err)
 	}
 
 	log.Info("Setting up database")
 	if err := c.SetupDatabase(cfg); err != nil {
-		return fmt.Errorf("failed to setup database: %w", err)
+		return fmt.Errorf("setting up database: %w", err)
 	}
 
 	log.Info("Setting up GeoIP client")
 	if err := c.SetupGeoIPClient(cfg); err != nil {
-		return fmt.Errorf("failed to setup geoip client: %w", err)
+		return fmt.Errorf("setting up GeoIP client: %w", err)
 	}
 
 	log.Info("Setting up service")
 	if err := c.SetupService(cfg); err != nil {
-		return fmt.Errorf("failed to setup service: %w", err)
+		return fmt.Errorf("setting up service: %w", err)
 	}
 
 	log.Info("Setting up account addr")
 	if err := c.SetupAccAddr(cfg); err != nil {
-		return fmt.Errorf("failed to setup account addr: %w", err)
+		return fmt.Errorf("setting up account addr: %w", err)
 	}
 
 	return nil

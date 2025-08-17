@@ -7,7 +7,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.17
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc.6.0.20250816150754-3266e10d7a0d
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc.6.0.20250817160617-e6eac458483c
 	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc.11
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7

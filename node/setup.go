@@ -64,7 +64,7 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 
 	log.Info("Registering scheduler workers", "count", len(items))
 	if err := s.RegisterWorkers(items...); err != nil {
-		return fmt.Errorf("failed to register workers: %w", err)
+		return fmt.Errorf("registering scheduler workers: %w", err)
 	}
 
 	// Attach the configured scheduler to the Node.
@@ -76,12 +76,12 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 func (n *Node) Setup(cfg *config.Config) error {
 	log.Info("Setting up router")
 	if err := n.SetupRouter(cfg); err != nil {
-		return fmt.Errorf("failed to setup router: %w", err)
+		return fmt.Errorf("setting up router: %w", err)
 	}
 
 	log.Info("Setting up scheduler")
 	if err := n.SetupScheduler(cfg); err != nil {
-		return fmt.Errorf("failed to setup scheduler: %w", err)
+		return fmt.Errorf("setting up scheduler: %w", err)
 	}
 
 	return nil

@@ -21,7 +21,12 @@ import (
 // handlerInitHandshake returns a handler function to process the request for performing a handshake.
 func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// TODO: validate current peer count
+		// Reject handshake if maximum peer limit is reached
+		if n := c.Service().PeersLen(); uint(n) >= c.MaxPeers() {
+			err := fmt.Errorf("maximum peer limit reached")
+			ctx.JSON(http.StatusConflict, types.NewResponseError(1, err))
+			return
+		}
 
 		// Parse and verify the request.
 		req, err := NewInitHandshakeRequest(ctx)
