@@ -12,7 +12,7 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
-const nameNodeStatusUpdate = "node_status_update"
+const NameNodeStatusUpdate = "node_status_update"
 
 // NewNodeStatusUpdateWorker creates a worker to periodically update the node's status to active on the blockchain.
 // This worker broadcasts a transaction to mark the node as active at regular intervals.
@@ -27,21 +27,15 @@ func NewNodeStatusUpdateWorker(c *core.Context, interval time.Duration) cron.Wor
 
 		// Broadcast the transaction message to the blockchain.
 		if err := c.BroadcastTx(ctx, msg); err != nil {
-			return fmt.Errorf("failed to broadcast update node status tx: %w", err)
+			return fmt.Errorf("broadcasting tx with update_node_status msg: %w", err)
 		}
 
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameNodeStatusUpdate).
+	return cron.NewBasicWorker(NameNodeStatusUpdate).
 		WithHandler(handlerFunc).
 		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithRetryDelay(5 * time.Second)
 }

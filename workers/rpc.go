@@ -13,7 +13,7 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
-const nameBestRPCAddr = "best_rpc_addr"
+const NameBestRPCAddr = "best_rpc_addr"
 
 // NewBestRPCAddrWorker creates a worker that determines the best RPC address based on latency.
 // This worker periodically measures the latency of available RPC addresses,
@@ -90,15 +90,8 @@ func NewBestRPCAddrWorker(c *core.Context, interval time.Duration) cron.Worker {
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameBestRPCAddr).
+	return cron.NewBasicWorker(NameBestRPCAddr).
 		WithHandler(handlerFunc).
-		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithInterval(interval)
 }

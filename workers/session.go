@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	nameSessionUsageSyncWithBlockchain = "session_usage_sync_with_blockchain"
-	nameSessionUsageSyncWithDatabase   = "session_usage_sync_with_database"
-	nameSessionUsageValidate           = "session_usage_validate"
-	nameSessionValidate                = "session_validate"
+	NameSessionUsageSyncWithBlockchain = "session_usage_sync_with_blockchain"
+	NameSessionUsageSyncWithDatabase   = "session_usage_sync_with_database"
+	NameSessionUsageValidate           = "session_usage_validate"
+	NameSessionValidate                = "session_validate"
 )
 
 // NewSessionUsageSyncWithBlockchainWorker creates a worker that synchronizes session usage with the blockchain.
@@ -27,19 +27,26 @@ const (
 func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Duration) cron.Worker {
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
-		items, err := operations.SessionFind(c.Database(), nil)
+		query := map[string]interface{}{
+			"node_addr": c.NodeAddr().String(),
+		}
+
+		items, err := operations.SessionFind(c.Database(), query)
 		if err != nil {
 			return fmt.Errorf("retrieving sessions from database: %w", err)
 		}
 
-		var msgs []types.Msg
 		// Iterate over sessions and prepare messages for updates.
+		var msgs []types.Msg
 		for _, item := range items {
 			session, err := c.Client().Session(ctx, item.GetID())
 			if err != nil {
-				return fmt.Errorf("querying session %d on blockchain: %w", item.GetID(), err)
+				return fmt.Errorf("querying session %d from blockchain: %w", item.GetID(), err)
 			}
 			if session == nil {
+				continue
+			}
+			if session.GetUploadBytes().Equal(item.GetRxBytes()) {
 				continue
 			}
 
@@ -50,23 +57,17 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 
 		// Broadcast the prepared messages as a transaction.
 		if err := c.BroadcastTx(ctx, msgs...); err != nil {
-			return fmt.Errorf("broadcasting tx: %w", err)
+			return fmt.Errorf("broadcasting tx with %d update_session msgs: %w", len(msgs), err)
 		}
 
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameSessionUsageSyncWithBlockchain).
+	return cron.NewBasicWorker(NameSessionUsageSyncWithBlockchain).
 		WithHandler(handlerFunc).
 		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithRetryDelay(5 * time.Second)
 }
 
 // NewSessionUsageSyncWithDatabaseWorker creates a worker that updates session usage in the database.
@@ -105,17 +106,10 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameSessionUsageSyncWithDatabase).
+	return cron.NewBasicWorker(NameSessionUsageSyncWithDatabase).
 		WithHandler(handlerFunc).
-		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithInterval(interval)
 }
 
 // NewSessionUsageValidateWorker creates a worker that validates session usage limits and removes peers if necessary.
@@ -123,7 +117,11 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron.Worker {
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
-		items, err := operations.SessionFind(c.Database(), nil)
+		query := map[string]interface{}{
+			"service_type": c.Service().Type().String(),
+		}
+
+		items, err := operations.SessionFind(c.Database(), query)
 		if err != nil {
 			return fmt.Errorf("retrieving sessions from database: %w", err)
 		}
@@ -144,11 +142,6 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 				removePeer = true
 			}
 
-			// Ensure that only sessions of the current service type are validated.
-			if item.GetServiceType() != c.Service().Type() {
-				removePeer = false
-			}
-
 			// If the session exceeded any limits, remove the associated peer.
 			if removePeer {
 				req := item.GetPeerRequest()
@@ -161,17 +154,10 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameSessionUsageValidate).
+	return cron.NewBasicWorker(NameSessionUsageValidate).
 		WithHandler(handlerFunc).
-		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithInterval(interval)
 }
 
 // NewSessionValidateWorker creates a worker that validates session status and removes peers if necessary.
@@ -179,7 +165,11 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Worker {
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
-		items, err := operations.SessionFind(c.Database(), nil)
+		query := map[string]interface{}{
+			"service_type": c.Service().Type().String(),
+		}
+
+		items, err := operations.SessionFind(c.Database(), query)
 		if err != nil {
 			return fmt.Errorf("retrieving sessions from database: %w", err)
 		}
@@ -188,7 +178,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 		for _, item := range items {
 			session, err := c.Client().Session(ctx, item.GetID())
 			if err != nil {
-				return fmt.Errorf("querying session %d on blockchain: %w", item.GetID(), err)
+				return fmt.Errorf("querying session %d from blockchain: %w", item.GetID(), err)
 			}
 
 			removePeer := false
@@ -200,10 +190,6 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 			// Remove peer if the session status is not active.
 			if session != nil && !session.GetStatus().Equal(v1.StatusActive) {
 				removePeer = true
-			}
-			// Validate only sessions of the current service type.
-			if item.GetServiceType() != c.Service().Type() {
-				removePeer = false
 			}
 
 			// Remove the associated peer if validation fails.
@@ -236,15 +222,8 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameSessionValidate).
+	return cron.NewBasicWorker(NameSessionValidate).
 		WithHandler(handlerFunc).
-		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithInterval(interval)
 }

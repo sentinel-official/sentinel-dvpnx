@@ -90,7 +90,7 @@ func (n *Node) Register(ctx context.Context) error {
 
 	// Broadcast the registration transaction.
 	if err := n.BroadcastTx(ctx, msg); err != nil {
-		return fmt.Errorf("failed to broadcast register node tx: %w", err)
+		return fmt.Errorf("broadcasting tx with register_node msg: %w", err)
 	}
 
 	log.Info("Node registered successfully", "addr", n.NodeAddr())
@@ -115,7 +115,7 @@ func (n *Node) UpdateDetails(ctx context.Context) error {
 
 	// Broadcast the update transaction.
 	if err := n.BroadcastTx(ctx, msg); err != nil {
-		return fmt.Errorf("failed to broadcast update node details tx: %w", err)
+		return fmt.Errorf("broadcasting tx with update_node_details msg: %w", err)
 	}
 
 	log.Info("Node details updated successfully", "addr", n.NodeAddr())

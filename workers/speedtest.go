@@ -11,7 +11,7 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
-const nameSpeedtest = "speedtest"
+const NameSpeedtest = "speedtest"
 
 // NewSpeedtestWorker creates a worker that performs periodic speed tests and updates the context with the results.
 // This worker measures the download and upload speeds and sets the results in the application's context.
@@ -21,7 +21,7 @@ func NewSpeedtestWorker(c *core.Context, interval time.Duration) cron.Worker {
 		// Run the speed test to measure download and upload speeds.
 		dlSpeed, ulSpeed, err := speedtest.Run(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to run speed test: %w", err)
+			return fmt.Errorf("running speed test: %w", err)
 		}
 
 		// Update the context with the obtained speed test results.
@@ -30,15 +30,8 @@ func NewSpeedtestWorker(c *core.Context, interval time.Duration) cron.Worker {
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameSpeedtest).
+	return cron.NewBasicWorker(NameSpeedtest).
 		WithHandler(handlerFunc).
-		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithInterval(interval)
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
-const nameGeoIPLocation = "geoip_location"
+const NameGeoIPLocation = "geoip_location"
 
 // NewGeoIPLocationWorker creates a worker to periodically update the GeoIP location in the context.
 // This worker fetches the GeoIP location and updates the context at regular intervals.
@@ -20,7 +20,7 @@ func NewGeoIPLocationWorker(c *core.Context, interval time.Duration) cron.Worker
 		// Fetch the GeoIP location using the GeoIP client.
 		location, err := c.GeoIPClient().Get("")
 		if err != nil {
-			return fmt.Errorf("failed to get geoip location: %w", err)
+			return fmt.Errorf("getting GeoIP location: %w", err)
 		}
 
 		// Update the context with the fetched location.
@@ -29,15 +29,8 @@ func NewGeoIPLocationWorker(c *core.Context, interval time.Duration) cron.Worker
 		return nil
 	}
 
-	// Error handling function to log failures.
-	onErrorFunc := func(err error) bool {
-		return false
-	}
-
 	// Initialize and return the worker.
-	return cron.NewBasicWorker().
-		WithName(nameGeoIPLocation).
+	return cron.NewBasicWorker(NameGeoIPLocation).
 		WithHandler(handlerFunc).
-		WithInterval(interval).
-		WithOnError(onErrorFunc)
+		WithInterval(interval)
 }

@@ -74,7 +74,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		// Fetch session details from blockchain.
 		session, err := c.Client().Session(ctx, req.Body.ID)
 		if err != nil {
-			err = fmt.Errorf("querying session %d on blockchain: %w", req.Body.ID, err)
+			err = fmt.Errorf("querying session %d from blockchain: %w", req.Body.ID, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err))
 			return
 		}

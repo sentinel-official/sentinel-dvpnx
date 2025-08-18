@@ -25,7 +25,7 @@ func (c *Context) BroadcastTx(ctx context.Context, msgs ...types.Msg) error {
 		return fmt.Errorf("broadcasting tx commit: %w", err)
 	}
 
-	log.Info(
+	log.Debug(
 		"Transaction broadcasted successfully",
 		"code", fmt.Sprintf("%s/%d", txRes.TxResult.Codespace, txRes.TxResult.Code),
 		"gas", fmt.Sprintf("%d/%d", txRes.TxResult.GasUsed, txRes.TxResult.GasWanted),
