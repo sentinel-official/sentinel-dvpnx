@@ -98,6 +98,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 					return fmt.Errorf("starting node: %w", err)
 				}
 
+				log.Info("Node started successfully")
 				eg.Go(func() error {
 					defer log.Info("Exiting node routine")
 					if err := n.Wait(); err != nil {
@@ -112,7 +113,6 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 
 			// Wait until all routines started
 			start.Wait()
-			log.Info("Node started successfully")
 
 			// Wait for all goroutines to complete.
 			if err := eg.Wait(); err != nil {

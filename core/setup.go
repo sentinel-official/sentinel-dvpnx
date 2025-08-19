@@ -19,38 +19,20 @@ import (
 // SetupClient initializes the SDK client with the given configuration and assigns it to the context.
 func (c *Context) SetupClient(cfg *config.Config) error {
 	log.Info("Initializing blockchain client",
-		"rpc.chain_id", cfg.RPC.GetChainID(),
+		"keyring.backend", cfg.Keyring.GetBackend(),
+		"keyring.name", cfg.Keyring.GetName(),
 		"rpc.addr", cfg.RPC.GetAddr(),
+		"rpc.chain_id", cfg.RPC.GetChainID(),
 		"tx.from_name", cfg.Tx.GetFromName(),
 	)
-	cc := core.NewClient().
-		WithQueryProve(cfg.Query.GetProve()).
-		WithQueryRetryAttempts(cfg.Query.GetRetryAttempts()).
-		WithQueryRetryDelay(cfg.Query.GetRetryDelay()).
-		WithRPCAddr(c.RPCAddr()).
-		WithRPCChainID(cfg.RPC.GetChainID()).
-		WithRPCTimeout(cfg.RPC.GetTimeout()).
-		WithTxBroadcastRetryAttempts(cfg.Tx.GetBroadcastRetryAttempts()).
-		WithTxBroadcastRetryDelay(cfg.Tx.GetBroadcastRetryDelay()).
-		WithTxFeeGranterAddr(cfg.Tx.GetFeeGranterAddr()).
-		WithTxFees(nil).
-		WithTxFromName(cfg.Tx.GetFromName()).
-		WithTxGasAdjustment(cfg.Tx.GetGasAdjustment()).
-		WithTxGas(cfg.Tx.GetGas()).
-		WithTxGasPrices(cfg.Tx.GetGasPrices()).
-		WithTxMemo("").
-		WithTxQueryRetryAttempts(cfg.Tx.GetQueryRetryAttempts()).
-		WithTxQueryRetryDelay(cfg.Tx.GetQueryRetryDelay()).
-		WithTxSimulateAndExecute(cfg.Tx.GetSimulateAndExecute()).
-		WithTxTimeoutHeight(0)
 
-	log.Info("Setting up keyring",
-		"backend", cfg.Keyring.GetBackend(),
-		"name", cfg.Keyring.GetName(),
-	)
-	if err := cc.SetupKeyring(cfg.Keyring); err != nil {
-		return fmt.Errorf("setting up keyring: %w", err)
+	cc, err := core.NewClientFromConfig(cfg.Config)
+	if err != nil {
+		return fmt.Errorf("creating client from config: %w", err)
 	}
+
+	// Seal the client.
+	cc.Seal()
 
 	// Assign the initialized client to the context.
 	c.WithClient(cc)

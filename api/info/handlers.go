@@ -21,9 +21,8 @@ func handlerGetInfo(c *core.Context) gin.HandlerFunc {
 		// Construct the result structure with node information.
 		res := &node.GetInfoResult{
 			Addr:         c.NodeAddr().String(),
-			EgressRate:   ulSpeed.String(),
+			Downlink:     ulSpeed.String(),
 			HandshakeDNS: false,
-			IngressRate:  dlSpeed.String(),
 			Location: &geoip.Location{
 				City:        loc.City,
 				Country:     loc.Country,
@@ -34,6 +33,7 @@ func handlerGetInfo(c *core.Context) gin.HandlerFunc {
 			Moniker:     c.Moniker(),
 			Peers:       c.Service().PeersLen(),
 			ServiceType: c.Service().Type().String(),
+			Uplink:      dlSpeed.String(),
 			Version:     version.Get(),
 		}
 

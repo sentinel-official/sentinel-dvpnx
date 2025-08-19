@@ -51,58 +51,95 @@ func NewContext() *Context {
 	}
 }
 
+// checkSealed verifies if the context is sealed to prevent modification.
+func (c *Context) checkSealed() {
+	if c.sealed {
+		panic(errors.New("context is sealed"))
+	}
+}
+
+// Seal marks the context as sealed, preventing further modifications.
+func (c *Context) Seal() *Context {
+	c.sealed = true
+	return c
+}
+
 // AccAddr returns the transaction sender address set in the context.
 func (c *Context) AccAddr() cosmossdk.AccAddress {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.accAddr.Bytes()
 }
 
 // APIAddrs returns the api addresses set in the context.
 func (c *Context) APIAddrs() []string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.apiAddrs
 }
 
 // APIListenAddr returns the listen address of the node API.
 func (c *Context) APIListenAddr() string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.apiListenAddr
 }
 
 // Client returns the client instance set in the context.
 func (c *Context) Client() *core.Client {
-	return c.client.WithRPCAddr(c.RPCAddr()) // TODO: is it needed?
+	c.fm.RLock()
+	defer c.fm.RUnlock()
+
+	c.client.SetRPCAddr(c.RPCAddr())
+	return c.client
 }
 
 // Database returns the database connection set in the context.
 func (c *Context) Database() *gorm.DB {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.database
 }
 
 // DatabaseFile returns the database path of the node.
 func (c *Context) DatabaseFile() string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return filepath.Join(c.HomeDir(), "data.db")
 }
 
 // GeoIPClient returns the GeoIP client set in the context.
 func (c *Context) GeoIPClient() geoip.Client {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.geoIPClient
 }
 
 // GigabytePrices returns the gigabyte prices for nodes.
 func (c *Context) GigabytePrices() v1.Prices {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.gigabytePrices
 }
 
 // HomeDir returns the home directory set in the context.
 func (c *Context) HomeDir() string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.homeDir
 }
 
 // HourlyPrices returns the hourly prices for nodes.
 func (c *Context) HourlyPrices() v1.Prices {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.hourlyPrices
 }
 
 // Input returns the keyring input set in the context.
 func (c *Context) Input() io.Reader {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.input
 }
 
@@ -115,28 +152,39 @@ func (c *Context) Location() *geoip.Location {
 
 // MaxPeers returns the maximum peers for the service.
 func (c *Context) MaxPeers() uint {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.maxPeers
 }
 
 // Moniker returns the name or identifier for the node.
 func (c *Context) Moniker() string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.moniker
 }
 
 func (c *Context) NodeAddr() sentinelhub.NodeAddress {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.accAddr.Bytes()
 }
 
 // RemoteAddrs returns the remote addresses set in the context.
 func (c *Context) RemoteAddrs() []string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.remoteAddrs
 }
 
 // RPCAddr returns the first RPC address from the list or an empty string if no addresses are available.
 func (c *Context) RPCAddr() string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
+
 	addrs := c.RPCAddrs()
-	if len(addrs) == 0 { // TODO: is it needed?
-		return ""
+	if len(addrs) == 0 {
+		panic(errors.New("rpc_addrs is empty"))
 	}
 
 	return addrs[0]
@@ -149,24 +197,31 @@ func (c *Context) RPCAddrs() []string {
 	return c.rpcAddrs
 }
 
-// Seal marks the context as sealed, preventing further modifications.
-func (c *Context) Seal() *Context {
-	c.sealed = true
-	return c
-}
-
 // Service returns the server service instance set in the context.
 func (c *Context) Service() sentinelsdk.ServerService {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return c.service
+}
+
+// SpeedtestResults returns the download and upload speeds set in the context.
+func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed math.Int) {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
+	return c.dlSpeed, c.ulSpeed
 }
 
 // TLSCertFile returns the TLS certificate path of the node API server.
 func (c *Context) TLSCertFile() string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return filepath.Join(c.HomeDir(), "tls.crt")
 }
 
 // TLSKeyFile returns the TLS key path of the node API server.
 func (c *Context) TLSKeyFile() string {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
 	return filepath.Join(c.HomeDir(), "tls.key")
 }
 
@@ -190,13 +245,6 @@ func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed math.Int) {
 	defer c.fm.Unlock()
 	c.dlSpeed = dlSpeed
 	c.ulSpeed = ulSpeed
-}
-
-// SpeedtestResults returns the download and upload speeds set in the context.
-func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed math.Int) {
-	c.fm.RLock()
-	defer c.fm.RUnlock()
-	return c.dlSpeed, c.ulSpeed
 }
 
 // WithAccAddr sets the transaction sender address in the context and returns the updated context.
@@ -302,11 +350,4 @@ func (c *Context) WithService(service sentinelsdk.ServerService) *Context {
 	c.checkSealed()
 	c.service = service
 	return c
-}
-
-// checkSealed verifies if the context is sealed to prevent modification.
-func (c *Context) checkSealed() {
-	if c.sealed {
-		panic(errors.New("context is sealed"))
-	}
 }
