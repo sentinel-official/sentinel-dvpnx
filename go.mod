@@ -14,7 +14,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	golang.org/x/sync v0.16.0
 	gorm.io/driver/sqlite v1.6.0
-	gorm.io/gorm v1.30.0
+	gorm.io/gorm v1.30.1
 )
 
 require (
