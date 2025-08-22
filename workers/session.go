@@ -118,7 +118,7 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		query := map[string]interface{}{
-			"service_type": c.Service().Type().String(),
+			"node_addr": c.NodeAddr().String(),
 		}
 
 		items, err := operations.SessionFind(c.Database(), query)
@@ -140,6 +140,11 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 			maxDuration := item.GetMaxDuration()
 			if maxDuration != 0 && item.GetDuration() >= maxDuration {
 				removePeer = true
+			}
+
+			// Ensure that only sessions of the current service type are validated.
+			if item.GetServiceType() != c.Service().Type() {
+				removePeer = false
 			}
 
 			// If the session exceeded any limits, remove the associated peer.
@@ -166,7 +171,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		query := map[string]interface{}{
-			"service_type": c.Service().Type().String(),
+			"node_addr": c.NodeAddr().String(),
 		}
 
 		items, err := operations.SessionFind(c.Database(), query)
@@ -190,6 +195,11 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 			// Remove peer if the session status is not active.
 			if session != nil && !session.GetStatus().Equal(v1.StatusActive) {
 				removePeer = true
+			}
+
+			// Ensure that only sessions of the current service type are validated.
+			if item.GetServiceType() != c.Service().Type() {
+				removePeer = false
 			}
 
 			// Remove the associated peer if validation fails.
