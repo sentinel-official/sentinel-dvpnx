@@ -192,11 +192,7 @@ func (n *Node) Start(ctx context.Context) error {
 		log.Info("Starting API server routine")
 		defer start.Done()
 
-		log.Info("Starting API server",
-			"listen_on", n.APIListenAddr(),
-			"tls_cert_file", n.TLSCertFile(),
-			"tls_key_file", n.TLSKeyFile(),
-		)
+		log.Info("Starting API server", "listen_on", n.APIListenAddr())
 		n.eg.Go(func() error {
 			defer log.Info("Exiting API server routine")
 			if err := cmux.ListenAndServeTLS(ctx, n.APIListenAddr(), n.TLSCertFile(), n.TLSKeyFile(), n.Router()); err != nil {

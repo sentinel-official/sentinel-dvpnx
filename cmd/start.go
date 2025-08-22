@@ -23,14 +23,6 @@ func NewStartCmd(cfg *config.Config) *cobra.Command {
 		Short: "Start the Sentinel dVPN node",
 		Long: `Starts the Sentinel dVPN node. Initializes the logger, sets up the context and node,
 explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			log.Info("Validating configuration")
-			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("validating configuration: %w", err)
-			}
-
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Retrieve the home directory from the configuration.
 			homeDir := viper.GetString("home")
@@ -77,7 +69,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 					// Wait until signal is received
 					<-ctx.Done()
 
-					log.Info("Stop signal received, stopping node")
+					log.Info("Stop signal received, stopping node...")
 					if err := n.Stop(); err != nil {
 						return fmt.Errorf("stopping node: %w", err)
 					}

@@ -292,7 +292,7 @@ func DefaultNodeConfig() *NodeConfig {
 		IntervalSpeedtest:                      (7 * 24 * time.Hour).String(),
 		IntervalStatusUpdate:                   (1*time.Hour - 5*time.Minute).String(),
 		Moniker:                                randMoniker(),
-		RemoteAddrs:                            []string{},
+		RemoteAddrs:                            []string{"127.0.0.1"},
 		ServiceType:                            randServiceType().String(),
 	}
 }

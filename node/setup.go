@@ -61,10 +61,14 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 
 	// Create a new cron scheduler and register the workers.
 	s := cron.NewScheduler()
-
-	log.Info("Registering scheduler workers", "count", len(items))
-	if err := s.RegisterWorkers(items...); err != nil {
-		return fmt.Errorf("registering scheduler workers: %w", err)
+	for _, item := range items {
+		log.Info("Registering scheduler worker",
+			"name", item.Name(),
+			"interval", item.Interval().String(),
+		)
+		if err := s.RegisterWorkers(item); err != nil {
+			return fmt.Errorf("registering scheduler worker %q: %w", item.Name(), err)
+		}
 	}
 
 	// Attach the configured scheduler to the Node.

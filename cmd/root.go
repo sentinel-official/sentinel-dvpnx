@@ -78,12 +78,17 @@ tools for key management and node initialization, ensuring privacy, performance,
 
 			// Unmarshal configuration into the config object
 			if err := v.Unmarshal(cfg); err != nil {
-				return fmt.Errorf("unmarshalling config file %q: %w", cfgFile, err)
+				return fmt.Errorf("unmarshaling config file %q: %w", cfgFile, err)
 			}
 
 			// Update the keyring configuration
 			cfg.Keyring.HomeDir = homeDir
 			cfg.Keyring.Input = cmd.InOrStdin()
+
+			log.Info("Validating configuration")
+			if err := cfg.Validate(); err != nil {
+				return fmt.Errorf("validating config: %w", err)
+			}
 
 			return nil
 		},

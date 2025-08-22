@@ -33,14 +33,6 @@ func NewInitCmd(cfg *config.Config) *cobra.Command {
 		Long: `Creates the application home directory and generates a default config.toml file.
 If a configuration file already exists, this command will abort unless the "force" flag
 is set to overwrite the existing configuration.`,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			log.Info("Validating configuration")
-			if err := cfg.Validate(); err != nil {
-				return fmt.Errorf("validating configuration: %w", err)
-			}
-
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Create the home directory if it doesn't exist
 			homeDir := viper.GetString("home")
@@ -122,6 +114,8 @@ is set to overwrite the existing configuration.`,
 	cmd.Flags().BoolVar(&force, "force", force, "overwrite the existing configuration file if it exists")
 	cmd.Flags().BoolVar(&skipTLS, "skip-tls", false, "skip TLS key and certificate generation")
 	cmd.Flags().BoolVar(&skipService, "skip-service", false, "skip initialization of the selected service")
+
+	_ = cmd.MarkFlagRequired("node.remote-addrs")
 
 	return cmd
 }
