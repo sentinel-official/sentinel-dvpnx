@@ -16,9 +16,12 @@ const NameGeoIPLocation = "geoip_location"
 // This worker fetches the GeoIP location and updates the context at regular intervals.
 func NewGeoIPLocationWorker(c *core.Context, interval time.Duration) cron.Worker {
 	// Handler function that fetches the GeoIP location and updates the context.
-	handlerFunc := func(_ context.Context) error {
+	handlerFunc := func(ctx context.Context) error {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
 		// Fetch the GeoIP location using the GeoIP client.
-		location, err := c.GeoIPClient().Get("")
+		location, err := c.GeoIPClient().Get(ctx, "")
 		if err != nil {
 			return fmt.Errorf("getting GeoIP location: %w", err)
 		}
