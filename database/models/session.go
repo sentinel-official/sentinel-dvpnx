@@ -18,18 +18,22 @@ type Session struct {
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"` // Timestamp when the record was created
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"` // Timestamp when the record was last updated
 
-	AccAddr     string `gorm:"column:acc_addr;not null"`                 // Account address, cannot be null
-	Duration    int64  `gorm:"column:duration;not null"`                 // Duration of the session in nanoseconds
-	ID          uint64 `gorm:"column:id;not null;primaryKey"`            // Unique identifier for the session
-	MaxBytes    string `gorm:"column:max_bytes;not null"`                // Maximum bytes represented as a string
-	MaxDuration int64  `gorm:"column:max_duration;not null"`             // Maximum allowed duration for the session in nanoseconds
-	NodeAddr    string `gorm:"column:node_addr;not null"`                // Address of the node associated with the session
-	PeerID      string `gorm:"column:peer_id;not null;uniqueIndex"`      // Unique identifier for the peer (e.g., public key, email, or name depending on protocol)
-	PeerRequest string `gorm:"column:peer_request;not null;uniqueIndex"` // Unique peer request for the session, indexed and cannot be null
-	RxBytes     string `gorm:"column:rx_bytes;not null"`                 // Rx bytes represented as a string
-	ServiceType string `gorm:"column:service_type;not null"`             // Type of service for the session
-	Signature   string `gorm:"column:signature;not null"`                // Signature associated with the session
-	TxBytes     string `gorm:"column:tx_bytes;not null"`                 // Tx bytes represented as a string
+	NodeAddr    string `gorm:"column:node_addr;index:idx_node_addr;not null"` // Address of the node associated with the session
+	ServiceType string `gorm:"column:service_type;not null"`                  // Type of service for the session
+
+	AccAddr     string        `gorm:"column:acc_addr;not null"`      // Account address, cannot be null
+	ID          uint64        `gorm:"column:id;not null;primaryKey"` // Unique identifier for the session
+	MaxBytes    string        `gorm:"column:max_bytes;not null"`     // Maximum bytes represented as a string
+	MaxDuration time.Duration `gorm:"column:max_duration;not null"`  // Maximum allowed duration for the session in nanoseconds
+
+	PeerID       string `gorm:"column:peer_id;not null;uniqueIndex"`      // Unique identifier for the peer (e.g., public key, email, or name depending on protocol)
+	PeerMetadata string `gorm:"column:peer_metadata;not null"`            // Peer metadata (could be JSON or another format)
+	PeerRequest  string `gorm:"column:peer_request;not null;uniqueIndex"` // Unique peer request for the session, indexed and cannot be null
+
+	Duration  time.Duration `gorm:"column:duration;not null"`  // Duration of the session in nanoseconds
+	RxBytes   string        `gorm:"column:rx_bytes;not null"`  // Rx bytes represented as a string
+	Signature string        `gorm:"column:signature;not null"` // Signature associated with the session
+	TxBytes   string        `gorm:"column:tx_bytes;not null"`  // Tx bytes represented as a string
 }
 
 // NewSession creates and returns a new instance of the Session struct with default values.
@@ -45,7 +49,7 @@ func (s *Session) WithAccAddr(v cosmossdk.AccAddress) *Session {
 
 // WithDuration sets the Duration field from time.Duration and returns the updated Session instance.
 func (s *Session) WithDuration(v time.Duration) *Session {
-	s.Duration = v.Nanoseconds()
+	s.Duration = v
 	return s
 }
 
@@ -63,7 +67,7 @@ func (s *Session) WithMaxBytes(v math.Int) *Session {
 
 // WithMaxDuration sets the MaxDuration field from time.Duration and returns the updated Session instance.
 func (s *Session) WithMaxDuration(v time.Duration) *Session {
-	s.MaxDuration = v.Nanoseconds()
+	s.MaxDuration = v
 	return s
 }
 
@@ -76,6 +80,12 @@ func (s *Session) WithNodeAddr(v sentinelhub.NodeAddress) *Session {
 // WithPeerID sets the PeerID field and returns the updated Session instance.
 func (s *Session) WithPeerID(v string) *Session {
 	s.PeerID = v
+	return s
+}
+
+// WithPeerMetadata sets the PeerMetadata field and returns the updated Session instance.
+func (s *Session) WithPeerMetadata(v []byte) *Session {
+	s.PeerMetadata = base64.StdEncoding.EncodeToString(v)
 	return s
 }
 
@@ -113,23 +123,15 @@ func (s *Session) WithTxBytes(v math.Int) *Session {
 func (s *Session) GetAccAddr() cosmossdk.AccAddress {
 	addr, err := cosmossdk.AccAddressFromBech32(s.AccAddr)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("decosing Bech32 account addr %q: %w", s.AccAddr, err))
 	}
 
 	return addr
 }
 
-// GetTotalBytes returns the total number of bytes (rx + tx) as math.Int.
-func (s *Session) GetTotalBytes() math.Int {
-	rxBytes := s.GetRxBytes()
-	txBytes := s.GetTxBytes()
-
-	return rxBytes.Add(txBytes)
-}
-
 // GetDuration returns the Duration field as time.Duration.
 func (s *Session) GetDuration() time.Duration {
-	return time.Duration(s.Duration)
+	return s.Duration
 }
 
 // GetID returns the ID field.
@@ -141,7 +143,7 @@ func (s *Session) GetID() uint64 {
 func (s *Session) GetMaxBytes() math.Int {
 	v, ok := math.NewIntFromString(s.MaxBytes)
 	if !ok {
-		panic(fmt.Errorf("invalid max_bytes %s", s.MaxBytes))
+		panic(fmt.Errorf("parsing max_bytes %q", s.MaxBytes))
 	}
 
 	return v
@@ -149,14 +151,14 @@ func (s *Session) GetMaxBytes() math.Int {
 
 // GetMaxDuration returns the MaxDuration field as time.Duration.
 func (s *Session) GetMaxDuration() time.Duration {
-	return time.Duration(s.MaxDuration)
+	return s.MaxDuration
 }
 
 // GetNodeAddr returns the NodeAddr field as sentinelhub.NodeAddress.
 func (s *Session) GetNodeAddr() sentinelhub.NodeAddress {
 	addr, err := sentinelhub.NodeAddressFromBech32(s.NodeAddr)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("decosing Bech32 node addr %q: %w", s.NodeAddr, err))
 	}
 
 	return addr
@@ -167,11 +169,21 @@ func (s *Session) GetPeerID() string {
 	return s.PeerID
 }
 
+// GetPeerMetadata returns the PeerMetadata field as a decoded byte slice.
+func (s *Session) GetPeerMetadata() []byte {
+	buf, err := base64.StdEncoding.DecodeString(s.PeerMetadata)
+	if err != nil {
+		panic(fmt.Errorf("decoding Base64 peer metadata %q: %w", s.PeerMetadata, err))
+	}
+
+	return buf
+}
+
 // GetPeerRequest returns the PeerRequest field as a decoded byte slice.
 func (s *Session) GetPeerRequest() []byte {
 	buf, err := base64.StdEncoding.DecodeString(s.PeerRequest)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("decosing Base64 peer request %q: %w", s.PeerRequest, err))
 	}
 
 	return buf
@@ -181,7 +193,7 @@ func (s *Session) GetPeerRequest() []byte {
 func (s *Session) GetRxBytes() math.Int {
 	v, ok := math.NewIntFromString(s.RxBytes)
 	if !ok {
-		panic(fmt.Errorf("invalid rx_bytes %s", s.RxBytes))
+		panic(fmt.Errorf("parsing rx_bytes %q", s.RxBytes))
 	}
 
 	return v
@@ -200,17 +212,25 @@ func (s *Session) GetSignature() []byte {
 
 	buf, err := base64.StdEncoding.DecodeString(s.Signature)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("decoding Base64 signature %q: %w", s.Signature, err))
 	}
 
 	return buf
+}
+
+// GetTotalBytes returns the total number of bytes (rx + tx) as math.Int.
+func (s *Session) GetTotalBytes() math.Int {
+	rxBytes := s.GetRxBytes()
+	txBytes := s.GetTxBytes()
+
+	return rxBytes.Add(txBytes)
 }
 
 // GetTxBytes returns the TxBytes field as math.Int.
 func (s *Session) GetTxBytes() math.Int {
 	v, ok := math.NewIntFromString(s.TxBytes)
 	if !ok {
-		panic(fmt.Errorf("invalid tx_bytes %s", s.TxBytes))
+		panic(fmt.Errorf("parsing tx_bytes %q", s.TxBytes))
 	}
 
 	return v

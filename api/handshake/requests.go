@@ -17,10 +17,15 @@ type InitHandshakeRequest struct {
 func (r *InitHandshakeRequest) AccAddr() types.AccAddress {
 	addr, err := r.Body.AccAddr()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("getting account addr from request body: %w", err))
 	}
 
 	return addr
+}
+
+// PeerRequest returns the peer request from request body.
+func (r *InitHandshakeRequest) PeerRequest() []byte {
+	return r.Body.Data
 }
 
 // NewInitHandshakeRequest parses, binds, and verifies the handshake request.

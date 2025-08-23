@@ -12,28 +12,24 @@ import (
 
 // New initializes a new database connection with the specified file path and configuration.
 // It also performs migrations to ensure the database schema is up to date with the models.
-func New(filepath string, cfg *gorm.Config) (*gorm.DB, error) {
+func New(file string, cfg *gorm.Config) (*gorm.DB, error) {
 	// Build the SQLite DSN
-	dsn := fmt.Sprintf("%s?_busy_timeout=5000&_journal_mode=WAL", filepath)
+	dsn := file + "?_busy_timeout=5000&_journal_mode=WAL"
 
 	// Open a database connection using the provided filepath and configuration.
 	db, err := gorm.Open(sqlite.Open(dsn), cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, fmt.Errorf("opening database file %q: %w", file, err)
 	}
 
-	// Set connection pooling for SQLite
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve database instance: %w", err)
+	// List of models to be migrated.
+	items := []interface{}{
+		&models.Session{},
 	}
 
-	sqlDB.SetMaxIdleConns(1) // Keep one idle connection for reuse
-	sqlDB.SetMaxOpenConns(1) // Restrict to one open connection
-
-	// Run migrations to apply the schema of the `Session` model to the database.
-	if err := db.AutoMigrate(&models.Session{}); err != nil {
-		return nil, fmt.Errorf("failed to auto migrate session: %w", err)
+	// Run migrations to apply the schema of the models to the database.
+	if err := db.AutoMigrate(items...); err != nil {
+		return nil, fmt.Errorf("auto migrating %d model(s): %w", len(items), err)
 	}
 
 	// Return the database connection if everything is successful.
@@ -41,7 +37,7 @@ func New(filepath string, cfg *gorm.Config) (*gorm.DB, error) {
 }
 
 // NewDefault uses default configuration settings and calls the New function to initialize the database.
-func NewDefault(filepath string) (*gorm.DB, error) {
+func NewDefault(file string) (*gorm.DB, error) {
 	// Define default GORM configuration settings.
 	cfg := gorm.Config{
 		Logger:         logger.Discard,
@@ -50,5 +46,5 @@ func NewDefault(filepath string) (*gorm.DB, error) {
 	}
 
 	// Call New with the default configuration.
-	return New(filepath, &cfg)
+	return New(file, &cfg)
 }

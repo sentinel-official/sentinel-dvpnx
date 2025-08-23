@@ -54,19 +54,19 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		}
 
 		// Check if a session already exists by peer request data.
-		peerReq := base64.StdEncoding.EncodeToString(req.Body.Data)
+		peerReqStr := base64.StdEncoding.EncodeToString(req.PeerRequest())
 		query = map[string]interface{}{
-			"peer_request": peerReq,
+			"peer_request": peerReqStr,
 		}
 
 		record, err = operations.SessionFindOne(c.Database(), query)
 		if err != nil {
-			err = fmt.Errorf("retrieving session for peer request %q from database: %w", peerReq, err)
+			err = fmt.Errorf("retrieving session for peer request %q from database: %w", peerReqStr, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(4, err))
 			return
 		}
 		if record != nil {
-			err = fmt.Errorf("session already exists for peer request %q", peerReq)
+			err = fmt.Errorf("session already exists for peer request %q", peerReqStr)
 			ctx.JSON(http.StatusConflict, types.NewResponseError(4, err))
 			return
 		}
@@ -112,7 +112,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		}
 
 		// Add the peer to the active service.
-		id, data, err := c.Service().AddPeer(ctx, req.Body.Data)
+		id, data, err := c.Service().AddPeer(ctx, req.PeerRequest())
 		if err != nil {
 			err = fmt.Errorf("adding peer to service: %w", err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
@@ -136,7 +136,8 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 			WithMaxDuration(session.GetMaxDuration()).
 			WithNodeAddr(c.NodeAddr()).
 			WithPeerID(id).
-			WithPeerRequest(req.Body.Data).
+			WithPeerMetadata(res.Data).
+			WithPeerRequest(req.PeerRequest()).
 			WithRxBytes(math.ZeroInt()).
 			WithServiceType(c.Service().Type()).
 			WithSignature(nil).

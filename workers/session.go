@@ -57,7 +57,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 
 		// Broadcast the prepared messages as a transaction.
 		if err := c.BroadcastTx(ctx, msgs...); err != nil {
-			return fmt.Errorf("broadcasting tx with %d update_session msgs: %w", len(msgs), err)
+			return fmt.Errorf("broadcasting tx with %d update_session msg(s): %w", len(msgs), err)
 		}
 
 		return nil
@@ -149,9 +149,8 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 
 			// If the session exceeded any limits, remove the associated peer.
 			if removePeer {
-				req := item.GetPeerRequest()
-				if err := c.RemovePeerIfExists(ctx, req); err != nil {
-					return fmt.Errorf("removing peer for session %d from service: %w", item.GetID(), err)
+				if err := c.RemovePeerIfExists(ctx, item.GetPeerID()); err != nil {
+					return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
 				}
 			}
 		}
@@ -204,9 +203,8 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 
 			// Remove the associated peer if validation fails.
 			if removePeer {
-				req := item.GetPeerRequest()
-				if err := c.RemovePeerIfExists(ctx, req); err != nil {
-					return fmt.Errorf("removing peer for session %d from service: %w", item.GetID(), err)
+				if err := c.RemovePeerIfExists(ctx, item.GetPeerID()); err != nil {
+					return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
 				}
 			}
 
@@ -220,11 +218,11 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 			// Delete the session record from the database if not found on the blockchain.
 			if deleteSession {
 				query := map[string]interface{}{
-					"id": item.ID,
+					"id": item.GetID(),
 				}
 
 				if _, err := operations.SessionFindOneAndDelete(c.Database(), query); err != nil {
-					return fmt.Errorf("deleting session %d from database: %w", item.ID, err)
+					return fmt.Errorf("deleting session %d from database: %w", item.GetID(), err)
 				}
 			}
 		}
