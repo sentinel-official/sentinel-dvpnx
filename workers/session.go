@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
+	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinelhub/v12/types/v1"
 
 	"github.com/sentinel-official/sentinel-dvpnx/core"
@@ -25,6 +26,8 @@ const (
 // This worker retrieves session data from the database, validates it against the blockchain,
 // and broadcasts any updates as transactions.
 func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Duration) cron.Worker {
+	log := logger.With("module", "workers", "name", NameSessionUsageSyncWithBlockchain)
+
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		query := map[string]interface{}{
@@ -44,14 +47,25 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 				return fmt.Errorf("querying session %d from blockchain: %w", item.GetID(), err)
 			}
 			if session == nil {
+				log.Debug("Skipping session",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
+				)
 				continue
 			}
 			if session.GetUploadBytes().Equal(item.GetRxBytes()) {
+				log.Debug("Skipping session",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "already up-to-date",
+				)
 				continue
 			}
 
 			// Generate an update message for the session.
 			msg := item.MsgUpdateSessionRequest()
+			log.Debug("Adding session to update list",
+				"id", item.GetID(), "peer_id", item.GetPeerID(), "download_bytes", msg.DownloadBytes,
+				"duration", msg.Duration, "upload_bytes", msg.UploadBytes,
+			)
+
 			msgs = append(msgs, msg)
 		}
 
@@ -73,6 +87,8 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 // NewSessionUsageSyncWithDatabaseWorker creates a worker that updates session usage in the database.
 // This worker fetches usage data from the peer service and updates the corresponding database records.
 func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Duration) cron.Worker {
+	log := logger.With("module", "workers", "name", NameSessionUsageSyncWithDatabase)
+
 	handlerFunc := func(ctx context.Context) error {
 		// Fetch peer usage statistics from the service.
 		items, err := c.Service().PeerStatistics()
@@ -81,14 +97,22 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 		}
 
 		// Update the database with the fetched statistics.
-		for id, item := range items {
+		for peerID, item := range items {
+			if time.Since(item.UpdatedAt) > interval {
+				log.Debug("Skipping session",
+					"id", 0, "peer_id", peerID, "cause", "already up-to-date",
+					"updated_at", item.UpdatedAt,
+				)
+				continue
+			}
+
 			// Convert usage statistics to strings for database storage.
 			rxBytes := math.NewInt(item.RxBytes).String()
 			txBytes := math.NewInt(item.TxBytes).String()
 
 			// Define query to find the session by peer id.
 			query := map[string]interface{}{
-				"peer_id": id,
+				"peer_id": peerID,
 			}
 
 			// Define updates to apply to the session record.
@@ -97,9 +121,11 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 				"tx_bytes": txBytes,
 			}
 
-			// Update the session in the database.
+			log.Debug("Updating session in database",
+				"id", 0, "peer_id", peerID, "rx_bytes", rxBytes, "tx_bytes", txBytes,
+			)
 			if _, err := operations.SessionFindOneAndUpdate(c.Database(), query, updates); err != nil {
-				return fmt.Errorf("updating session for peer %q in database: %w", id, err)
+				return fmt.Errorf("updating session for peer %q in database: %w", peerID, err)
 			}
 		}
 
@@ -115,6 +141,8 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 // NewSessionUsageValidateWorker creates a worker that validates session usage limits and removes peers if necessary.
 // This worker checks if sessions exceed their maximum byte or duration limits and removes peers accordingly.
 func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron.Worker {
+	log := logger.With("module", "workers", "name", NameSessionUsageValidate)
+
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		query := map[string]interface{}{
@@ -133,22 +161,35 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 			// Check if the session exceeds the maximum allowed bytes.
 			maxBytes := item.GetMaxBytes()
 			if !maxBytes.IsZero() && item.GetTotalBytes().GTE(maxBytes) {
+				log.Debug("Marking peer for removing from service",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "exceeds max bytes",
+					"total_bytes", item.GetTotalBytes(), "max_bytes", item.GetMaxBytes(),
+				)
 				removePeer = true
 			}
 
 			// Check if the session exceeds the maximum allowed duration.
 			maxDuration := item.GetMaxDuration()
 			if maxDuration != 0 && item.GetDuration() >= maxDuration {
+				log.Debug("Marking peer for removing from service",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "exceeds max duration",
+					"duration", item.GetDuration(), "max_duration", maxDuration,
+				)
 				removePeer = true
 			}
 
 			// Ensure that only sessions of the current service type are validated.
 			if item.GetServiceType() != c.Service().Type() {
+				log.Debug("Skipping peer",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid service type",
+					"got", item.GetServiceType(), "expected", c.Service().Type(),
+				)
 				removePeer = false
 			}
 
 			// If the session exceeded any limits, remove the associated peer.
 			if removePeer {
+				log.Debug("Removing peer from service", "id", item.GetID(), "peer_id", item.GetPeerID())
 				if err := c.RemovePeerIfExists(ctx, item.GetPeerID()); err != nil {
 					return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
 				}
@@ -167,6 +208,8 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 // NewSessionValidateWorker creates a worker that validates session status and removes peers if necessary.
 // This worker ensures sessions are active and consistent between the database and blockchain.
 func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Worker {
+	log := logger.With("module", "workers", "name", NameSessionValidate)
+
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		query := map[string]interface{}{
@@ -189,20 +232,32 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 
 			// Remove peer if the session is missing on the blockchain.
 			if session == nil {
+				log.Debug("Marking peer for removing from service",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
+				)
 				removePeer = true
 			}
 			// Remove peer if the session status is not active.
 			if session != nil && !session.GetStatus().Equal(v1.StatusActive) {
+				log.Debug("Marking peer for removing from service",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid session status",
+					"got", session.GetStatus(), "expected", v1.StatusActive,
+				)
 				removePeer = true
 			}
 
 			// Ensure that only sessions of the current service type are validated.
 			if item.GetServiceType() != c.Service().Type() {
+				log.Debug("Skipping peer",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid service type",
+					"got", item.GetServiceType(), "expected", c.Service().Type(),
+				)
 				removePeer = false
 			}
 
 			// Remove the associated peer if validation fails.
 			if removePeer {
+				log.Debug("Removing peer from service", "id", item.GetID(), "peer_id", item.GetPeerID())
 				if err := c.RemovePeerIfExists(ctx, item.GetPeerID()); err != nil {
 					return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
 				}
@@ -212,6 +267,9 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 
 			// Delete session if the session is missing on the blockchain.
 			if session == nil {
+				log.Debug("Marking session for deleting from database",
+					"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
+				)
 				deleteSession = true
 			}
 
@@ -221,6 +279,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 					"id": item.GetID(),
 				}
 
+				log.Info("Deleting session from database", "id", item.GetID(), "peer_id", item.GetPeerID())
 				if _, err := operations.SessionFindOneAndDelete(c.Database(), query); err != nil {
 					return fmt.Errorf("deleting session %d from database: %w", item.GetID(), err)
 				}

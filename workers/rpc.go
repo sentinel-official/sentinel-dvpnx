@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
+	logger "github.com/sentinel-official/sentinel-go-sdk/libs/log"
 
 	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
@@ -20,6 +21,7 @@ const NameBestRPCAddr = "best_rpc_addr"
 // sorts them in ascending order of latency, and updates the context.
 func NewBestRPCAddrWorker(c *core.Context, interval time.Duration) cron.Worker {
 	client := &http.Client{Timeout: 5 * time.Second}
+	log := logger.With("module", "workers", "name", NameBestRPCAddr)
 
 	// Handler function that measures RPC address latencies and updates the context.
 	handlerFunc := func(ctx context.Context) error {
@@ -84,7 +86,7 @@ func NewBestRPCAddrWorker(c *core.Context, interval time.Duration) cron.Worker {
 			return latencies[addrs[i]] < latencies[addrs[j]]
 		})
 
-		// Update the context with the sorted list of RPC addresses.
+		log.Debug("Updating context", "addrs", addrs)
 		c.SetRPCAddrs(addrs)
 
 		return nil

@@ -23,6 +23,6 @@ func (c *Context) RemovePeerIfExists(ctx context.Context, id string) error {
 		return fmt.Errorf("removing peer %q from service: %w", id, err)
 	}
 
-	log.Info("Peer has been removed from service", "id", id)
+	log.Info("Peer has been removed from service", "peer_id", id)
 	return nil
 }
