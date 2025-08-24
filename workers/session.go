@@ -96,7 +96,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 
 		// Wait until all routines complete.
 		if err := jobGroup.Wait(); err != nil {
-			return err
+			return fmt.Errorf("waiting job group: %w", err)
 		}
 
 		// Broadcast the prepared messages as a transaction.
@@ -175,7 +175,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 
 		// Wait until all routines complete.
 		if err := jobGroup.Wait(); err != nil {
-			return err
+			return fmt.Errorf("waiting job group: %w", err)
 		}
 
 		return nil
@@ -195,7 +195,8 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 	handlerFunc := func(ctx context.Context) error {
 		// Retrieve session records from the database.
 		query := map[string]interface{}{
-			"node_addr": c.NodeAddr().String(),
+			"node_addr":    c.NodeAddr().String(),
+			"service_type": c.Service().Type().String(),
 		}
 
 		items, err := operations.SessionFind(c.Database(), query)
@@ -238,15 +239,6 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 					removePeer = true
 				}
 
-				// Ensure that only sessions of the current service type are validated.
-				if item.GetServiceType() != c.Service().Type() {
-					log.Debug("Skipping peer",
-						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid service type",
-						"got", item.GetServiceType(), "expected", c.Service().Type(),
-					)
-					removePeer = false
-				}
-
 				// If the session exceeded any limits, remove the associated peer.
 				if removePeer {
 					log.Debug("Removing peer from service", "id", item.GetID(), "peer_id", item.GetPeerID())
@@ -261,7 +253,7 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 
 		// Wait until all routines complete.
 		if err := jobGroup.Wait(); err != nil {
-			return err
+			return fmt.Errorf("waiting job group: %w", err)
 		}
 
 		return nil
@@ -371,7 +363,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 
 		// Wait until all routines complete.
 		if err := jobGroup.Wait(); err != nil {
-			return err
+			return fmt.Errorf("waiting job group: %w", err)
 		}
 
 		return nil
