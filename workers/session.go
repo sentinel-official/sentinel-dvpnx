@@ -299,62 +299,78 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 					return fmt.Errorf("querying session %d from blockchain: %w", item.GetID(), err)
 				}
 
-				removePeer := false
-
-				// Remove peer if the session is missing on the blockchain.
-				if session == nil {
-					log.Debug("Marking peer for removing from service",
-						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
-					)
-					removePeer = true
-				}
-
-				// Remove peer if the session status is not active.
-				if session != nil && !session.GetStatus().Equal(v1.StatusActive) {
-					log.Debug("Marking peer for removing from service",
-						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid session status",
-						"got", session.GetStatus(), "expected", v1.StatusActive,
-					)
-					removePeer = true
-				}
-
-				// Ensure that only sessions of the current service type are validated.
-				if item.GetServiceType() != c.Service().Type() {
-					log.Debug("Skipping peer",
-						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid service type",
-						"got", item.GetServiceType(), "expected", c.Service().Type(),
-					)
-					removePeer = false
-				}
-
-				// Remove the associated peer if validation fails.
-				if removePeer {
-					log.Debug("Removing peer from service", "id", item.GetID(), "peer_id", item.GetPeerID())
-					if err := c.RemovePeerIfExists(jobCtx, item.GetPeerID()); err != nil {
-						return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
-					}
-				}
-
-				deleteSession := false
-
-				// Delete session if the session is missing on the blockchain.
-				if session == nil {
-					log.Debug("Marking session for deleting from database",
-						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
-					)
-					deleteSession = true
-				}
-
-				// Delete the session record from the database if not found on the blockchain.
-				if deleteSession {
-					query := map[string]interface{}{
-						"id": item.GetID(),
+				removePeerFunc := func() error {
+					// Ensure that only sessions of the current service type are validated.
+					if item.GetServiceType() != c.Service().Type() {
+						log.Debug("Skipping peer",
+							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid service type",
+							"got", item.GetServiceType(), "expected", c.Service().Type(),
+						)
+						return nil
 					}
 
-					log.Info("Deleting session from database", "id", item.GetID(), "peer_id", item.GetPeerID())
-					if _, err := operations.SessionFindOneAndDelete(c.Database(), query); err != nil {
-						return fmt.Errorf("deleting session %d from database: %w", item.GetID(), err)
+					remove := false
+
+					// Remove peer if the session is missing on the blockchain.
+					if session == nil {
+						log.Debug("Marking peer for removing from service",
+							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
+						)
+						remove = true
 					}
+
+					// Remove peer if the session status is not active.
+					if session != nil && !session.GetStatus().Equal(v1.StatusActive) {
+						log.Debug("Marking peer for removing from service",
+							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid session status",
+							"got", session.GetStatus(), "expected", v1.StatusActive,
+						)
+						remove = true
+					}
+
+					// Remove the associated peer if validation fails.
+					if remove {
+						log.Debug("Removing peer from service", "id", item.GetID(), "peer_id", item.GetPeerID())
+						if err := c.RemovePeerIfExists(jobCtx, item.GetPeerID()); err != nil {
+							return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
+						}
+					}
+
+					return nil
+				}
+
+				if err := removePeerFunc(); err != nil {
+					return err
+				}
+
+				deleteSessionFunc := func() error {
+					remove := false
+
+					// Delete session if the session is missing on the blockchain.
+					if session == nil {
+						log.Debug("Marking session for deleting from database",
+							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
+						)
+						remove = true
+					}
+
+					// Delete the session record from the database if not found on the blockchain.
+					if remove {
+						query := map[string]interface{}{
+							"id": item.GetID(),
+						}
+
+						log.Info("Deleting session from database", "id", item.GetID(), "peer_id", item.GetPeerID())
+						if _, err := operations.SessionFindOneAndDelete(c.Database(), query); err != nil {
+							return fmt.Errorf("deleting session %d from database: %w", item.GetID(), err)
+						}
+					}
+
+					return nil
+				}
+
+				if err := deleteSessionFunc(); err != nil {
+					return err
 				}
 
 				return nil
