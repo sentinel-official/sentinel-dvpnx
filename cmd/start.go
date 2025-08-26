@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os/signal"
 	"syscall"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
@@ -51,6 +53,14 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			ctx, cancel := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
 
+			// Register the node and update its details.
+			if err := n.Register(ctx); err != nil {
+				return fmt.Errorf("registering node: %w", err)
+			}
+			if err := n.UpdateDetails(ctx); err != nil {
+				return fmt.Errorf("updating node details: %w", err)
+			}
+
 			// Create an errgroup with the signal-aware context.
 			eg, ctx := errgroup.WithContext(ctx)
 
@@ -83,20 +93,14 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 					return nil
 				})
 
-				// Register the node and update its details.
-				if err := n.Register(ctx); err != nil {
-					return fmt.Errorf("registering node: %w", err)
-				}
-				if err := n.UpdateDetails(ctx); err != nil {
-					return fmt.Errorf("updating node details: %w", err)
-				}
-
 				return nil
 			})
 
 			// Wait for all goroutines to complete.
 			if err := eg.Wait(); err != nil {
-				return err
+				if !utils.ErrorIs(err, context.Canceled) {
+					return err
+				}
 			}
 
 			log.Info("Node stopped successfully")

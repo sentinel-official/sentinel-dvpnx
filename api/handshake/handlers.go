@@ -23,7 +23,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Reject handshake if maximum peer limit is reached
 		if n := c.Service().PeersLen(); uint(n) >= c.MaxPeers() {
-			err := fmt.Errorf("maximum peer limit reached")
+			err := fmt.Errorf("maximum peer limit %d reached", n)
 			ctx.JSON(http.StatusConflict, types.NewResponseError(1, err))
 			return
 		}

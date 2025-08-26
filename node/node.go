@@ -115,10 +115,10 @@ func (n *Node) UpdateDetails(ctx context.Context) error {
 
 // Start initializes the Node's services, scheduler, and API server.
 func (n *Node) Start() error {
-	eg := &errgroup.Group{}
+	sg := &errgroup.Group{}
 
 	// Launch the service stack as a background goroutine.
-	eg.Go(func() error {
+	sg.Go(func() error {
 		log.Info("Running service pre-up task")
 		if err := n.Service().PreUp(); err != nil {
 			return fmt.Errorf("running service pre-up task: %w", err)
@@ -146,7 +146,7 @@ func (n *Node) Start() error {
 	})
 
 	// Launch the cron-based job scheduler in the background.
-	eg.Go(func() error {
+	sg.Go(func() error {
 		log.Info("Starting scheduler")
 		if err := n.Scheduler().Start(); err != nil {
 			return fmt.Errorf("starting scheduler: %w", err)
@@ -164,7 +164,7 @@ func (n *Node) Start() error {
 	})
 
 	// Launch the API server using the configured TLS certificates and router.
-	eg.Go(func() error {
+	sg.Go(func() error {
 		log.Info("Starting API server", "addr", n.APIListenAddr())
 		if err := n.Server().Start(); err != nil {
 			return fmt.Errorf("starting API server: %w", err)
@@ -182,7 +182,7 @@ func (n *Node) Start() error {
 	})
 
 	// Wait until all routines started
-	if err := eg.Wait(); err != nil {
+	if err := sg.Wait(); err != nil {
 		return err
 	}
 
@@ -200,9 +200,9 @@ func (n *Node) Wait() error {
 
 // Stop gracefully stops the Node's operations.
 func (n *Node) Stop() error {
-	eg := &errgroup.Group{}
+	sg := &errgroup.Group{}
 
-	eg.Go(func() error {
+	sg.Go(func() error {
 		log.Info("Running service pre-down task")
 		if err := n.Service().PreDown(); err != nil {
 			return fmt.Errorf("running service pre-down task: %w", err)
@@ -221,7 +221,7 @@ func (n *Node) Stop() error {
 		return nil
 	})
 
-	eg.Go(func() error {
+	sg.Go(func() error {
 		log.Info("Stopping scheduler")
 		if err := n.Scheduler().Stop(); err != nil {
 			return fmt.Errorf("stopping scheduler: %w", err)
@@ -230,7 +230,7 @@ func (n *Node) Stop() error {
 		return nil
 	})
 
-	eg.Go(func() error {
+	sg.Go(func() error {
 		log.Info("Stopping API server")
 		if err := n.Server().Stop(); err != nil {
 			return fmt.Errorf("stopping API server: %w", err)
@@ -239,7 +239,7 @@ func (n *Node) Stop() error {
 		return nil
 	})
 
-	if err := eg.Wait(); err != nil {
+	if err := sg.Wait(); err != nil {
 		return err
 	}
 
