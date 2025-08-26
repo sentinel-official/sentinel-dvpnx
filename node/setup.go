@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/cmux"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/gin/middlewares"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
@@ -18,31 +19,6 @@ import (
 // init sets the Gin mode to ReleaseMode.
 func init() {
 	gin.SetMode(gin.ReleaseMode)
-}
-
-// SetupRouter sets up the HTTP router with necessary middlewares and routes.
-func (n *Node) SetupRouter(_ *config.Config) error {
-	// Define middlewares to be used by the router.
-	items := []gin.HandlerFunc{
-		cors.New(
-			cors.Config{
-				AllowAllOrigins: true,
-				AllowMethods:    []string{http.MethodGet, http.MethodPost},
-			},
-		),
-		middlewares.RateLimiter(nil),
-	}
-
-	// Create a new Gin router and apply the middlewares.
-	r := gin.New()
-	r.Use(items...)
-
-	// Register API routes to the router.
-	api.RegisterRoutes(n.Context, r)
-
-	// Attach the configured router to the Node.
-	n.WithRouter(r)
-	return nil
 }
 
 // SetupScheduler sets up the cron scheduler with various workers.
@@ -63,8 +39,7 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 	s := cron.NewScheduler()
 	for _, item := range items {
 		log.Info("Registering scheduler worker",
-			"name", item.Name(),
-			"interval", item.Interval().String(),
+			"name", item.Name(), "interval", item.Interval().String(),
 		)
 		if err := s.RegisterWorkers(item); err != nil {
 			return fmt.Errorf("registering scheduler worker %q: %w", item.Name(), err)
@@ -76,16 +51,43 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 	return nil
 }
 
-// Setup sets up both the router and scheduler for the Node.
-func (n *Node) Setup(cfg *config.Config) error {
-	log.Info("Setting up router")
-	if err := n.SetupRouter(cfg); err != nil {
-		return fmt.Errorf("setting up router: %w", err)
+// SetupServer sets up the API server with necessary middlewares and API routes.
+func (n *Node) SetupServer(_ *config.Config) error {
+	// Define middlewares to be used by the router.
+	items := []gin.HandlerFunc{
+		cors.New(
+			cors.Config{
+				AllowAllOrigins: true,
+				AllowMethods:    []string{http.MethodGet, http.MethodPost},
+			},
+		),
+		middlewares.RateLimiter(nil),
 	}
 
+	// Create a new Gin router and apply the middlewares.
+	router := gin.New()
+	router.Use(items...)
+
+	// Register API routes to the router.
+	api.RegisterRoutes(n.Context, router)
+
+	// Create and attach the HTTP server to the Node instance.
+	n.WithServer(
+		cmux.NewServer(n.APIListenAddr(), n.TLSCertFile(), n.TLSKeyFile(), router),
+	)
+	return nil
+}
+
+// Setup sets up both the scheduler and API server for the Node.
+func (n *Node) Setup(cfg *config.Config) error {
 	log.Info("Setting up scheduler")
 	if err := n.SetupScheduler(cfg); err != nil {
 		return fmt.Errorf("setting up scheduler: %w", err)
+	}
+
+	log.Info("Setting up API server")
+	if err := n.SetupServer(cfg); err != nil {
+		return fmt.Errorf("setting up API server: %w", err)
 	}
 
 	return nil

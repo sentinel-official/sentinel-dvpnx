@@ -97,7 +97,7 @@ is set to overwrite the existing configuration.`,
 				}
 
 				log.Info("Running service init task")
-				if err := service.Init(force); err != nil {
+				if err := service.Init(nil, force); err != nil {
 					return fmt.Errorf("running service init task: %w", err)
 				}
 			}

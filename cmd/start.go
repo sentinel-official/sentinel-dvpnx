@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
@@ -55,44 +54,28 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			// Create an errgroup with the signal-aware context.
 			eg, ctx := errgroup.WithContext(ctx)
 
-			start := sync.WaitGroup{}
-			start.Add(2)
-
 			// Launch goroutine to stop the node gracefully.
 			eg.Go(func() error {
-				log.Info("Starting stop signal catch routine")
-				defer start.Done()
+				// Wait until signal is received
+				<-ctx.Done()
 
-				eg.Go(func() error {
-					defer log.Info("Exiting stop signal catch routine")
-
-					// Wait until signal is received
-					<-ctx.Done()
-
-					log.Info("Stop signal received, stopping node...")
-					if err := n.Stop(); err != nil {
-						return fmt.Errorf("stopping node: %w", err)
-					}
-
-					return nil
-				})
+				log.Info("Stop signal received, stopping node")
+				if err := n.Stop(); err != nil {
+					return fmt.Errorf("stopping node: %w", err)
+				}
 
 				return nil
 			})
 
 			// Launch goroutine to start the node and wait.
 			eg.Go(func() error {
-				log.Info("Starting node routine")
-				defer start.Done()
-
 				log.Info("Starting node")
-				if err := n.Start(ctx); err != nil {
+				if err := n.Start(); err != nil {
 					return fmt.Errorf("starting node: %w", err)
 				}
 
 				log.Info("Node started successfully")
 				eg.Go(func() error {
-					defer log.Info("Exiting node routine")
 					if err := n.Wait(); err != nil {
 						return fmt.Errorf("waiting node: %w", err)
 					}
@@ -100,11 +83,16 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 					return nil
 				})
 
+				// Register the node and update its details.
+				if err := n.Register(ctx); err != nil {
+					return fmt.Errorf("registering node: %w", err)
+				}
+				if err := n.UpdateDetails(ctx); err != nil {
+					return fmt.Errorf("updating node details: %w", err)
+				}
+
 				return nil
 			})
-
-			// Wait until all routines started
-			start.Wait()
 
 			// Wait for all goroutines to complete.
 			if err := eg.Wait(); err != nil {

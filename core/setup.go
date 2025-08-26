@@ -117,11 +117,6 @@ func (c *Context) SetupService(cfg *config.Config) error {
 		return fmt.Errorf("service is already up")
 	}
 
-	log.Info("Running service pre-up task")
-	if err := service.PreUp(nil); err != nil {
-		return fmt.Errorf("running service pre-up task: %w", err)
-	}
-
 	// Assign the service to the context
 	c.WithService(service)
 	return nil
