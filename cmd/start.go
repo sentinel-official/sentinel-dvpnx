@@ -7,7 +7,11 @@ import (
 	"syscall"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/openvpn"
+	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
+	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
+	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
@@ -19,16 +23,23 @@ import (
 
 // NewStartCmd creates and returns a new Cobra command to start the node application.
 func NewStartCmd(cfg *config.Config) *cobra.Command {
+	// Initialize default server configs for all supported services
+	cfg.Services = map[types.ServiceType]types.ServiceConfig{
+		types.ServiceTypeOpenVPN:   openvpn.DefaultServerConfig(),
+		types.ServiceTypeV2Ray:     v2ray.DefaultServerConfig(),
+		types.ServiceTypeWireGuard: wireguard.DefaultServerConfig(),
+	}
+
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start the Sentinel dVPN node",
 		Long: `Starts the Sentinel dVPN node. Initializes the logger, sets up the context and node,
 explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Retrieve the home directory from the configuration.
+			// Retrieve the home directory from the configuration
 			homeDir := viper.GetString("home")
 
-			// Create and configure the application context.
+			// Create and configure the application context
 			c := core.NewContext().
 				WithHomeDir(homeDir).
 				WithInput(cmd.InOrStdin())
@@ -38,10 +49,10 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return fmt.Errorf("setting up context: %w", err)
 			}
 
-			// Seal the context to prevent further modifications.
+			// Seal the context to prevent further modifications
 			c.Seal()
 
-			// Create and set up the node.
+			// Create and initialize the node with the configured context
 			n := node.New(c)
 
 			log.Info("Setting up node")
@@ -49,11 +60,11 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return fmt.Errorf("setting up node: %w", err)
 			}
 
-			// Create a context that listens for SIGINT and SIGTERM signals.
+			// Create a context that listens for SIGINT and SIGTERM signals
 			ctx, cancel := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
 
-			// Register the node and update its details.
+			// Register the node and update its details
 			if err := n.Register(ctx); err != nil {
 				return fmt.Errorf("registering node: %w", err)
 			}
@@ -61,12 +72,11 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return fmt.Errorf("updating node details: %w", err)
 			}
 
-			// Create an errgroup with the signal-aware context.
+			// Use errgroup to manage concurrent start/wait and shutdown operations
 			eg, ctx := errgroup.WithContext(ctx)
 
-			// Launch goroutine to stop the node gracefully.
+			// Goroutine to handle graceful shutdown on signal
 			eg.Go(func() error {
-				// Wait until signal is received
 				<-ctx.Done()
 
 				log.Info("Stop signal received, stopping node")
@@ -77,7 +87,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return nil
 			})
 
-			// Launch goroutine to start the node and wait.
+			// Goroutine to start and wait on the node
 			eg.Go(func() error {
 				log.Info("Starting node")
 				if err := n.Start(); err != nil {
@@ -85,6 +95,8 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				}
 
 				log.Info("Node started successfully")
+
+				// Run node.Wait() in a nested goroutine
 				eg.Go(func() error {
 					if err := n.Wait(); err != nil {
 						return fmt.Errorf("waiting node: %w", err)
@@ -96,7 +108,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return nil
 			})
 
-			// Wait for all goroutines to complete.
+			// Wait for all goroutines to finish
 			if err := eg.Wait(); err != nil {
 				if !utils.ErrorIs(err, context.Canceled) {
 					return err
@@ -108,8 +120,11 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 		},
 	}
 
-	// Set configuration flags with the command.
+	// Set CLI flags for application and service configuration
 	cfg.SetForFlags(cmd.Flags())
+	cfg.Services[types.ServiceTypeOpenVPN].SetForFlags(cmd.Flags(), "openvpn")
+	cfg.Services[types.ServiceTypeV2Ray].SetForFlags(cmd.Flags(), "v2ray")
+	cfg.Services[types.ServiceTypeWireGuard].SetForFlags(cmd.Flags(), "wireguard")
 
 	return cmd
 }

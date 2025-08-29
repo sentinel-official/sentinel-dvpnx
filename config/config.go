@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/sentinel-official/sentinel-go-sdk/config"
+	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
 	"github.com/spf13/pflag"
 )
@@ -21,6 +22,8 @@ type Config struct {
 	HandshakeDNS   *HandshakeDNSConfig `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
 	Node           *NodeConfig         `mapstructure:"node"`          // Node contains node-specific configuration.
 	QoS            *QoSConfig          `mapstructure:"qos"`           // QoS contains Quality of Service configuration.
+
+	Services map[types.ServiceType]types.ServiceConfig `mapstructure:"-"`
 }
 
 // Validate validates the entire configuration.
@@ -59,22 +62,22 @@ func DefaultConfig() *Config {
 	}
 }
 
-// WriteAppConfig writes the application configuration to a file using a template.
-func (c *Config) WriteAppConfig(filename string) error {
-	// Read the configuration template file.
+// WriteAppConfig generates the application-level configuration file using the main config template.
+func (c *Config) WriteAppConfig(file string) error {
+	// Load the application template from the embedded filesystem.
 	text, err := fs.ReadFile("config.toml.tmpl")
 	if err != nil {
 		return fmt.Errorf("reading config template: %w", err)
 	}
 
 	// Render the template with Config data and write the result to the specified file.
-	if err := utils.ExecTemplateToFile(string(text), c, filename); err != nil {
-		return fmt.Errorf("executing config template to file %q: %w", filename, err)
+	if err := utils.ExecTemplateToFile(string(text), c, file); err != nil {
+		return fmt.Errorf("writing rendered config file %q: %w", file, err)
 	}
 
 	// Restrict file permissions to owner read/write only.
-	if err := os.Chmod(filename, 0600); err != nil {
-		return fmt.Errorf("setting permissions for file %q: %w", filename, err)
+	if err := os.Chmod(file, 0600); err != nil {
+		return fmt.Errorf("setting file permissions: %w", err)
 	}
 
 	return nil

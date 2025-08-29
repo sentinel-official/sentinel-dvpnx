@@ -90,31 +90,32 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 // SetupService determines the service type and configures it accordingly.
 func (c *Context) SetupService(cfg *config.Config) error {
 	var (
-		service     types.ServerService         // The service instance to configure
-		serviceType = cfg.Node.GetServiceType() // Type of the service from configuration
+		service     types.ServerService         // Interface for the node service
+		serviceType = cfg.Node.GetServiceType() // Get the service type from config
 	)
 
 	log.Info("Initializing service", "type", serviceType)
 
-	switch cfg.Node.GetServiceType() {
+	// Initialize the appropriate server service based on the configured type
+	switch serviceType {
 	case types.ServiceTypeV2Ray:
-		service = v2ray.NewServer(c.HomeDir())
+		service = v2ray.NewServer(c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
 	case types.ServiceTypeWireGuard:
-		service = wireguard.NewServer(c.HomeDir())
+		service = wireguard.NewServer(c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 	case types.ServiceTypeOpenVPN:
-		service = openvpn.NewServer(c.HomeDir())
+		service = openvpn.NewServer(c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 	default:
 		return fmt.Errorf("unsupported service type %q", serviceType)
 	}
 
 	log.Info("Checking service status")
 
-	ok, err := service.IsUp()
+	up, err := service.IsUp()
 	if err != nil {
-		return fmt.Errorf("checking service status: %w", err)
+		return fmt.Errorf("checking service %q status: %w", serviceType, err)
 	}
-	if ok {
-		return fmt.Errorf("service is already up")
+	if up {
+		return fmt.Errorf("service %q is already up", serviceType)
 	}
 
 	// Assign the service to the context

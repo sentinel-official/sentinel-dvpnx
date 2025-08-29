@@ -20,6 +20,13 @@ import (
 
 // NewInitCmd creates and returns a new Cobra command for initializing the application configuration.
 func NewInitCmd(cfg *config.Config) *cobra.Command {
+	// Initialize default server configs for all supported services
+	cfg.Services = map[types.ServiceType]types.ServiceConfig{
+		types.ServiceTypeOpenVPN:   openvpn.DefaultServerConfig(),
+		types.ServiceTypeV2Ray:     v2ray.DefaultServerConfig(),
+		types.ServiceTypeWireGuard: wireguard.DefaultServerConfig(),
+	}
+
 	// Declare variables for CLI flags
 	var (
 		force       bool // Determines whether to overwrite existing config
@@ -44,13 +51,13 @@ is set to overwrite the existing configuration.`,
 			cfgFile := filepath.Join(homeDir, "config.toml")
 
 			// Check if the config file exists at the specified path
-			cfgFileExists, err := utils.IsFileExists(cfgFile)
+			exists, err := utils.IsFileExists(cfgFile)
 			if err != nil {
 				return fmt.Errorf("checking if config file %q exists: %w", cfgFile, err)
 			}
 
 			// Write default config only if file doesn't exist or force flag is set
-			if !cfgFileExists || force {
+			if !exists || force {
 				log.Info("Writing app config", "file", cfgFile)
 				if err := cfg.WriteAppConfig(cfgFile); err != nil {
 					return fmt.Errorf("writing config file %q: %w", cfgFile, err)
@@ -83,21 +90,21 @@ is set to overwrite the existing configuration.`,
 					serviceType = cfg.Node.GetServiceType() // Get the service type from config
 				)
 
-				log.Info("Initializing service", "type", serviceType)
+				log.Info("Initializing service", "type", serviceType, "force", force)
 
+				// Initialize the appropriate server service based on the configured type
 				switch serviceType {
 				case types.ServiceTypeV2Ray:
-					service = v2ray.NewServer(homeDir)
+					service = v2ray.NewServer(homeDir, cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
 				case types.ServiceTypeWireGuard:
-					service = wireguard.NewServer(homeDir)
+					service = wireguard.NewServer(homeDir, cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 				case types.ServiceTypeOpenVPN:
-					service = openvpn.NewServer(homeDir)
+					service = openvpn.NewServer(homeDir, cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 				default:
 					return fmt.Errorf("unsupported service type %q", serviceType)
 				}
 
-				log.Info("Running service init task")
-				if err := service.Init(nil, force); err != nil {
+				if err := service.Init(force); err != nil {
 					return fmt.Errorf("running service init task: %w", err)
 				}
 			}
@@ -107,8 +114,11 @@ is set to overwrite the existing configuration.`,
 		},
 	}
 
-	// Set default configuration flags
+	// Set CLI flags for application and service configuration
 	cfg.SetForFlags(cmd.Flags())
+	cfg.Services[types.ServiceTypeOpenVPN].SetForFlags(cmd.Flags(), "openvpn")
+	cfg.Services[types.ServiceTypeV2Ray].SetForFlags(cmd.Flags(), "v2ray")
+	cfg.Services[types.ServiceTypeWireGuard].SetForFlags(cmd.Flags(), "wireguard")
 
 	// Bind command-line flags to local variables
 	cmd.Flags().BoolVar(&force, "force", force, "overwrite the existing configuration file if it exists")

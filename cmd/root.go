@@ -49,23 +49,8 @@ tools for key management and node initialization, ensuring privacy, performance,
 			// Set the global logger instance
 			log.SetLogger(logger)
 
-			// Construct the full path to the config file
-			cfgFile := filepath.Join(homeDir, "config.toml")
-
-			// Check if the config file exists at the specified path
-			cfgFileExists, err := utils.IsFileExists(cfgFile)
-			if err != nil {
-				return fmt.Errorf("checking if config file %q exists: %w", cfgFile, err)
-			}
-
-			// If the config file exists, proceed to read its contents
+			// Create a new viper instance
 			v := viper.New()
-			if cfgFileExists {
-				v.SetConfigFile(cfgFile)
-				if err := v.ReadInConfig(); err != nil {
-					return fmt.Errorf("reading config file %q: %w", cfgFile, err)
-				}
-			}
 
 			// Bind flags to Viper with normalized keys
 			r := strings.NewReplacer("-", "_")
@@ -76,9 +61,26 @@ tools for key management and node initialization, ensuring privacy, performance,
 				_ = v.BindPFlag(r.Replace(f.Name), f)
 			})
 
+			// Construct the full path to the config file
+			cfgFile := filepath.Join(homeDir, "config.toml")
+
+			// Check if the config file exists at the specified path
+			exists, err := utils.IsFileExists(cfgFile)
+			if err != nil {
+				return fmt.Errorf("checking if config file %q exists: %w", cfgFile, err)
+			}
+
+			// If the config file exists, proceed to read its contents
+			if exists {
+				v.SetConfigFile(cfgFile)
+				if err := v.ReadInConfig(); err != nil {
+					return fmt.Errorf("reading config file %q: %w", cfgFile, err)
+				}
+			}
+
 			// Unmarshal configuration into the config object
 			if err := v.Unmarshal(cfg); err != nil {
-				return fmt.Errorf("unmarshaling config file %q: %w", cfgFile, err)
+				return fmt.Errorf("unmarshaling config: %w", err)
 			}
 
 			// Update the keyring configuration
@@ -107,6 +109,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 	rootCmd.PersistentFlags().StringVar(&logFormat, "log.format", logFormat, "format of the log output (json or text)")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log.level", logLevel, "log level for output (debug, error, info, warn)")
 
+	// Bind flags to global viper instance
 	_ = viper.BindPFlag("home", rootCmd.PersistentFlags().Lookup("home"))
 	_ = viper.BindPFlag("log.format", rootCmd.PersistentFlags().Lookup("log.format"))
 	_ = viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("log.level"))
