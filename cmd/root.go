@@ -35,7 +35,6 @@ func NewRootCmd(userDir string) *cobra.Command {
 blockchain, providing secure, private, and censorship-resistant internet access while earning
 cryptocurrency rewards. It integrates with Cosmos-SDK, supports robust configuration, and offers
 tools for key management and node initialization, ensuring privacy, performance, and ease of use.`,
-		SilenceUsage: true,
 		CompletionOptions: cobra.CompletionOptions{
 			DisableDefaultCmd: true,
 		},

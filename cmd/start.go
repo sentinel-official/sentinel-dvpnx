@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/sentinel-official/sentinel-go-sdk/app"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinel-go-sdk/openvpn"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
-	"github.com/sentinel-official/sentinel-go-sdk/utils"
 	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
 	"github.com/sentinel-official/sentinel-go-sdk/wireguard"
 	"github.com/spf13/cobra"
@@ -73,11 +72,12 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			eg.Go(func() error {
 				<-ctx.Done()
 
-				log.Info("Stop signal received, stopping node")
+				log.Info("Stopping node")
 				if err := n.Stop(); err != nil {
-					return fmt.Errorf("stopping node: %w", err)
+					return &app.StopError{Err: err}
 				}
 
+				log.Info("Node stopped successfully")
 				return nil
 			})
 
@@ -85,15 +85,13 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			eg.Go(func() error {
 				log.Info("Starting node")
 				if err := n.Start(); err != nil {
-					return fmt.Errorf("starting node: %w", err)
+					return &app.StartError{Err: err}
 				}
 
 				log.Info("Node started successfully")
-
-				// Run node.Wait() in a nested goroutine
 				eg.Go(func() error {
 					if err := n.Wait(); err != nil {
-						return fmt.Errorf("waiting node: %w", err)
+						return &app.WaitError{Err: err}
 					}
 
 					return nil
@@ -104,12 +102,9 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 
 			// Wait for all goroutines to finish
 			if err := eg.Wait(); err != nil {
-				if !utils.ErrorIs(err, context.Canceled) {
-					return err
-				}
+				return err
 			}
 
-			log.Info("Node stopped successfully")
 			return nil
 		},
 	}
