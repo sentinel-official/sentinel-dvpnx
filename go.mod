@@ -1,13 +1,13 @@
 module github.com/sentinel-official/sentinel-dvpnx
 
-go 1.24.2
+go 1.24.6
 
 require (
 	cosmossdk.io/math v1.5.3
 	github.com/cosmos/cosmos-sdk v0.47.17
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc.6.0.20250829070544-8a886595ff6b
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc.6.0.20250829112606-3d177552eebd
 	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc.11
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
@@ -113,6 +113,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/onsi/ginkgo/v2 v2.19.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/petermattis/goid v0.0.0-20240813172612-4fcff4a6cae7 // indirect
 	github.com/pires/go-proxyproto v0.8.1 // indirect
@@ -156,7 +157,7 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.18.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
+	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/term v0.34.0 // indirect

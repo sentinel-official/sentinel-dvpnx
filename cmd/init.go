@@ -29,9 +29,9 @@ func NewInitCmd(cfg *config.Config) *cobra.Command {
 
 	// Declare variables for CLI flags
 	var (
-		force       bool // Determines whether to overwrite existing config
-		skipTLS     bool // Whether to skip the TLS key/cert generation
-		skipService bool // Whether to skip the node service initialization
+		force       bool
+		skipTLS     bool
+		skipService bool
 	)
 
 	cmd := &cobra.Command{

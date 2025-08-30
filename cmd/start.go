@@ -3,8 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os/signal"
-	"syscall"
 
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinel-go-sdk/openvpn"
@@ -60,20 +58,16 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 				return fmt.Errorf("setting up node: %w", err)
 			}
 
-			// Create a context that listens for SIGINT and SIGTERM signals
-			ctx, cancel := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
-			defer cancel()
-
 			// Register the node and update its details
-			if err := n.Register(ctx); err != nil {
+			if err := n.Register(cmd.Context()); err != nil {
 				return fmt.Errorf("registering node: %w", err)
 			}
-			if err := n.UpdateDetails(ctx); err != nil {
+			if err := n.UpdateDetails(cmd.Context()); err != nil {
 				return fmt.Errorf("updating node details: %w", err)
 			}
 
 			// Use errgroup to manage concurrent start/wait and shutdown operations
-			eg, ctx := errgroup.WithContext(ctx)
+			eg, ctx := errgroup.WithContext(cmd.Context())
 
 			// Goroutine to handle graceful shutdown on signal
 			eg.Go(func() error {

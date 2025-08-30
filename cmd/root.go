@@ -107,7 +107,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 	// Add persistent flags
 	rootCmd.PersistentFlags().StringVar(&homeDir, "home", homeDir, "home directory for application config and data")
 	rootCmd.PersistentFlags().StringVar(&logFormat, "log.format", logFormat, "format of the log output (json or text)")
-	rootCmd.PersistentFlags().StringVar(&logLevel, "log.level", logLevel, "log level for output (debug, error, info, warn)")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log.level", logLevel, "log level for output (debug, error, info, none, warn)")
 
 	// Bind flags to global viper instance
 	_ = viper.BindPFlag("home", rootCmd.PersistentFlags().Lookup("home"))

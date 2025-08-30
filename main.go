@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -10,8 +13,9 @@ import (
 )
 
 func main() {
-	// Enable Cobra's feature to traverse and execute hooks for commands.
-	cobra.EnableTraverseRunHooks = true
+	// Create a context that listens for SIGINT and SIGTERM signals
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
 	// Retrieve the user's home directory.
 	homeDir, err := os.UserHomeDir()
@@ -20,11 +24,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Enable Cobra's feature to traverse and execute hooks for commands.
+	cobra.EnableTraverseRunHooks = true
+
 	// Initialize the root command for the application.
 	rootCmd := cmd.NewRootCmd(homeDir)
 
 	// Execute the root command.
-	if err := rootCmd.Execute(); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 }
