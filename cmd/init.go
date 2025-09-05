@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -41,6 +42,9 @@ func NewInitCmd(cfg *config.Config) *cobra.Command {
 If a configuration file already exists, this command will abort unless the "force" flag
 is set to overwrite the existing configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithCancel(cmd.Context())
+			defer cancel()
+
 			// Create the home directory if it doesn't exist
 			homeDir := viper.GetString("home")
 			if err := os.MkdirAll(homeDir, 0755); err != nil {
@@ -95,11 +99,11 @@ is set to overwrite the existing configuration.`,
 				// Initialize the appropriate server service based on the configured type
 				switch serviceType {
 				case types.ServiceTypeV2Ray:
-					service = v2ray.NewServer(homeDir, cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
+					service = v2ray.NewServer(ctx, "v2ray", homeDir, cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
 				case types.ServiceTypeWireGuard:
-					service = wireguard.NewServer(homeDir, cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
+					service = wireguard.NewServer(ctx, "wireguard", homeDir, cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 				case types.ServiceTypeOpenVPN:
-					service = openvpn.NewServer(homeDir, cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
+					service = openvpn.NewServer(ctx, "openvpn", homeDir, cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 				default:
 					return fmt.Errorf("unsupported service type %q", serviceType)
 				}

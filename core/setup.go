@@ -88,7 +88,7 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 }
 
 // SetupService determines the service type and configures it accordingly.
-func (c *Context) SetupService(cfg *config.Config) error {
+func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 	var (
 		service     types.ServerService         // Interface for the node service
 		serviceType = cfg.Node.GetServiceType() // Get the service type from config
@@ -99,23 +99,27 @@ func (c *Context) SetupService(cfg *config.Config) error {
 	// Initialize the appropriate server service based on the configured type
 	switch serviceType {
 	case types.ServiceTypeV2Ray:
-		service = v2ray.NewServer(c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
+		service = v2ray.NewServer(ctx, "v2ray", c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
 	case types.ServiceTypeWireGuard:
-		service = wireguard.NewServer(c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
+		service = wireguard.NewServer(ctx, "wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 	case types.ServiceTypeOpenVPN:
-		service = openvpn.NewServer(c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
+		service = openvpn.NewServer(ctx, "openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 	default:
 		return fmt.Errorf("unsupported service type %q", serviceType)
 	}
 
 	log.Info("Checking service status")
 
-	up, err := service.IsUp()
+	ok, err := service.IsRunning()
 	if err != nil {
 		return fmt.Errorf("checking service %q status: %w", serviceType, err)
 	}
-	if up {
-		return fmt.Errorf("service %q is already up", serviceType)
+	if ok {
+		return fmt.Errorf("service %q is already running", serviceType)
+	}
+
+	if err := service.Setup(); err != nil {
+		return err
 	}
 
 	// Assign the service to the context
@@ -124,7 +128,7 @@ func (c *Context) SetupService(cfg *config.Config) error {
 }
 
 // Setup initializes all components of the node context.
-func (c *Context) Setup(cfg *config.Config) error {
+func (c *Context) Setup(ctx context.Context, cfg *config.Config) error {
 	// Assign configuration values to the context.
 	c.WithAPIAddrs(cfg.Node.APIAddrs())
 	c.WithAPIListenAddr(cfg.Node.APIListenAddr())
@@ -151,7 +155,7 @@ func (c *Context) Setup(cfg *config.Config) error {
 	}
 
 	log.Info("Setting up service")
-	if err := c.SetupService(cfg); err != nil {
+	if err := c.SetupService(ctx, cfg); err != nil {
 		return fmt.Errorf("setting up service: %w", err)
 	}
 

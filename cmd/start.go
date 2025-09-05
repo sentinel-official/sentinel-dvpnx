@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sentinel-official/sentinel-go-sdk/app"
@@ -14,7 +15,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/sentinel-official/sentinel-dvpnx/config"
-	"github.com/sentinel-official/sentinel-dvpnx/core"
 	"github.com/sentinel-official/sentinel-dvpnx/node"
 )
 
@@ -33,70 +33,45 @@ func NewStartCmd(cfg *config.Config) *cobra.Command {
 		Long: `Starts the Sentinel dVPN node. Initializes the logger, sets up the context and node,
 explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := context.WithCancel(cmd.Context())
+			defer cancel()
+
 			// Retrieve the home directory from the configuration
 			homeDir := viper.GetString("home")
 
-			// Create and configure the application context
-			c := core.NewContext().
-				WithHomeDir(homeDir).
-				WithInput(cmd.InOrStdin())
-
-			log.Info("Setting up context")
-			if err := c.Setup(cfg); err != nil {
-				return fmt.Errorf("setting up context: %w", err)
-			}
-
-			// Seal the context to prevent further modifications
-			c.Seal()
-
 			// Create and initialize the node with the configured context
-			n := node.New(c)
+			n := node.New(ctx, "node")
 
 			log.Info("Setting up node")
-			if err := n.Setup(cfg); err != nil {
+			if err := n.Setup(homeDir, cmd.InOrStdin(), cfg); err != nil {
 				return fmt.Errorf("setting up node: %w", err)
 			}
 
-			// Register the node and update its details
-			if err := n.Register(cmd.Context()); err != nil {
-				return fmt.Errorf("registering node: %w", err)
-			}
-			if err := n.UpdateDetails(cmd.Context()); err != nil {
-				return fmt.Errorf("updating node details: %w", err)
-			}
-
 			// Use errgroup to manage concurrent start/wait and shutdown operations
-			eg, ctx := errgroup.WithContext(cmd.Context())
+			eg, ctx := errgroup.WithContext(ctx)
+
+			// Goroutine to start and wait on the node
+			eg.Go(func() error {
+				if err := n.Start(); err != nil {
+					return fmt.Errorf("starting node: %w", err)
+				}
+
+				log.Info("Node started successfully")
+				if err := n.Wait(); err != nil {
+					return fmt.Errorf("waiting node: %w", err)
+				}
+
+				return nil
+			})
 
 			// Goroutine to handle graceful shutdown on signal
 			eg.Go(func() error {
 				<-ctx.Done()
-
-				log.Info("Stopping node")
 				if err := n.Stop(); err != nil {
-					return &app.StopError{Err: err}
+					return app.NewErrShutdown(err)
 				}
 
 				log.Info("Node stopped successfully")
-				return nil
-			})
-
-			// Goroutine to start and wait on the node
-			eg.Go(func() error {
-				log.Info("Starting node")
-				if err := n.Start(); err != nil {
-					return &app.StartError{Err: err}
-				}
-
-				log.Info("Node started successfully")
-				eg.Go(func() error {
-					if err := n.Wait(); err != nil {
-						return &app.WaitError{Err: err}
-					}
-
-					return nil
-				})
-
 				return nil
 			})
 

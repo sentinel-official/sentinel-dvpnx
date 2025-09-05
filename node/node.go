@@ -7,28 +7,32 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cmux"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/process"
 	"github.com/sentinel-official/sentinelhub/v12/x/node/types/v3"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
 // Node represents the application node, holding its context, scheduler, and server.
 type Node struct {
-	*core.Context
+	*process.Manager // Embedded process manager for handling lifecycle.
 
+	ctx       *core.Context   // Application code context.
 	scheduler *cron.Scheduler // Scheduler for managing periodic tasks.
 	server    *cmux.Server    // HTTP server for handling API requests.
-
-	eg *errgroup.Group
 }
 
 // New creates a new Node with the provided context.
-func New(c *core.Context) *Node {
+func New(ctx context.Context, name string) *Node {
 	return &Node{
-		Context: c,
-		eg:      &errgroup.Group{},
+		Manager: process.NewManager(ctx, name),
 	}
+}
+
+// WithContext sets the core context for the Node and returns the updated Node.
+func (n *Node) WithContext(ctx *core.Context) *Node {
+	n.ctx = ctx
+	return n
 }
 
 // WithScheduler sets the scheduler for the Node and returns the updated Node.
@@ -41,6 +45,11 @@ func (n *Node) WithScheduler(v *cron.Scheduler) *Node {
 func (n *Node) WithServer(v *cmux.Server) *Node {
 	n.server = v
 	return n
+}
+
+// Context returns the core context configured for the Node.
+func (n *Node) Context() *core.Context {
+	return n.ctx
 }
 
 // Scheduler returns the scheduler configured for the Node.
@@ -56,103 +65,95 @@ func (n *Node) Server() *cmux.Server {
 // Register registers the node on the network if not already registered.
 func (n *Node) Register(ctx context.Context) error {
 	// Query the network to check if the node is already registered.
-	node, err := n.Client().Node(ctx, n.NodeAddr())
+	node, err := n.Context().Client().Node(ctx, n.Context().NodeAddr())
 	if err != nil {
 		return fmt.Errorf("failed to query node: %w", err)
 	}
 	if node != nil {
-		log.Info("Node already registered", "addr", n.NodeAddr())
+		log.Info("Node already registered", "addr", n.Context().NodeAddr())
 		return nil
 	}
 
 	log.Info("Registering node",
-		"gigabyte_price", n.GigabytePrices(),
-		"hourly_price", n.HourlyPrices(),
-		"remote_addrs", n.APIAddrs(),
+		"gigabyte_price", n.Context().GigabytePrices(),
+		"hourly_price", n.Context().HourlyPrices(),
+		"remote_addrs", n.Context().APIAddrs(),
 	)
 
 	// Prepare a message to register the node.
 	msg := v3.NewMsgRegisterNodeRequest(
-		n.AccAddr(),
-		n.GigabytePrices(),
-		n.HourlyPrices(),
-		n.APIAddrs(),
+		n.Context().AccAddr(),
+		n.Context().GigabytePrices(),
+		n.Context().HourlyPrices(),
+		n.Context().APIAddrs(),
 	)
 
 	// Broadcast the registration transaction.
-	if err := n.BroadcastTx(ctx, msg); err != nil {
+	if err := n.Context().BroadcastTx(ctx, msg); err != nil {
 		return fmt.Errorf("broadcasting tx with register_node msg: %w", err)
 	}
 
-	log.Info("Node registered successfully", "addr", n.NodeAddr())
+	log.Info("Node registered successfully", "addr", n.Context().NodeAddr())
 	return nil
 }
 
 // UpdateDetails updates the node's pricing and address details on the network.
 func (n *Node) UpdateDetails(ctx context.Context) error {
 	log.Info("Updating node details",
-		"gigabyte_prices", n.GigabytePrices(),
-		"hourly_prices", n.HourlyPrices(),
-		"remote_addrs", n.APIAddrs(),
+		"gigabyte_prices", n.Context().GigabytePrices(),
+		"hourly_prices", n.Context().HourlyPrices(),
+		"remote_addrs", n.Context().APIAddrs(),
 	)
 
 	// Prepare a message to update the node's details.
 	msg := v3.NewMsgUpdateNodeDetailsRequest(
-		n.NodeAddr(),
-		n.GigabytePrices(),
-		n.HourlyPrices(),
-		n.APIAddrs(),
+		n.Context().NodeAddr(),
+		n.Context().GigabytePrices(),
+		n.Context().HourlyPrices(),
+		n.Context().APIAddrs(),
 	)
 
 	// Broadcast the update transaction.
-	if err := n.BroadcastTx(ctx, msg); err != nil {
+	if err := n.Context().BroadcastTx(ctx, msg); err != nil {
 		return fmt.Errorf("broadcasting tx with update_node_details msg: %w", err)
 	}
 
-	log.Info("Node details updated successfully", "addr", n.NodeAddr())
+	log.Info("Node details updated successfully", "addr", n.Context().NodeAddr())
 	return nil
 }
 
 // Start initializes the Node's services, scheduler, and API server.
 func (n *Node) Start() error {
-	sg := &errgroup.Group{}
-
-	// Launch the service stack as a background goroutine.
-	sg.Go(func() error {
-		log.Info("Running service pre-up task")
-		if err := n.Service().PreUp(); err != nil {
-			return fmt.Errorf("running service pre-up task: %w", err)
+	return n.Manager.Start(func(ctx context.Context) error {
+		if err := n.Context().Service().Start(); err != nil {
+			return fmt.Errorf("starting service: %w", err)
 		}
 
-		log.Info("Running service up task")
-		if err := n.Service().Up(); err != nil {
-			return fmt.Errorf("running service up task: %w", err)
+		if err := n.Scheduler().Start(); err != nil {
+			return fmt.Errorf("starting scheduler: %w", err)
 		}
 
-		log.Info("Running service post-up task")
-		if err := n.Service().PostUp(); err != nil {
-			return fmt.Errorf("running service post-up task: %w", err)
+		if err := n.Server().Start(); err != nil {
+			return fmt.Errorf("starting API server: %w", err)
 		}
 
-		n.eg.Go(func() error {
-			if err := n.Service().Wait(); err != nil {
+		if err := n.Register(ctx); err != nil {
+			return fmt.Errorf("registering node: %w", err)
+		}
+
+		if err := n.UpdateDetails(ctx); err != nil {
+			return fmt.Errorf("updating details: %w", err)
+		}
+
+		n.Go(func(ctx context.Context) error {
+			if err := n.Context().Service().Wait(); err != nil {
 				return fmt.Errorf("waiting service: %w", err)
 			}
 
 			return nil
 		})
 
-		return nil
-	})
-
-	// Launch the cron-based job scheduler in the background.
-	sg.Go(func() error {
-		log.Info("Starting scheduler")
-		if err := n.Scheduler().Start(); err != nil {
-			return fmt.Errorf("starting scheduler: %w", err)
-		}
-
-		n.eg.Go(func() error {
+		n.Go(func(ctx context.Context) error {
 			if err := n.Scheduler().Wait(); err != nil {
 				return fmt.Errorf("waiting scheduler: %w", err)
 			}
@@ -160,17 +161,7 @@ func (n *Node) Start() error {
 			return nil
 		})
 
-		return nil
-	})
-
-	// Launch the API server using the configured TLS certificates and router.
-	sg.Go(func() error {
-		log.Info("Starting API server", "addr", n.APIListenAddr())
-		if err := n.Server().Start(); err != nil {
-			return fmt.Errorf("starting API server: %w", err)
-		}
-
-		n.eg.Go(func() error {
+		n.Go(func(ctx context.Context) error {
 			if err := n.Server().Wait(); err != nil {
 				return fmt.Errorf("waiting API server: %w", err)
 			}
@@ -180,68 +171,33 @@ func (n *Node) Start() error {
 
 		return nil
 	})
-
-	// Wait until all routines started
-	if err := sg.Wait(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Wait blocks until all background goroutines launched exit.
 func (n *Node) Wait() error {
-	if err := n.eg.Wait(); err != nil {
-		return err
-	}
-
-	return nil
+	return n.Manager.Wait(nil)
 }
 
 // Stop gracefully stops the Node's operations.
 func (n *Node) Stop() error {
-	sg := &errgroup.Group{}
-
-	sg.Go(func() error {
-		log.Info("Running service pre-down task")
-		if err := n.Service().PreDown(); err != nil {
-			return fmt.Errorf("running service pre-down task: %w", err)
+	return n.Manager.Stop(func() error {
+		if err := n.Context().Service().Stop(); err != nil {
+			return fmt.Errorf("stopping service: %w", err)
 		}
 
-		log.Info("Running service down task")
-		if err := n.Service().Down(); err != nil {
-			return fmt.Errorf("running service down task: %w", err)
-		}
-
-		log.Info("Running service post-down task")
-		if err := n.Service().PostDown(); err != nil {
-			return fmt.Errorf("running service post-up task: %w", err)
-		}
-
-		return nil
-	})
-
-	sg.Go(func() error {
-		log.Info("Stopping scheduler")
 		if err := n.Scheduler().Stop(); err != nil {
 			return fmt.Errorf("stopping scheduler: %w", err)
 		}
 
-		return nil
-	})
-
-	sg.Go(func() error {
-		log.Info("Stopping API server")
 		if err := n.Server().Stop(); err != nil {
 			return fmt.Errorf("stopping API server: %w", err)
 		}
 
 		return nil
 	})
+}
 
-	if err := sg.Wait(); err != nil {
-		return err
-	}
-
-	return nil
+// Cleanup cleans up resources used by the node.
+func (n *Node) Cleanup() error {
+	return n.Manager.Cleanup(nil)
 }

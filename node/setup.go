@@ -1,7 +1,9 @@
 package node
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/sentinel-official/sentinel-dvpnx/api"
 	"github.com/sentinel-official/sentinel-dvpnx/config"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 	"github.com/sentinel-official/sentinel-dvpnx/workers"
 )
 
@@ -22,26 +25,30 @@ func init() {
 }
 
 // SetupScheduler sets up the cron scheduler with various workers.
-func (n *Node) SetupScheduler(cfg *config.Config) error {
+func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 	// Define the list of cron workers with their respective handlers and intervals.
 	items := []cron.Worker{
-		workers.NewBestRPCAddrWorker(n.Context, cfg.Node.GetIntervalBestRPCAddr()),
-		workers.NewGeoIPLocationWorker(n.Context, cfg.Node.GetIntervalGeoIPLocation()),
-		workers.NewNodeStatusUpdateWorker(n.Context, cfg.Node.GetIntervalStatusUpdate()),
-		workers.NewSessionUsageSyncWithBlockchainWorker(n.Context, cfg.Node.GetIntervalSessionUsageSyncWithBlockchain()),
-		workers.NewSessionUsageSyncWithDatabaseWorker(n.Context, cfg.Node.GetIntervalSessionUsageSyncWithDatabase()),
-		workers.NewSessionUsageValidateWorker(n.Context, cfg.Node.GetIntervalSessionUsageValidate()),
-		workers.NewSessionValidateWorker(n.Context, cfg.Node.GetIntervalSessionValidate()),
-		workers.NewSpeedtestWorker(n.Context, cfg.Node.GetIntervalSpeedtest()),
+		workers.NewBestRPCAddrWorker(n.Context(), cfg.Node.GetIntervalBestRPCAddr()),
+		workers.NewGeoIPLocationWorker(n.Context(), cfg.Node.GetIntervalGeoIPLocation()),
+		workers.NewNodeStatusUpdateWorker(n.Context(), cfg.Node.GetIntervalStatusUpdate()),
+		workers.NewSessionUsageSyncWithBlockchainWorker(n.Context(), cfg.Node.GetIntervalSessionUsageSyncWithBlockchain()),
+		workers.NewSessionUsageSyncWithDatabaseWorker(n.Context(), cfg.Node.GetIntervalSessionUsageSyncWithDatabase()),
+		workers.NewSessionUsageValidateWorker(n.Context(), cfg.Node.GetIntervalSessionUsageValidate()),
+		workers.NewSessionValidateWorker(n.Context(), cfg.Node.GetIntervalSessionValidate()),
+		workers.NewSpeedtestWorker(n.Context(), cfg.Node.GetIntervalSpeedtest()),
 	}
 
 	// Create a new cron scheduler and register the workers.
-	s := cron.NewScheduler()
+	s := cron.NewScheduler(ctx, "scheduler")
+	if err := s.Setup(); err != nil {
+		return err
+	}
+
 	for _, item := range items {
 		log.Info("Registering scheduler worker",
-			"name", item.Name(), "interval", item.Interval().String(),
+			"name", item.Name(), "interval", item.Interval(),
 		)
-		if err := s.RegisterWorkers(item); err != nil {
+		if err := s.Register(item); err != nil {
 			return fmt.Errorf("registering scheduler worker %q: %w", item.Name(), err)
 		}
 	}
@@ -52,7 +59,7 @@ func (n *Node) SetupScheduler(cfg *config.Config) error {
 }
 
 // SetupServer sets up the API server with necessary middlewares and API routes.
-func (n *Node) SetupServer(_ *config.Config) error {
+func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
 	// Define middlewares to be used by the router.
 	items := []gin.HandlerFunc{
 		cors.New(
@@ -69,26 +76,62 @@ func (n *Node) SetupServer(_ *config.Config) error {
 	router.Use(items...)
 
 	// Register API routes to the router.
-	api.RegisterRoutes(n.Context, router)
+	api.RegisterRoutes(n.Context(), router)
 
-	// Create and attach the HTTP server to the Node instance.
-	n.WithServer(
-		cmux.NewServer(n.APIListenAddr(), n.TLSCertFile(), n.TLSKeyFile(), router),
+	// Create the API server
+	server := cmux.NewServer(
+		ctx,
+		"API-server",
+		n.Context().APIListenAddr(),
+		n.Context().TLSCertFile(),
+		n.Context().TLSKeyFile(),
+		router,
 	)
+	if err := server.Setup(); err != nil {
+		return err
+	}
+
+	// Attach the API server to the Node instance.
+	n.WithServer(server)
 	return nil
 }
 
-// Setup sets up both the scheduler and API server for the Node.
-func (n *Node) Setup(cfg *config.Config) error {
-	log.Info("Setting up scheduler")
-	if err := n.SetupScheduler(cfg); err != nil {
-		return fmt.Errorf("setting up scheduler: %w", err)
+// SetupContext sets up the core context.
+func (n *Node) SetupContext(ctx context.Context, homeDir string, input io.Reader, cfg *config.Config) error {
+	// Create and configure the context.
+	cc := core.NewContext().
+		WithHomeDir(homeDir).
+		WithInput(input)
+	if err := cc.Setup(ctx, cfg); err != nil {
+		return err
 	}
 
-	log.Info("Setting up API server")
-	if err := n.SetupServer(cfg); err != nil {
-		return fmt.Errorf("setting up API server: %w", err)
-	}
+	// Seal the context.
+	cc.Seal()
 
+	// Attach the code context to the Node instance.
+	n.WithContext(cc)
 	return nil
+}
+
+// Setup sets up the context, scheduler and API server for the Node.
+func (n *Node) Setup(homeDir string, input io.Reader, cfg *config.Config) error {
+	return n.Manager.Setup(func(ctx context.Context) error {
+		log.Info("Setting up context")
+		if err := n.SetupContext(ctx, homeDir, input, cfg); err != nil {
+			return fmt.Errorf("setting up context: %w", err)
+		}
+
+		log.Info("Setting up scheduler")
+		if err := n.SetupScheduler(ctx, cfg); err != nil {
+			return fmt.Errorf("setting up scheduler: %w", err)
+		}
+
+		log.Info("Setting up API server")
+		if err := n.SetupServer(ctx, cfg); err != nil {
+			return fmt.Errorf("setting up API server: %w", err)
+		}
+
+		return nil
+	})
 }
