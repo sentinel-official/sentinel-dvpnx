@@ -9,6 +9,7 @@ import (
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
 	"github.com/sentinel-official/sentinel-go-sdk/process"
 	"github.com/sentinel-official/sentinelhub/v12/x/node/types/v3"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
@@ -125,24 +126,45 @@ func (n *Node) UpdateDetails(ctx context.Context) error {
 // Start initializes the Node's services, scheduler, and API server.
 func (n *Node) Start() error {
 	return n.Manager.Start(func(ctx context.Context) error {
-		if err := n.Context().Service().Start(); err != nil {
-			return fmt.Errorf("starting service: %w", err)
-		}
-
-		if err := n.Scheduler().Start(); err != nil {
-			return fmt.Errorf("starting scheduler: %w", err)
-		}
-
-		if err := n.Server().Start(); err != nil {
-			return fmt.Errorf("starting API server: %w", err)
-		}
-
 		if err := n.Register(ctx); err != nil {
 			return fmt.Errorf("registering node: %w", err)
 		}
 
 		if err := n.UpdateDetails(ctx); err != nil {
 			return fmt.Errorf("updating details: %w", err)
+		}
+
+		sg := &errgroup.Group{}
+
+		sg.Go(func() error {
+			log.Info("Starting service")
+			if err := n.Context().Service().Start(); err != nil {
+				return fmt.Errorf("starting service: %w", err)
+			}
+
+			return nil
+		})
+
+		sg.Go(func() error {
+			log.Info("Starting scheduler")
+			if err := n.Scheduler().Start(); err != nil {
+				return fmt.Errorf("starting scheduler: %w", err)
+			}
+
+			return nil
+		})
+
+		sg.Go(func() error {
+			log.Info("Starting API server")
+			if err := n.Server().Start(); err != nil {
+				return fmt.Errorf("starting API server: %w", err)
+			}
+
+			return nil
+		})
+
+		if err := sg.Wait(); err != nil {
+			return err
 		}
 
 		n.Go(func(ctx context.Context) error {
@@ -181,16 +203,37 @@ func (n *Node) Wait() error {
 // Stop gracefully stops the Node's operations.
 func (n *Node) Stop() error {
 	return n.Manager.Stop(func() error {
-		if err := n.Context().Service().Stop(); err != nil {
-			return fmt.Errorf("stopping service: %w", err)
-		}
+		sg := &errgroup.Group{}
 
-		if err := n.Scheduler().Stop(); err != nil {
-			return fmt.Errorf("stopping scheduler: %w", err)
-		}
+		sg.Go(func() error {
+			log.Info("Stopping service")
+			if err := n.Context().Service().Stop(); err != nil {
+				return fmt.Errorf("stopping service: %w", err)
+			}
 
-		if err := n.Server().Stop(); err != nil {
-			return fmt.Errorf("stopping API server: %w", err)
+			return nil
+		})
+
+		sg.Go(func() error {
+			log.Info("Stopping scheduler")
+			if err := n.Scheduler().Stop(); err != nil {
+				return fmt.Errorf("stopping scheduler: %w", err)
+			}
+
+			return nil
+		})
+
+		sg.Go(func() error {
+			log.Info("Stopping API server")
+			if err := n.Server().Stop(); err != nil {
+				return fmt.Errorf("stopping API server: %w", err)
+			}
+
+			return nil
+		})
+
+		if err := sg.Wait(); err != nil {
+			return err
 		}
 
 		return nil

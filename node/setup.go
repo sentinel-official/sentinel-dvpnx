@@ -38,7 +38,8 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 		workers.NewSpeedtestWorker(n.Context(), cfg.Node.GetIntervalSpeedtest()),
 	}
 
-	// Create a new cron scheduler and register the workers.
+	log.Info("Initializing scheduler")
+
 	s := cron.NewScheduler(ctx, "scheduler")
 	if err := s.Setup(); err != nil {
 		return err
@@ -78,8 +79,9 @@ func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
 	// Register API routes to the router.
 	api.RegisterRoutes(n.Context(), router)
 
-	// Create the API server
-	server := cmux.NewServer(
+	log.Info("Initializing API server")
+
+	s := cmux.NewServer(
 		ctx,
 		"API-server",
 		n.Context().APIListenAddr(),
@@ -87,30 +89,31 @@ func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
 		n.Context().TLSKeyFile(),
 		router,
 	)
-	if err := server.Setup(); err != nil {
+	if err := s.Setup(); err != nil {
 		return err
 	}
 
 	// Attach the API server to the Node instance.
-	n.WithServer(server)
+	n.WithServer(s)
 	return nil
 }
 
 // SetupContext sets up the core context.
 func (n *Node) SetupContext(ctx context.Context, homeDir string, input io.Reader, cfg *config.Config) error {
-	// Create and configure the context.
-	cc := core.NewContext().
+	log.Info("Initializing context")
+
+	c := core.NewContext().
 		WithHomeDir(homeDir).
 		WithInput(input)
-	if err := cc.Setup(ctx, cfg); err != nil {
+	if err := c.Setup(ctx, cfg); err != nil {
 		return err
 	}
 
 	// Seal the context.
-	cc.Seal()
+	c.Seal()
 
 	// Attach the code context to the Node instance.
-	n.WithContext(cc)
+	n.WithContext(c)
 	return nil
 }
 

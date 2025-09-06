@@ -52,6 +52,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 
 			// Goroutine to start and wait on the node
 			eg.Go(func() error {
+				log.Info("Starting node")
 				if err := n.Start(); err != nil {
 					return fmt.Errorf("starting node: %w", err)
 				}
@@ -67,6 +68,8 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			// Goroutine to handle graceful shutdown on signal
 			eg.Go(func() error {
 				<-ctx.Done()
+
+				log.Info("Stopping node")
 				if err := n.Stop(); err != nil {
 					return app.NewErrShutdown(err)
 				}

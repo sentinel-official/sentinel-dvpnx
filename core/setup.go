@@ -26,22 +26,22 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 		"tx.from_name", cfg.Tx.GetFromName(),
 	)
 
-	cc, err := core.NewClientFromConfig(cfg.Config)
+	v, err := core.NewClientFromConfig(cfg.Config)
 	if err != nil {
 		return fmt.Errorf("creating client from config: %w", err)
 	}
 
 	// Seal the client.
-	cc.Seal()
+	v.Seal()
 
 	// Assign the initialized client to the context.
-	c.WithClient(cc)
+	c.WithClient(v)
 	return nil
 }
 
 // SetupDatabase creates and configures the database, then assigns it to the context.
 func (c *Context) SetupDatabase(_ *config.Config) error {
-	log.Info("Initializing database connection", "file", c.DatabaseFile())
+	log.Info("Initializing database", "file", c.DatabaseFile())
 
 	db, err := database.NewDefault(c.DatabaseFile())
 	if err != nil {
@@ -90,40 +90,40 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 // SetupService determines the service type and configures it accordingly.
 func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 	var (
-		service     types.ServerService         // Interface for the node service
-		serviceType = cfg.Node.GetServiceType() // Get the service type from config
+		s  types.ServerService         // Interface for the node service
+		st = cfg.Node.GetServiceType() // Get the service type from config
 	)
 
-	log.Info("Initializing service", "type", serviceType)
+	log.Info("Initializing service", "type", st)
 
 	// Initialize the appropriate server service based on the configured type
-	switch serviceType {
+	switch st {
 	case types.ServiceTypeV2Ray:
-		service = v2ray.NewServer(ctx, "v2ray", c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
+		s = v2ray.NewServer(ctx, "v2ray", c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
 	case types.ServiceTypeWireGuard:
-		service = wireguard.NewServer(ctx, "wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
+		s = wireguard.NewServer(ctx, "wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 	case types.ServiceTypeOpenVPN:
-		service = openvpn.NewServer(ctx, "openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
+		s = openvpn.NewServer(ctx, "openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 	default:
-		return fmt.Errorf("unsupported service type %q", serviceType)
+		return fmt.Errorf("unsupported service type %q", st)
 	}
 
 	log.Info("Checking service status")
 
-	ok, err := service.IsRunning()
+	ok, err := s.IsRunning()
 	if err != nil {
-		return fmt.Errorf("checking service %q status: %w", serviceType, err)
+		return fmt.Errorf("checking service %q status: %w", st, err)
 	}
 	if ok {
-		return fmt.Errorf("service %q is already running", serviceType)
+		return fmt.Errorf("service %q is already running", st)
 	}
 
-	if err := service.Setup(); err != nil {
+	if err := s.Setup(); err != nil {
 		return err
 	}
 
 	// Assign the service to the context
-	c.WithService(service)
+	c.WithService(s)
 	return nil
 }
 
