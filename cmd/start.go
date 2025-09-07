@@ -40,10 +40,10 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			homeDir := viper.GetString("home")
 
 			// Create and initialize the node with the configured context
-			n := node.New(ctx, "node")
+			n := node.New("node")
 
 			log.Info("Setting up node")
-			if err := n.Setup(homeDir, cmd.InOrStdin(), cfg); err != nil {
+			if err := n.Setup(ctx, homeDir, cmd.InOrStdin(), cfg); err != nil {
 				return fmt.Errorf("setting up node: %w", err)
 			}
 
@@ -53,12 +53,13 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 			// Goroutine to start and wait on the node
 			eg.Go(func() error {
 				log.Info("Starting node")
-				if err := n.Start(); err != nil {
+				ctx, err := n.Start(ctx)
+				if err != nil {
 					return fmt.Errorf("starting node: %w", err)
 				}
 
 				log.Info("Node started successfully")
-				if err := n.Wait(); err != nil {
+				if err := n.Wait(ctx); err != nil {
 					return fmt.Errorf("waiting node: %w", err)
 				}
 
@@ -71,10 +72,11 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 
 				log.Info("Stopping node")
 				if err := n.Stop(); err != nil {
-					return app.NewErrShutdown(err)
+					return app.NewErrShutdown(fmt.Errorf("stopping node: %w", err))
 				}
 
 				log.Info("Node stopped successfully")
+
 				return nil
 			})
 

@@ -40,8 +40,8 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 
 	log.Info("Initializing scheduler")
 
-	s := cron.NewScheduler(ctx, "scheduler")
-	if err := s.Setup(); err != nil {
+	s := cron.NewScheduler("scheduler")
+	if err := s.Setup(ctx); err != nil {
 		return err
 	}
 
@@ -82,14 +82,13 @@ func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
 	log.Info("Initializing API server")
 
 	s := cmux.NewServer(
-		ctx,
 		"API-server",
 		n.Context().APIListenAddr(),
 		n.Context().TLSCertFile(),
 		n.Context().TLSKeyFile(),
 		router,
 	)
-	if err := s.Setup(); err != nil {
+	if err := s.Setup(ctx); err != nil {
 		return err
 	}
 
@@ -118,8 +117,8 @@ func (n *Node) SetupContext(ctx context.Context, homeDir string, input io.Reader
 }
 
 // Setup sets up the context, scheduler and API server for the Node.
-func (n *Node) Setup(homeDir string, input io.Reader, cfg *config.Config) error {
-	return n.Manager.Setup(func(ctx context.Context) error {
+func (n *Node) Setup(ctx context.Context, homeDir string, input io.Reader, cfg *config.Config) error {
+	return n.Manager.Setup(ctx, func() error {
 		log.Info("Setting up context")
 		if err := n.SetupContext(ctx, homeDir, input, cfg); err != nil {
 			return fmt.Errorf("setting up context: %w", err)

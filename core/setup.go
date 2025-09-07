@@ -99,11 +99,11 @@ func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 	// Initialize the appropriate server service based on the configured type
 	switch st {
 	case types.ServiceTypeV2Ray:
-		s = v2ray.NewServer(ctx, "v2ray", c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
+		s = v2ray.NewServer("v2ray", c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
 	case types.ServiceTypeWireGuard:
-		s = wireguard.NewServer(ctx, "wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
+		s = wireguard.NewServer("wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 	case types.ServiceTypeOpenVPN:
-		s = openvpn.NewServer(ctx, "openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
+		s = openvpn.NewServer("openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 	default:
 		return fmt.Errorf("unsupported service type %q", st)
 	}
@@ -118,7 +118,7 @@ func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 		return fmt.Errorf("service %q is already running", st)
 	}
 
-	if err := s.Setup(); err != nil {
+	if err := s.Setup(ctx); err != nil {
 		return err
 	}
 

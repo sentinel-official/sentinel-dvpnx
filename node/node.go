@@ -24,9 +24,9 @@ type Node struct {
 }
 
 // New creates a new Node with the provided context.
-func New(ctx context.Context, name string) *Node {
+func New(name string) *Node {
 	return &Node{
-		Manager: process.NewManager(ctx, name),
+		Manager: process.NewManager(name),
 	}
 }
 
@@ -120,12 +120,13 @@ func (n *Node) UpdateDetails(ctx context.Context) error {
 	}
 
 	log.Info("Node details updated successfully", "addr", n.Context().NodeAddr())
+
 	return nil
 }
 
 // Start initializes the Node's services, scheduler, and API server.
-func (n *Node) Start() error {
-	return n.Manager.Start(func(ctx context.Context) error {
+func (n *Node) Start(parent context.Context) (context.Context, error) {
+	return n.Manager.Start(parent, func(ctx context.Context) error {
 		if err := n.Register(ctx); err != nil {
 			return fmt.Errorf("registering node: %w", err)
 		}
@@ -134,29 +135,35 @@ func (n *Node) Start() error {
 			return fmt.Errorf("updating details: %w", err)
 		}
 
+		var (
+			serviceCtx   context.Context
+			schedulerCtx context.Context
+			serverCtx    context.Context
+		)
+
 		sg := &errgroup.Group{}
 
-		sg.Go(func() error {
+		sg.Go(func() (err error) {
 			log.Info("Starting service")
-			if err := n.Context().Service().Start(); err != nil {
+			if serviceCtx, err = n.Context().Service().Start(ctx); err != nil {
 				return fmt.Errorf("starting service: %w", err)
 			}
 
 			return nil
 		})
 
-		sg.Go(func() error {
+		sg.Go(func() (err error) {
 			log.Info("Starting scheduler")
-			if err := n.Scheduler().Start(); err != nil {
+			if schedulerCtx, err = n.Scheduler().Start(ctx); err != nil {
 				return fmt.Errorf("starting scheduler: %w", err)
 			}
 
 			return nil
 		})
 
-		sg.Go(func() error {
+		sg.Go(func() (err error) {
 			log.Info("Starting API server")
-			if err := n.Server().Start(); err != nil {
+			if serverCtx, err = n.Server().Start(ctx); err != nil {
 				return fmt.Errorf("starting API server: %w", err)
 			}
 
@@ -167,24 +174,24 @@ func (n *Node) Start() error {
 			return err
 		}
 
-		n.Go(func(ctx context.Context) error {
-			if err := n.Context().Service().Wait(); err != nil {
+		n.Go(ctx, func() error {
+			if err := n.Context().Service().Wait(serviceCtx); err != nil {
 				return fmt.Errorf("waiting service: %w", err)
 			}
 
 			return nil
 		})
 
-		n.Go(func(ctx context.Context) error {
-			if err := n.Scheduler().Wait(); err != nil {
+		n.Go(ctx, func() error {
+			if err := n.Scheduler().Wait(schedulerCtx); err != nil {
 				return fmt.Errorf("waiting scheduler: %w", err)
 			}
 
 			return nil
 		})
 
-		n.Go(func(ctx context.Context) error {
-			if err := n.Server().Wait(); err != nil {
+		n.Go(ctx, func() error {
+			if err := n.Server().Wait(serverCtx); err != nil {
 				return fmt.Errorf("waiting API server: %w", err)
 			}
 
@@ -196,8 +203,8 @@ func (n *Node) Start() error {
 }
 
 // Wait blocks until all background goroutines launched exit.
-func (n *Node) Wait() error {
-	return n.Manager.Wait(nil)
+func (n *Node) Wait(ctx context.Context) error {
+	return n.Manager.Wait(ctx, nil)
 }
 
 // Stop gracefully stops the Node's operations.
