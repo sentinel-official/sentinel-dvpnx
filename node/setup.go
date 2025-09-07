@@ -49,6 +49,7 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 		log.Info("Registering scheduler worker",
 			"name", item.Name(), "interval", item.Interval(),
 		)
+
 		if err := s.Register(item); err != nil {
 			return fmt.Errorf("registering scheduler worker %q: %w", item.Name(), err)
 		}
@@ -56,6 +57,7 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 
 	// Attach the configured scheduler to the Node.
 	n.WithScheduler(s)
+
 	return nil
 }
 
@@ -94,6 +96,7 @@ func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
 
 	// Attach the API server to the Node instance.
 	n.WithServer(s)
+
 	return nil
 }
 
@@ -113,6 +116,7 @@ func (n *Node) SetupContext(ctx context.Context, homeDir string, input io.Reader
 
 	// Attach the code context to the Node instance.
 	n.WithContext(c)
+
 	return nil
 }
 
@@ -120,16 +124,19 @@ func (n *Node) SetupContext(ctx context.Context, homeDir string, input io.Reader
 func (n *Node) Setup(ctx context.Context, homeDir string, input io.Reader, cfg *config.Config) error {
 	return n.Manager.Setup(ctx, func() error {
 		log.Info("Setting up context")
+
 		if err := n.SetupContext(ctx, homeDir, input, cfg); err != nil {
 			return fmt.Errorf("setting up context: %w", err)
 		}
 
 		log.Info("Setting up scheduler")
+
 		if err := n.SetupScheduler(ctx, cfg); err != nil {
 			return fmt.Errorf("setting up scheduler: %w", err)
 		}
 
 		log.Info("Setting up API server")
+
 		if err := n.SetupServer(ctx, cfg); err != nil {
 			return fmt.Errorf("setting up API server: %w", err)
 		}

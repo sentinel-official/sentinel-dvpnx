@@ -1,0 +1,43 @@
+{
+  "version": "2",
+  "linters": {
+    "default": "none",
+    "enable": [
+      "canonicalheader",
+      "copyloopvar",
+      "dupword",
+      "errorlint",
+      "exptostd",
+      "fatcontext",
+      "ginkgolinter",
+      "gocritic",
+      "godot",
+      "goheader",
+      "govet",
+      "iface",
+      "importas",
+      "intrange",
+      "mirror",
+      "misspell",
+      "nakedret",
+      "nlreturn",
+      "nolintlint",
+      "perfsprint",
+      "protogetter",
+      "sloglint",
+      "staticcheck",
+      "tagalign",
+      "testifylint",
+      "usestdlibvars",
+      "usetesting",
+      "whitespace",
+      "wsl_v5"
+    ],
+    "disable": [
+      "revive"
+    ]
+  },
+  "run": {
+    "timeout": "1m"
+  }
+}

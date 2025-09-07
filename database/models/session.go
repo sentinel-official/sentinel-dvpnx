@@ -44,78 +44,91 @@ func NewSession() *Session {
 // WithAccAddr sets the AccAddr field and returns the updated Session instance.
 func (s *Session) WithAccAddr(v cosmossdk.AccAddress) *Session {
 	s.AccAddr = v.String()
+
 	return s
 }
 
 // WithDuration sets the Duration field from time.Duration and returns the updated Session instance.
 func (s *Session) WithDuration(v time.Duration) *Session {
 	s.Duration = v
+
 	return s
 }
 
 // WithID sets the ID field and returns the updated Session instance.
 func (s *Session) WithID(v uint64) *Session {
 	s.ID = v
+
 	return s
 }
 
 // WithMaxBytes sets the MaxBytes field from math.Int and returns the updated Session instance.
 func (s *Session) WithMaxBytes(v math.Int) *Session {
 	s.MaxBytes = v.String()
+
 	return s
 }
 
 // WithMaxDuration sets the MaxDuration field from time.Duration and returns the updated Session instance.
 func (s *Session) WithMaxDuration(v time.Duration) *Session {
 	s.MaxDuration = v
+
 	return s
 }
 
 // WithNodeAddr sets the NodeAddr field and returns the updated Session instance.
 func (s *Session) WithNodeAddr(v sentinelhub.NodeAddress) *Session {
 	s.NodeAddr = v.String()
+
 	return s
 }
 
 // WithPeerID sets the PeerID field and returns the updated Session instance.
 func (s *Session) WithPeerID(v string) *Session {
 	s.PeerID = v
+
 	return s
 }
 
 // WithPeerMetadata sets the PeerMetadata field and returns the updated Session instance.
 func (s *Session) WithPeerMetadata(v []byte) *Session {
 	s.PeerMetadata = base64.StdEncoding.EncodeToString(v)
+
 	return s
 }
 
 // WithPeerRequest sets the PeerRequest field and returns the updated Session instance.
 func (s *Session) WithPeerRequest(v []byte) *Session {
 	s.PeerRequest = base64.StdEncoding.EncodeToString(v)
+
 	return s
 }
 
 // WithRxBytes sets the RxBytes field from math.Int and returns the updated Session instance.
 func (s *Session) WithRxBytes(v math.Int) *Session {
 	s.RxBytes = v.String()
+
 	return s
 }
 
 // WithServiceType sets the ServiceType field and returns the updated Session instance.
 func (s *Session) WithServiceType(v sentinelsdk.ServiceType) *Session {
 	s.ServiceType = v.String()
+
 	return s
 }
 
 // WithSignature sets the Signature field and returns the updated Session instance.
 func (s *Session) WithSignature(v []byte) *Session {
 	s.Signature = base64.StdEncoding.EncodeToString(v)
+
 	return s
 }
 
 // WithTxBytes sets the TxBytes field from math.Int and returns the updated Session instance.
 func (s *Session) WithTxBytes(v math.Int) *Session {
 	s.TxBytes = v.String()
+
 	return s
 }
 

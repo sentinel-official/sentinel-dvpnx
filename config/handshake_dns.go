@@ -18,12 +18,14 @@ type HandshakeDNSConfig struct {
 // WithEnable sets the Enable field and returns the updated HandshakeDNSConfig.
 func (c *HandshakeDNSConfig) WithEnable(enable bool) *HandshakeDNSConfig {
 	c.Enable = enable
+
 	return c
 }
 
 // WithPeers sets the Peers field and returns the updated HandshakeDNSConfig.
 func (c *HandshakeDNSConfig) WithPeers(peers uint) *HandshakeDNSConfig {
 	c.Peers = peers
+
 	return c
 }
 

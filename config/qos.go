@@ -17,6 +17,7 @@ type QoSConfig struct {
 // WithMaxPeers sets the MaxPeers field and returns the updated QoSConfig.
 func (c *QoSConfig) WithMaxPeers(maxPeers uint) *QoSConfig {
 	c.MaxPeers = maxPeers
+
 	return c
 }
 

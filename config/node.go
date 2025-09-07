@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,7 +38,7 @@ type NodeConfig struct {
 // APIAddrs generates the API addresses for the node.
 func (c *NodeConfig) APIAddrs() []string {
 	addrs := make([]string, len(c.RemoteAddrs))
-	port := fmt.Sprintf("%d", c.GetAPIPort().OutFrom)
+	port := strconv.FormatUint(uint64(c.GetAPIPort().OutFrom), 10)
 
 	for i, addr := range c.RemoteAddrs {
 		addrs[i] = net.JoinHostPort(addr, port)
@@ -187,6 +188,7 @@ func (c *NodeConfig) Validate() error {
 	if c.APIPort == "" {
 		return errors.New("api_port cannot be empty")
 	}
+
 	if _, err := netip.NewPortFromString(c.APIPort); err != nil {
 		return fmt.Errorf("parsing api_port %q: %w", c.APIPort, err)
 	}
@@ -205,26 +207,33 @@ func (c *NodeConfig) Validate() error {
 	if _, err := time.ParseDuration(c.IntervalBestRPCAddr); err != nil {
 		return fmt.Errorf("parsing interval_best_rpc_addr %q: %w", c.IntervalBestRPCAddr, err)
 	}
+
 	if _, err := time.ParseDuration(c.IntervalGeoIPLocation); err != nil {
 		return fmt.Errorf("parsing interval_geoip_location %q: %w", c.IntervalGeoIPLocation, err)
 	}
+
 	if _, err := time.ParseDuration(c.IntervalSessionUsageSyncWithBlockchain); err != nil {
 		return fmt.Errorf("parsing interval_session_usage_sync_with_blockchain %q: %w",
 			c.IntervalSessionUsageSyncWithBlockchain, err)
 	}
+
 	if _, err := time.ParseDuration(c.IntervalSessionUsageSyncWithDatabase); err != nil {
 		return fmt.Errorf("parsing interval_session_usage_sync_with_database %q: %w",
 			c.IntervalSessionUsageSyncWithDatabase, err)
 	}
+
 	if _, err := time.ParseDuration(c.IntervalSessionUsageValidate); err != nil {
 		return fmt.Errorf("parsing interval_session_usage_validate %q: %w", c.IntervalSessionUsageValidate, err)
 	}
+
 	if _, err := time.ParseDuration(c.IntervalSessionValidate); err != nil {
 		return fmt.Errorf("parsing interval_session_validate %q: %w", c.IntervalSessionValidate, err)
 	}
+
 	if _, err := time.ParseDuration(c.IntervalSpeedtest); err != nil {
 		return fmt.Errorf("parsing interval_speedtest %q: %w", c.IntervalSpeedtest, err)
 	}
+
 	if _, err := time.ParseDuration(c.IntervalStatusUpdate); err != nil {
 		return fmt.Errorf("parsing interval_status_update %q: %w", c.IntervalStatusUpdate, err)
 	}
@@ -280,7 +289,7 @@ func (c *NodeConfig) SetForFlags(f *pflag.FlagSet) {
 // DefaultNodeConfig returns a NodeConfig instance with default values.
 func DefaultNodeConfig() *NodeConfig {
 	return &NodeConfig{
-		APIPort:                                fmt.Sprintf("%d", utils.RandomPort()),
+		APIPort:                                strconv.FormatUint(uint64(utils.RandomPort()), 10),
 		GigabytePrices:                         "udvpn:0.00,13000000",
 		HourlyPrices:                           "udvpn:0.00,27000000",
 		IntervalBestRPCAddr:                    (5 * time.Minute).String(),
@@ -312,7 +321,7 @@ func randMoniker() string {
 	var result strings.Builder
 	result.Grow(8)
 
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if i%2 == 0 {
 			result.WriteByte(letters[rand.IntN(len(letters))])
 		} else {
@@ -328,6 +337,7 @@ func validateRemoteAddr(addr string) error {
 	if len(addr) == 0 {
 		return errors.New("addr cannot be empty")
 	}
+
 	if len(addr) > MaxRemoteAddrLen {
 		return fmt.Errorf("addr length cannot be greater than %d", MaxRemoteAddrLen)
 	}
@@ -337,6 +347,7 @@ func validateRemoteAddr(addr string) error {
 		if ipv4 := ip.To4(); ipv4 != nil {
 			return nil
 		}
+
 		if ipv6 := ip.To16(); ipv6 != nil {
 			return nil
 		}

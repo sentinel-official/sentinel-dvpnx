@@ -14,6 +14,7 @@ func (c *Context) RemovePeerIfExists(ctx context.Context, id string) error {
 	if err != nil {
 		return fmt.Errorf("checking if peer %q exists in service: %w", id, err)
 	}
+
 	if !exists {
 		return nil
 	}
@@ -24,5 +25,6 @@ func (c *Context) RemovePeerIfExists(ctx context.Context, id string) error {
 	}
 
 	log.Info("Peer has been removed from service", "peer_id", id)
+
 	return nil
 }

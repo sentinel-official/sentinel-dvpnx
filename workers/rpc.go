@@ -33,6 +33,7 @@ func NewBestRPCAddrWorker(c *core.Context, interval time.Duration) cron.Worker {
 		// Measure latency for each address concurrently.
 		for _, addr := range addrs {
 			wg.Add(1)
+
 			go func(addr string) {
 				defer wg.Done()
 

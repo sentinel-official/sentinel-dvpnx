@@ -74,6 +74,7 @@ func SessionFindOneAndUpdate(db *gorm.DB, query, updates map[string]interface{})
 		if err != nil {
 			return fmt.Errorf("finding session with query %v for update: %w", query, err)
 		}
+
 		if session == nil {
 			return nil
 		}
@@ -117,6 +118,7 @@ func SessionFindOneAndDelete(db *gorm.DB, query map[string]interface{}) (session
 		if err != nil {
 			return fmt.Errorf("finding session with query %v for deletion: %w", query, err)
 		}
+
 		if session == nil {
 			return nil
 		}

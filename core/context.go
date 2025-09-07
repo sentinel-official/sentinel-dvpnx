@@ -61,6 +61,7 @@ func (c *Context) checkSealed() {
 // Seal marks the context as sealed, preventing further modifications.
 func (c *Context) Seal() *Context {
 	c.sealed = true
+
 	return c
 }
 
@@ -68,6 +69,7 @@ func (c *Context) Seal() *Context {
 func (c *Context) AccAddr() cosmossdk.AccAddress {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.accAddr.Bytes()
 }
 
@@ -75,6 +77,7 @@ func (c *Context) AccAddr() cosmossdk.AccAddress {
 func (c *Context) APIAddrs() []string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.apiAddrs
 }
 
@@ -82,6 +85,7 @@ func (c *Context) APIAddrs() []string {
 func (c *Context) APIListenAddr() string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.apiListenAddr
 }
 
@@ -91,6 +95,7 @@ func (c *Context) Client() *core.Client {
 	defer c.fm.RUnlock()
 
 	c.client.SetRPCAddr(c.RPCAddr())
+
 	return c.client
 }
 
@@ -98,6 +103,7 @@ func (c *Context) Client() *core.Client {
 func (c *Context) Database() *gorm.DB {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.database
 }
 
@@ -105,6 +111,7 @@ func (c *Context) Database() *gorm.DB {
 func (c *Context) DatabaseFile() string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return filepath.Join(c.HomeDir(), "data.db")
 }
 
@@ -112,6 +119,7 @@ func (c *Context) DatabaseFile() string {
 func (c *Context) GeoIPClient() geoip.Client {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.geoIPClient
 }
 
@@ -119,6 +127,7 @@ func (c *Context) GeoIPClient() geoip.Client {
 func (c *Context) GigabytePrices() v1.Prices {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.gigabytePrices
 }
 
@@ -126,6 +135,7 @@ func (c *Context) GigabytePrices() v1.Prices {
 func (c *Context) HomeDir() string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.homeDir
 }
 
@@ -133,6 +143,7 @@ func (c *Context) HomeDir() string {
 func (c *Context) HourlyPrices() v1.Prices {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.hourlyPrices
 }
 
@@ -140,6 +151,7 @@ func (c *Context) HourlyPrices() v1.Prices {
 func (c *Context) Input() io.Reader {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.input
 }
 
@@ -147,6 +159,7 @@ func (c *Context) Input() io.Reader {
 func (c *Context) Location() *geoip.Location {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.location
 }
 
@@ -154,6 +167,7 @@ func (c *Context) Location() *geoip.Location {
 func (c *Context) MaxPeers() uint {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.maxPeers
 }
 
@@ -161,12 +175,14 @@ func (c *Context) MaxPeers() uint {
 func (c *Context) Moniker() string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.moniker
 }
 
 func (c *Context) NodeAddr() sentinelhub.NodeAddress {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.accAddr.Bytes()
 }
 
@@ -174,6 +190,7 @@ func (c *Context) NodeAddr() sentinelhub.NodeAddress {
 func (c *Context) RemoteAddrs() []string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.remoteAddrs
 }
 
@@ -194,6 +211,7 @@ func (c *Context) RPCAddr() string {
 func (c *Context) RPCAddrs() []string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.rpcAddrs
 }
 
@@ -201,6 +219,7 @@ func (c *Context) RPCAddrs() []string {
 func (c *Context) Service() sentinelsdk.ServerService {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.service
 }
 
@@ -208,6 +227,7 @@ func (c *Context) Service() sentinelsdk.ServerService {
 func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed math.Int) {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return c.dlSpeed, c.ulSpeed
 }
 
@@ -215,6 +235,7 @@ func (c *Context) SpeedtestResults() (dlSpeed, ulSpeed math.Int) {
 func (c *Context) TLSCertFile() string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return filepath.Join(c.HomeDir(), "tls.crt")
 }
 
@@ -222,6 +243,7 @@ func (c *Context) TLSCertFile() string {
 func (c *Context) TLSKeyFile() string {
 	c.fm.RLock()
 	defer c.fm.RUnlock()
+
 	return filepath.Join(c.HomeDir(), "tls.key")
 }
 
@@ -229,6 +251,7 @@ func (c *Context) TLSKeyFile() string {
 func (c *Context) SetLocation(location *geoip.Location) {
 	c.fm.Lock()
 	defer c.fm.Unlock()
+
 	c.location = location
 }
 
@@ -236,6 +259,7 @@ func (c *Context) SetLocation(location *geoip.Location) {
 func (c *Context) SetRPCAddrs(addrs []string) {
 	c.fm.Lock()
 	defer c.fm.Unlock()
+
 	c.rpcAddrs = addrs
 }
 
@@ -243,6 +267,7 @@ func (c *Context) SetRPCAddrs(addrs []string) {
 func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed math.Int) {
 	c.fm.Lock()
 	defer c.fm.Unlock()
+
 	c.dlSpeed = dlSpeed
 	c.ulSpeed = ulSpeed
 }
@@ -251,6 +276,7 @@ func (c *Context) SetSpeedtestResults(dlSpeed, ulSpeed math.Int) {
 func (c *Context) WithAccAddr(addr cosmossdk.AccAddress) *Context {
 	c.checkSealed()
 	c.accAddr = addr
+
 	return c
 }
 
@@ -258,6 +284,7 @@ func (c *Context) WithAccAddr(addr cosmossdk.AccAddress) *Context {
 func (c *Context) WithAPIAddrs(addrs []string) *Context {
 	c.checkSealed()
 	c.apiAddrs = addrs
+
 	return c
 }
 
@@ -265,6 +292,7 @@ func (c *Context) WithAPIAddrs(addrs []string) *Context {
 func (c *Context) WithAPIListenAddr(addr string) *Context {
 	c.checkSealed()
 	c.apiListenAddr = addr
+
 	return c
 }
 
@@ -272,6 +300,7 @@ func (c *Context) WithAPIListenAddr(addr string) *Context {
 func (c *Context) WithClient(client *core.Client) *Context {
 	c.checkSealed()
 	c.client = client
+
 	return c
 }
 
@@ -279,6 +308,7 @@ func (c *Context) WithClient(client *core.Client) *Context {
 func (c *Context) WithDatabase(database *gorm.DB) *Context {
 	c.checkSealed()
 	c.database = database
+
 	return c
 }
 
@@ -286,6 +316,7 @@ func (c *Context) WithDatabase(database *gorm.DB) *Context {
 func (c *Context) WithGeoIPClient(client geoip.Client) *Context {
 	c.checkSealed()
 	c.geoIPClient = client
+
 	return c
 }
 
@@ -293,6 +324,7 @@ func (c *Context) WithGeoIPClient(client geoip.Client) *Context {
 func (c *Context) WithGigabytePrices(prices v1.Prices) *Context {
 	c.checkSealed()
 	c.gigabytePrices = prices
+
 	return c
 }
 
@@ -300,6 +332,7 @@ func (c *Context) WithGigabytePrices(prices v1.Prices) *Context {
 func (c *Context) WithHomeDir(dir string) *Context {
 	c.checkSealed()
 	c.homeDir = dir
+
 	return c
 }
 
@@ -307,6 +340,7 @@ func (c *Context) WithHomeDir(dir string) *Context {
 func (c *Context) WithHourlyPrices(prices v1.Prices) *Context {
 	c.checkSealed()
 	c.hourlyPrices = prices
+
 	return c
 }
 
@@ -314,6 +348,7 @@ func (c *Context) WithHourlyPrices(prices v1.Prices) *Context {
 func (c *Context) WithInput(input io.Reader) *Context {
 	c.checkSealed()
 	c.input = input
+
 	return c
 }
 
@@ -321,6 +356,7 @@ func (c *Context) WithInput(input io.Reader) *Context {
 func (c *Context) WithMaxPeers(maxPeers uint) *Context {
 	c.checkSealed()
 	c.maxPeers = maxPeers
+
 	return c
 }
 
@@ -328,6 +364,7 @@ func (c *Context) WithMaxPeers(maxPeers uint) *Context {
 func (c *Context) WithMoniker(moniker string) *Context {
 	c.checkSealed()
 	c.moniker = moniker
+
 	return c
 }
 
@@ -335,6 +372,7 @@ func (c *Context) WithMoniker(moniker string) *Context {
 func (c *Context) WithRemoteAddrs(addrs []string) *Context {
 	c.checkSealed()
 	c.remoteAddrs = addrs
+
 	return c
 }
 
@@ -342,6 +380,7 @@ func (c *Context) WithRemoteAddrs(addrs []string) *Context {
 func (c *Context) WithRPCAddrs(addrs []string) *Context {
 	c.checkSealed()
 	c.rpcAddrs = addrs
+
 	return c
 }
 
@@ -349,5 +388,6 @@ func (c *Context) WithRPCAddrs(addrs []string) *Context {
 func (c *Context) WithService(service sentinelsdk.ServerService) *Context {
 	c.checkSealed()
 	c.service = service
+
 	return c
 }

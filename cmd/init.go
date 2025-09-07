@@ -110,6 +110,7 @@ is set to overwrite the existing configuration.`,
 			}
 
 			log.Info("Configuration initialized successfully")
+
 			return nil
 		},
 	}

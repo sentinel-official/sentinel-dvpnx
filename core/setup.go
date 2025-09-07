@@ -36,6 +36,7 @@ func (c *Context) SetupClient(cfg *config.Config) error {
 
 	// Assign the initialized client to the context.
 	c.WithClient(v)
+
 	return nil
 }
 
@@ -50,16 +51,19 @@ func (c *Context) SetupDatabase(_ *config.Config) error {
 
 	// Assign the database instance to the context.
 	c.WithDatabase(db)
+
 	return nil
 }
 
 // SetupGeoIPClient initializes the GeoIP client and assigns it to the context.
 func (c *Context) SetupGeoIPClient(_ *config.Config) error {
 	log.Info("Initializing GeoIP client")
+
 	v := geoip.NewDefaultClient()
 
 	// Assign the GeoIP client to the context.
 	c.WithGeoIPClient(v)
+
 	return nil
 }
 
@@ -78,12 +82,14 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("querying account %q: %w", addr, err)
 	}
+
 	if acc == nil {
 		return fmt.Errorf("account %s does not exist", addr)
 	}
 
 	// Assign the account address to the context.
 	c.WithAccAddr(addr)
+
 	return nil
 }
 
@@ -114,6 +120,7 @@ func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("checking service %q status: %w", st, err)
 	}
+
 	if ok {
 		return fmt.Errorf("service %q is already running", st)
 	}
@@ -124,6 +131,7 @@ func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 
 	// Assign the service to the context
 	c.WithService(s)
+
 	return nil
 }
 
@@ -140,26 +148,31 @@ func (c *Context) Setup(ctx context.Context, cfg *config.Config) error {
 	c.WithRPCAddrs(cfg.RPC.GetAddrs())
 
 	log.Info("Setting up blockchain client")
+
 	if err := c.SetupClient(cfg); err != nil {
 		return fmt.Errorf("setting up client: %w", err)
 	}
 
 	log.Info("Setting up database")
+
 	if err := c.SetupDatabase(cfg); err != nil {
 		return fmt.Errorf("setting up database: %w", err)
 	}
 
 	log.Info("Setting up GeoIP client")
+
 	if err := c.SetupGeoIPClient(cfg); err != nil {
 		return fmt.Errorf("setting up GeoIP client: %w", err)
 	}
 
 	log.Info("Setting up service")
+
 	if err := c.SetupService(ctx, cfg); err != nil {
 		return fmt.Errorf("setting up service: %w", err)
 	}
 
 	log.Info("Setting up account addr")
+
 	if err := c.SetupAccAddr(cfg); err != nil {
 		return fmt.Errorf("setting up account addr: %w", err)
 	}

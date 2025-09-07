@@ -25,6 +25,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if n := c.Service().PeersLen(); uint(n) >= c.MaxPeers() {
 			err := fmt.Errorf("maximum peer limit %d reached", n)
 			ctx.JSON(http.StatusConflict, types.NewResponseError(1, err))
+
 			return
 		}
 
@@ -33,6 +34,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if err != nil {
 			err = fmt.Errorf("parsing request from context: %w", err)
 			ctx.JSON(http.StatusBadRequest, types.NewResponseError(2, err))
+
 			return
 		}
 
@@ -45,11 +47,14 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if err != nil {
 			err = fmt.Errorf("retrieving session %d from database: %w", req.Body.ID, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(3, err))
+
 			return
 		}
+
 		if record != nil {
 			err = fmt.Errorf("session %d already exists in database", req.Body.ID)
 			ctx.JSON(http.StatusConflict, types.NewResponseError(3, err))
+
 			return
 		}
 
@@ -63,11 +68,14 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if err != nil {
 			err = fmt.Errorf("retrieving session for peer request %q from database: %w", peerReqStr, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(4, err))
+
 			return
 		}
+
 		if record != nil {
 			err = fmt.Errorf("session already exists for peer request %q", peerReqStr)
 			ctx.JSON(http.StatusConflict, types.NewResponseError(4, err))
+
 			return
 		}
 
@@ -76,11 +84,14 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if err != nil {
 			err = fmt.Errorf("querying session %d from blockchain: %w", req.Body.ID, err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(5, err))
+
 			return
 		}
+
 		if session == nil {
 			err = fmt.Errorf("session %d does not exist on blockchain", req.Body.ID)
 			ctx.JSON(http.StatusNotFound, types.NewResponseError(5, err))
+
 			return
 		}
 
@@ -88,6 +99,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if !session.GetStatus().Equal(v1.StatusActive) {
 			err = fmt.Errorf("invalid session status %q, expected %q", session.GetStatus(), v1.StatusActive)
 			ctx.JSON(http.StatusBadRequest, types.NewResponseError(5, err))
+
 			return
 		}
 
@@ -95,6 +107,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if session.GetNodeAddress() != c.NodeAddr().String() {
 			err = fmt.Errorf("node address mismatch: got %q, expected %q", session.GetNodeAddress(), c.NodeAddr())
 			ctx.JSON(http.StatusBadRequest, types.NewResponseError(6, err))
+
 			return
 		}
 
@@ -103,11 +116,14 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if err != nil {
 			err = fmt.Errorf("decoding Bech32 account addr %q: %w", session.GetAccAddress(), err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(6, err))
+
 			return
 		}
+
 		if got := req.AccAddr(); !got.Equals(accAddr) {
 			err = fmt.Errorf("account addr mismatch; got %q, expected %q", got, accAddr)
 			ctx.JSON(http.StatusUnauthorized, types.NewResponseError(6, err))
+
 			return
 		}
 
@@ -116,6 +132,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if err != nil {
 			err = fmt.Errorf("adding peer to service: %w", err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(7, err))
+
 			return
 		}
 
@@ -124,6 +141,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if res.Data, err = json.Marshal(data); err != nil {
 			err = fmt.Errorf("encoding add-peer service response: %w", err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(8, err))
+
 			return
 		}
 
@@ -146,6 +164,7 @@ func handlerInitHandshake(c *core.Context) gin.HandlerFunc {
 		if err = operations.SessionInsertOne(c.Database(), item); err != nil {
 			err = fmt.Errorf("inserting session %d into database: %w", item.GetID(), err)
 			ctx.JSON(http.StatusInternalServerError, types.NewResponseError(9, err))
+
 			return
 		}
 

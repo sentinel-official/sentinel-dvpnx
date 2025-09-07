@@ -42,8 +42,10 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 		}
 
 		// Prepare a slice to collect messages.
-		var msgs []types.Msg
-		var mu sync.Mutex
+		var (
+			msgs []types.Msg
+			mu   sync.Mutex
+		)
 
 		jobGroup, jobCtx := errgroup.WithContext(ctx)
 		jobGroup.SetLimit(8)
@@ -51,6 +53,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 		// Iterate over sessions and prepare messages for updates.
 		for _, val := range items {
 			item := val
+
 			jobGroup.Go(func() error {
 				select {
 				case <-jobCtx.Done():
@@ -68,6 +71,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 					log.Debug("Skipping session",
 						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
 					)
+
 					return nil
 				}
 
@@ -76,6 +80,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 					log.Debug("Skipping session",
 						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "already up-to-date",
 					)
+
 					return nil
 				}
 
@@ -90,6 +95,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 				defer mu.Unlock()
 
 				msgs = append(msgs, msg)
+
 				return nil
 			})
 		}
@@ -132,6 +138,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 		// Update the database with the fetched statistics.
 		for key, val := range items {
 			peerID, item := key, val
+
 			jobGroup.Go(func() error {
 				select {
 				case <-jobCtx.Done():
@@ -144,6 +151,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 						"id", 0, "peer_id", peerID, "cause", "already up-to-date",
 						"updated_at", item.UpdatedAt,
 					)
+
 					return nil
 				}
 
@@ -165,6 +173,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 				log.Debug("Updating session in database",
 					"id", 0, "peer_id", peerID, "rx_bytes", rxBytes, "tx_bytes", txBytes,
 				)
+
 				if _, err := operations.SessionFindOneAndUpdate(c.Database(), query, updates); err != nil {
 					return fmt.Errorf("updating session for peer %q in database: %w", peerID, err)
 				}
@@ -210,6 +219,7 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 		// Validate session limits and remove peers if needed.
 		for _, val := range items {
 			item := val
+
 			jobGroup.Go(func() error {
 				select {
 				case <-jobCtx.Done():
@@ -226,6 +236,7 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "exceeds max bytes",
 						"total_bytes", item.GetTotalBytes(), "max_bytes", item.GetMaxBytes(),
 					)
+
 					removePeer = true
 				}
 
@@ -236,12 +247,14 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 						"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "exceeds max duration",
 						"duration", item.GetDuration(), "max_duration", maxDuration,
 					)
+
 					removePeer = true
 				}
 
 				// If the session exceeded any limits, remove the associated peer.
 				if removePeer {
 					log.Debug("Removing peer from service", "id", item.GetID(), "peer_id", item.GetPeerID())
+
 					if err := c.RemovePeerIfExists(jobCtx, item.GetPeerID()); err != nil {
 						return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
 					}
@@ -287,6 +300,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 		// Validate session status and consistency.
 		for _, val := range items {
 			item := val
+
 			jobGroup.Go(func() error {
 				select {
 				case <-jobCtx.Done():
@@ -306,6 +320,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid service type",
 							"got", item.GetServiceType(), "expected", c.Service().Type(),
 						)
+
 						return nil
 					}
 
@@ -316,6 +331,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 						log.Debug("Marking peer for removing from service",
 							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
 						)
+
 						remove = true
 					}
 
@@ -325,12 +341,14 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "invalid session status",
 							"got", session.GetStatus(), "expected", v1.StatusActive,
 						)
+
 						remove = true
 					}
 
 					// Remove the associated peer if validation fails.
 					if remove {
 						log.Debug("Removing peer from service", "id", item.GetID(), "peer_id", item.GetPeerID())
+
 						if err := c.RemovePeerIfExists(jobCtx, item.GetPeerID()); err != nil {
 							return fmt.Errorf("removing peer %q for session %d from service: %w", item.GetPeerID(), item.GetID(), err)
 						}
@@ -351,6 +369,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 						log.Debug("Marking session for deleting from database",
 							"id", item.GetID(), "peer_id", item.GetPeerID(), "cause", "nil session",
 						)
+
 						remove = true
 					}
 
@@ -361,6 +380,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 						}
 
 						log.Info("Deleting session from database", "id", item.GetID(), "peer_id", item.GetPeerID())
+
 						if _, err := operations.SessionFindOneAndDelete(c.Database(), query); err != nil {
 							return fmt.Errorf("deleting session %d from database: %w", item.GetID(), err)
 						}

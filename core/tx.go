@@ -33,5 +33,6 @@ func (c *Context) BroadcastTx(ctx context.Context, msgs ...types.Msg) error {
 		"height", txRes.Height,
 		"msgs", len(msgs),
 	)
+
 	return nil
 }

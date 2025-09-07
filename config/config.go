@@ -31,12 +31,15 @@ func (c *Config) Validate() error {
 	if err := c.Config.Validate(); err != nil {
 		return err
 	}
+
 	if err := c.HandshakeDNS.Validate(); err != nil {
 		return fmt.Errorf("validating handshake_dns config: %w", err)
 	}
+
 	if err := c.Node.Validate(); err != nil {
 		return fmt.Errorf("validating node config: %w", err)
 	}
+
 	if err := c.QoS.Validate(); err != nil {
 		return fmt.Errorf("validating QoS config: %w", err)
 	}
