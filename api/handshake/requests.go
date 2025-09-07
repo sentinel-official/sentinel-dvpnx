@@ -13,21 +13,6 @@ type InitHandshakeRequest struct {
 	Body node.InitHandshakeRequestBody
 }
 
-// AccAddr returns the account address from the request body.
-func (r *InitHandshakeRequest) AccAddr() types.AccAddress {
-	addr, err := r.Body.AccAddr()
-	if err != nil {
-		panic(fmt.Errorf("getting account addr from request body: %w", err))
-	}
-
-	return addr
-}
-
-// PeerRequest returns the peer request from request body.
-func (r *InitHandshakeRequest) PeerRequest() []byte {
-	return r.Body.Data
-}
-
 // NewInitHandshakeRequest parses, binds, and verifies the handshake request.
 func NewInitHandshakeRequest(c *gin.Context) (req *InitHandshakeRequest, err error) {
 	req = &InitHandshakeRequest{}
@@ -43,4 +28,19 @@ func NewInitHandshakeRequest(c *gin.Context) (req *InitHandshakeRequest, err err
 	}
 
 	return req, nil
+}
+
+// AccAddr returns the account address from the request body.
+func (r *InitHandshakeRequest) AccAddr() types.AccAddress {
+	addr, err := r.Body.AccAddr()
+	if err != nil {
+		panic(fmt.Errorf("getting account addr from request body: %w", err))
+	}
+
+	return addr
+}
+
+// PeerRequest returns the peer request from request body.
+func (r *InitHandshakeRequest) PeerRequest() []byte {
+	return r.Body.Data
 }

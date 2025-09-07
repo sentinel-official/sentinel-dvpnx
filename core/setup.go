@@ -68,7 +68,7 @@ func (c *Context) SetupGeoIPClient(_ *config.Config) error {
 }
 
 // SetupAccAddr retrieves the account address for transactions and assigns it to the context.
-func (c *Context) SetupAccAddr(cfg *config.Config) error {
+func (c *Context) SetupAccAddr(ctx context.Context, cfg *config.Config) error {
 	log.Info("Retrieving addr for key", "name", cfg.Tx.GetFromName())
 
 	addr, err := c.Client().KeyAddr(cfg.Tx.GetFromName())
@@ -78,7 +78,7 @@ func (c *Context) SetupAccAddr(cfg *config.Config) error {
 
 	log.Info("Querying account information", "addr", addr)
 
-	acc, err := c.Client().Account(context.TODO(), addr)
+	acc, err := c.Client().Account(ctx, addr)
 	if err != nil {
 		return fmt.Errorf("querying account %q: %w", addr, err)
 	}
@@ -110,6 +110,8 @@ func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 		s = wireguard.NewServer("wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 	case types.ServiceTypeOpenVPN:
 		s = openvpn.NewServer("openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
+	case types.ServiceTypeUnspecified:
+		return fmt.Errorf("unsupported service type %q", st)
 	default:
 		return fmt.Errorf("unsupported service type %q", st)
 	}
@@ -126,7 +128,7 @@ func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 	}
 
 	if err := s.Setup(ctx); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	// Assign the service to the context
@@ -173,7 +175,7 @@ func (c *Context) Setup(ctx context.Context, cfg *config.Config) error {
 
 	log.Info("Setting up account addr")
 
-	if err := c.SetupAccAddr(cfg); err != nil {
+	if err := c.SetupAccAddr(ctx, cfg); err != nil {
 		return fmt.Errorf("setting up account addr: %w", err)
 	}
 

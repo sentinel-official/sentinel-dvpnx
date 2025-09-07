@@ -51,13 +51,6 @@ func NewContext() *Context {
 	}
 }
 
-// checkSealed verifies if the context is sealed to prevent modification.
-func (c *Context) checkSealed() {
-	if c.sealed {
-		panic(errors.New("context is sealed"))
-	}
-}
-
 // Seal marks the context as sealed, preventing further modifications.
 func (c *Context) Seal() *Context {
 	c.sealed = true
@@ -390,4 +383,11 @@ func (c *Context) WithService(service sentinelsdk.ServerService) *Context {
 	c.service = service
 
 	return c
+}
+
+// checkSealed verifies if the context is sealed to prevent modification.
+func (c *Context) checkSealed() {
+	if c.sealed {
+		panic(errors.New("context is sealed"))
+	}
 }

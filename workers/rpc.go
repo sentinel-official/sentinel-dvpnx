@@ -42,10 +42,16 @@ func NewBestRPCAddrWorker(c *core.Context, interval time.Duration) cron.Worker {
 					return
 				}
 
+				// Create the HTTP GET request to the endpoint.
+				req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+				if err != nil {
+					return
+				}
+
 				// Record start time and perform HTTP GET request.
 				start := time.Now()
 
-				resp, err := client.Get(endpoint)
+				resp, err := client.Do(req)
 				if err != nil {
 					return
 				}

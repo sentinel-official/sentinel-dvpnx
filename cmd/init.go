@@ -43,7 +43,7 @@ is set to overwrite the existing configuration.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Create the home directory if it doesn't exist
 			homeDir := viper.GetString("home")
-			if err := os.MkdirAll(homeDir, 0755); err != nil {
+			if err := os.MkdirAll(homeDir, 0700); err != nil {
 				return fmt.Errorf("creating application directory %q: %w", homeDir, err)
 			}
 
@@ -100,6 +100,8 @@ is set to overwrite the existing configuration.`,
 					service = wireguard.NewServer("wireguard", homeDir, cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 				case types.ServiceTypeOpenVPN:
 					service = openvpn.NewServer("openvpn", homeDir, cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
+				case types.ServiceTypeUnspecified:
+					return fmt.Errorf("unsupported service type %q", serviceType)
 				default:
 					return fmt.Errorf("unsupported service type %q", serviceType)
 				}

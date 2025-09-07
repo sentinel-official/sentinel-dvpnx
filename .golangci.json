@@ -1,41 +1,37 @@
 {
   "version": "2",
   "linters": {
-    "default": "none",
-    "enable": [
-      "canonicalheader",
-      "copyloopvar",
-      "dupword",
-      "errorlint",
-      "exptostd",
-      "fatcontext",
-      "ginkgolinter",
-      "gocritic",
-      "godot",
-      "goheader",
-      "govet",
-      "iface",
-      "importas",
-      "intrange",
-      "mirror",
-      "misspell",
-      "nakedret",
-      "nlreturn",
-      "nolintlint",
-      "perfsprint",
-      "protogetter",
-      "sloglint",
-      "staticcheck",
-      "tagalign",
-      "testifylint",
-      "usestdlibvars",
-      "usetesting",
-      "whitespace",
-      "wsl_v5"
-    ],
+    "default": "all",
     "disable": [
-      "revive"
-    ]
+      "cyclop",
+      "depguard",
+      "err113",
+      "exhaustruct",
+      "forcetypeassert",
+      "funlen",
+      "gocognit",
+      "interfacebloat",
+      "ireturn",
+      "lll",
+      "mnd",
+      "nestif",
+      "nilnil",
+      "noinlineerr",
+      "nonamedreturns",
+      "revive",
+      "tagliatelle",
+      "varnamelen",
+      "wsl"
+    ],
+    "settings": {
+      "gosec": {
+        "excludes": [
+          "G115",
+          "G204",
+          "G404"
+        ]
+      }
+    }
   },
   "run": {
     "timeout": "1m"

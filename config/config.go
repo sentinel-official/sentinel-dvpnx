@@ -19,9 +19,10 @@ var fs embed.FS
 // Config represents the overall configuration structure.
 type Config struct {
 	*config.Config `mapstructure:",squash"`
-	HandshakeDNS   *HandshakeDNSConfig `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
-	Node           *NodeConfig         `mapstructure:"node"`          // Node contains node-specific configuration.
-	QoS            *QoSConfig          `mapstructure:"qos"`           // QoS contains Quality of Service configuration.
+
+	HandshakeDNS *HandshakeDNSConfig `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
+	Node         *NodeConfig         `mapstructure:"node"`          // Node contains node-specific configuration.
+	QoS          *QoSConfig          `mapstructure:"qos"`           // QoS contains Quality of Service configuration.
 
 	Services map[types.ServiceType]types.ServiceConfig `mapstructure:"-"`
 }
@@ -29,7 +30,7 @@ type Config struct {
 // Validate validates the entire configuration.
 func (c *Config) Validate() error {
 	if err := c.Config.Validate(); err != nil {
-		return err
+		return fmt.Errorf("validating base config: %w", err)
 	}
 
 	if err := c.HandshakeDNS.Validate(); err != nil {

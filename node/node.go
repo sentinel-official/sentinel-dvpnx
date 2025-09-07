@@ -132,7 +132,7 @@ func (n *Node) UpdateDetails(ctx context.Context) error {
 
 // Start initializes the Node's services, scheduler, and API server.
 func (n *Node) Start(parent context.Context) (context.Context, error) {
-	return n.Manager.Start(parent, func(ctx context.Context) error {
+	return n.Manager.Start(parent, func(ctx context.Context) error { //nolint:contextcheck,wrapcheck
 		if err := n.Register(ctx); err != nil {
 			return fmt.Errorf("registering node: %w", err)
 		}
@@ -180,7 +180,7 @@ func (n *Node) Start(parent context.Context) (context.Context, error) {
 		})
 
 		if err := sg.Wait(); err != nil {
-			return err
+			return fmt.Errorf("starting group: %w", err)
 		}
 
 		n.Go(ctx, func() error {
@@ -213,12 +213,12 @@ func (n *Node) Start(parent context.Context) (context.Context, error) {
 
 // Wait blocks until all background goroutines launched exit.
 func (n *Node) Wait(ctx context.Context) error {
-	return n.Manager.Wait(ctx, nil)
+	return n.Manager.Wait(ctx, nil) //nolint:wrapcheck
 }
 
 // Stop gracefully stops the Node's operations.
 func (n *Node) Stop() error {
-	return n.Manager.Stop(func() error {
+	return n.Manager.Stop(func() error { //nolint:wrapcheck
 		sg := &errgroup.Group{}
 
 		sg.Go(func() error {
@@ -252,7 +252,7 @@ func (n *Node) Stop() error {
 		})
 
 		if err := sg.Wait(); err != nil {
-			return err
+			return fmt.Errorf("stopping group: %w", err)
 		}
 
 		return nil
@@ -261,5 +261,5 @@ func (n *Node) Stop() error {
 
 // Cleanup cleans up resources used by the node.
 func (n *Node) Cleanup() error {
-	return n.Manager.Cleanup(nil)
+	return n.Manager.Cleanup(nil) //nolint:wrapcheck
 }

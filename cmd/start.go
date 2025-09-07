@@ -82,7 +82,7 @@ explicitly starts the node, and handles SIGINT/SIGTERM for graceful shutdown.`,
 
 			// Wait for all goroutines to finish
 			if err := eg.Wait(); err != nil {
-				return err
+				return fmt.Errorf("waiting group: %w", err)
 			}
 
 			return nil

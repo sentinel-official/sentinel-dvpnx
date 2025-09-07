@@ -19,11 +19,6 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/workers"
 )
 
-// init sets the Gin mode to ReleaseMode.
-func init() {
-	gin.SetMode(gin.ReleaseMode)
-}
-
 // SetupScheduler sets up the cron scheduler with various workers.
 func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 	// Define the list of cron workers with their respective handlers and intervals.
@@ -42,7 +37,7 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 
 	s := cron.NewScheduler("scheduler")
 	if err := s.Setup(ctx); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	for _, item := range items {
@@ -63,6 +58,9 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 
 // SetupServer sets up the API server with necessary middlewares and API routes.
 func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
+	// Sets the Gin mode to ReleaseMode.
+	gin.SetMode(gin.ReleaseMode)
+
 	// Define middlewares to be used by the router.
 	items := []gin.HandlerFunc{
 		cors.New(
@@ -91,7 +89,7 @@ func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
 		router,
 	)
 	if err := s.Setup(ctx); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	// Attach the API server to the Node instance.
@@ -108,7 +106,7 @@ func (n *Node) SetupContext(ctx context.Context, homeDir string, input io.Reader
 		WithHomeDir(homeDir).
 		WithInput(input)
 	if err := c.Setup(ctx, cfg); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	// Seal the context.
@@ -122,7 +120,7 @@ func (n *Node) SetupContext(ctx context.Context, homeDir string, input io.Reader
 
 // Setup sets up the context, scheduler and API server for the Node.
 func (n *Node) Setup(ctx context.Context, homeDir string, input io.Reader, cfg *config.Config) error {
-	return n.Manager.Setup(ctx, func() error {
+	return n.Manager.Setup(ctx, func() error { //nolint:wrapcheck
 		log.Info("Setting up context")
 
 		if err := n.SetupContext(ctx, homeDir, input, cfg); err != nil {
