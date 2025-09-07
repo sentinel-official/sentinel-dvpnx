@@ -23,7 +23,7 @@ type NodeConfig struct {
 	GigabytePrices                         string   `mapstructure:"gigabyte_prices"`                             // GigabytePrices is the pricing information for gigabytes.
 	HourlyPrices                           string   `mapstructure:"hourly_prices"`                               // HourlyPrices is the pricing information for hourly usage.
 	IntervalBestRPCAddr                    string   `mapstructure:"interval_best_rpc_addr"`                      // IntervalBestRPCAddr is the duration between checking the best RPC address.
-	IntervalGeoIPLocation                  string   `mapstructure:"interval_geo_ip_location"`                    // IntervalGeoIPLocation is the duration between checking the GeoIP location.
+	IntervalGeoIPLocation                  string   `mapstructure:"interval_geoip_location"`                     // IntervalGeoIPLocation is the duration between checking the GeoIP location.
 	IntervalSessionUsageSyncWithBlockchain string   `mapstructure:"interval_session_usage_sync_with_blockchain"` // IntervalSessionUsageSyncWithBlockchain is the duration between syncing session usage with the blockchain.
 	IntervalSessionUsageSyncWithDatabase   string   `mapstructure:"interval_session_usage_sync_with_database"`   // IntervalSessionUsageSyncWithDatabase is the duration between syncing session usage with the database.
 	IntervalSessionUsageValidate           string   `mapstructure:"interval_session_usage_validate"`             // IntervalSessionUsageValidate is the duration between validating session usage.
@@ -274,7 +274,7 @@ func (c *NodeConfig) SetForFlags(f *pflag.FlagSet) {
 	f.StringVar(&c.GigabytePrices, "node.gigabyte-prices", c.GigabytePrices, "pricing information for gigabytes")
 	f.StringVar(&c.HourlyPrices, "node.hourly-prices", c.HourlyPrices, "pricing information for hourly usage")
 	f.StringVar(&c.IntervalBestRPCAddr, "node.interval-best-rpc-addr", c.IntervalBestRPCAddr, "interval for checking the best RPC address")
-	f.StringVar(&c.IntervalGeoIPLocation, "node.interval-geo-ip-location", c.IntervalGeoIPLocation, "interval for checking GeoIP location")
+	f.StringVar(&c.IntervalGeoIPLocation, "node.interval-geoip-location", c.IntervalGeoIPLocation, "interval for checking GeoIP location")
 	f.StringVar(&c.IntervalSessionUsageSyncWithBlockchain, "node.interval-session-usage-sync-with-blockchain", c.IntervalSessionUsageSyncWithBlockchain, "interval for syncing session usage with blockchain")
 	f.StringVar(&c.IntervalSessionUsageSyncWithDatabase, "node.interval-session-usage-sync-with-database", c.IntervalSessionUsageSyncWithDatabase, "interval for syncing session usage with database")
 	f.StringVar(&c.IntervalSessionUsageValidate, "node.interval-session-usage-validate", c.IntervalSessionUsageValidate, "interval for validating session usage")
