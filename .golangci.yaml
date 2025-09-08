@@ -1,0 +1,36 @@
+version: '2'
+linters:
+  default: all
+  disable:
+    - cyclop
+    - depguard
+    - err113
+    - exhaustruct
+    - forcetypeassert
+    - funlen
+    - gocognit
+    - ireturn
+    - lll
+    - mnd
+    - nestif
+    - nilnil
+    - noinlineerr
+    - nonamedreturns
+    - varnamelen
+    - wsl
+  settings:
+    gosec:
+      excludes:
+        - G115
+        - G204
+        - G404
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+run:
+  timeout: 1m
