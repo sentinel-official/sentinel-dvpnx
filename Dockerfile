@@ -5,8 +5,19 @@ FROM golang:1.25-alpine3.22 AS build
 WORKDIR /root
 
 # Install build dependencies
-RUN apk add --no-cache --virtual .build-deps \
-    autoconf automake bash file g++ gcc git libtool linux-headers make musl-dev unbound-dev
+RUN apk add --no-cache \
+    autoconf \
+    automake \
+    bash \
+    file \
+    g++ \
+    gcc \
+    git \
+    libtool \
+    linux-headers \
+    make \
+    musl-dev \
+    unbound-dev
 
 # Cache Go modules
 COPY go.mod go.sum ./
@@ -22,9 +33,9 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     make --jobs=$(nproc) install
 
 # Build hnsd
-RUN git clone --branch=master --depth=1 https://github.com/handshake-org/hnsd.git /root/hnsd && \
-    cd /root/hnsd && \
-    bash autogen.sh && \
+RUN git clone --branch=master --depth=1 https://github.com/handshake-org/hnsd.git && \
+    cd ./hnsd && \
+    ./autogen.sh && \
     ./configure && \
     make --jobs=$(nproc)
 
