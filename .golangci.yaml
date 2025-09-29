@@ -33,4 +33,4 @@ linters:
         rules:
           json: snake
 run:
-  timeout: 1m
+  timeout: 5m
