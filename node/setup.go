@@ -69,7 +69,7 @@ func (n *Node) SetupServer(ctx context.Context, _ *config.Config) error {
 				AllowMethods:    []string{http.MethodGet, http.MethodPost},
 			},
 		),
-		middlewares.RateLimiter(nil),
+		middlewares.RateLimiter(ctx, nil),
 	}
 
 	// Create a new Gin router and apply the middlewares.
