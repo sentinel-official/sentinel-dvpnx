@@ -22,6 +22,7 @@ type Config struct {
 
 	HandshakeDNS *HandshakeDNSConfig `mapstructure:"handshake_dns"` // HandshakeDNS contains Handshake DNS configuration.
 	Node         *NodeConfig         `mapstructure:"node"`          // Node contains node-specific configuration.
+	Oracle       *OracleConfig       `mapstructure:"oracle"`        // Oracle contains oracle-specific configuration.
 	QoS          *QoSConfig          `mapstructure:"qos"`           // QoS contains Quality of Service configuration.
 
 	Services map[types.ServiceType]types.ServiceConfig `mapstructure:"-"`
@@ -41,6 +42,10 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("validating node config: %w", err)
 	}
 
+	if err := c.Oracle.Validate(); err != nil {
+		return fmt.Errorf("validating oracle config: %w", err)
+	}
+
 	if err := c.QoS.Validate(); err != nil {
 		return fmt.Errorf("validating QoS config: %w", err)
 	}
@@ -53,6 +58,7 @@ func (c *Config) SetForFlags(f *pflag.FlagSet) {
 	c.Config.SetForFlags(f)
 	c.HandshakeDNS.SetForFlags(f)
 	c.Node.SetForFlags(f)
+	c.Oracle.SetForFlags(f)
 	c.QoS.SetForFlags(f)
 }
 
@@ -62,6 +68,7 @@ func DefaultConfig() *Config {
 		Config:       config.DefaultConfig(),
 		HandshakeDNS: DefaultHandshakeDNSConfig(),
 		Node:         DefaultNodeConfig(),
+		Oracle:       DefaultOracleConfig(),
 		QoS:          DefaultQoSConfig(),
 	}
 }

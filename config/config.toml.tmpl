@@ -228,6 +228,33 @@ remote_addrs = [{{ range $i, $addr := .Node.RemoteAddrs }}{{ if $i }}, {{ end }}
 # Example: "wireguard"
 service_type = "{{ .Node.ServiceType }}"
 
+# Oracle Configuration
+[oracle]
+
+# Oracle provider used to fetch quote prices for base prices and update them on-chain.
+# Leave empty to disable oracle functionality entirely.
+# Allowed: "coingecko", "osmosis", or empty
+# Example: "osmosis"
+name = "{{ .Oracle.Name }}"
+
+# CoinGecko Oracle Configuration
+[oracle.coingecko]
+
+# API key for authenticating requests to the CoinGecko API.
+# Some endpoints may require an API key for higher rate limits or premium features.
+# Allowed: Any valid API key string
+# Example: "your-coingecko-api-key"
+api_key = "{{ .Oracle.CoinGecko.APIKey }}"
+
+# Osmosis Oracle Configuration
+[oracle.osmosis]
+
+# REST API endpoint for accessing Osmosis market data.
+# The oracle queries this endpoint to fetch token prices and liquidity pool information.
+# Allowed: Valid URL string
+# Example: "https://api.example.com:443"
+api_addr = "{{ .Oracle.Osmosis.APIAddr }}"
+
 # QoS Configuration
 [qos]
 
