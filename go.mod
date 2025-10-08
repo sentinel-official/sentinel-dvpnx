@@ -7,8 +7,8 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.17
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
-	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc.7
-	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc.13
+	github.com/sentinel-official/sentinel-go-sdk v1.0.0-rc.7.0.20251008065737-69b835c36d80
+	github.com/sentinel-official/sentinelhub/v12 v12.0.0-rc.13.0.20251007075723-b5e9c41adcdd
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -51,6 +51,9 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogoproto v1.7.0 // indirect
 	github.com/cosmos/iavl v0.20.1 // indirect
+	github.com/cosmos/ibc-apps/modules/async-icq/v7 v7.1.1 // indirect
+	github.com/cosmos/ibc-go/v7 v7.10.0 // indirect
+	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.4 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

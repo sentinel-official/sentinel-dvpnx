@@ -2,11 +2,13 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/sentinel-official/sentinel-go-sdk/core"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/oracle"
 	"github.com/sentinel-official/sentinel-go-sdk/openvpn"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/v2ray"
@@ -15,6 +17,32 @@ import (
 	"github.com/sentinel-official/sentinel-dvpnx/config"
 	"github.com/sentinel-official/sentinel-dvpnx/database"
 )
+
+// SetupAccAddr retrieves the account address for transactions and assigns it to the context.
+func (c *Context) SetupAccAddr(ctx context.Context, cfg *config.Config) error {
+	log.Info("Retrieving addr for key", "name", cfg.Tx.GetFromName())
+
+	addr, err := c.Client().KeyAddr(cfg.Tx.GetFromName())
+	if err != nil {
+		return fmt.Errorf("getting addr for key %q: %w", cfg.Tx.GetFromName(), err)
+	}
+
+	log.Info("Querying account information", "addr", addr)
+
+	acc, err := c.Client().Account(ctx, addr)
+	if err != nil {
+		return fmt.Errorf("querying account %q: %w", addr, err)
+	}
+
+	if acc == nil {
+		return fmt.Errorf("account %s does not exist", addr)
+	}
+
+	// Assign the account address to the context.
+	c.WithAccAddr(addr)
+
+	return nil
+}
 
 // SetupClient initializes the SDK client with the given configuration and assigns it to the context.
 func (c *Context) SetupClient(cfg *config.Config) error {
@@ -67,28 +95,30 @@ func (c *Context) SetupGeoIPClient(_ *config.Config) error {
 	return nil
 }
 
-// SetupAccAddr retrieves the account address for transactions and assigns it to the context.
-func (c *Context) SetupAccAddr(ctx context.Context, cfg *config.Config) error {
-	log.Info("Retrieving addr for key", "name", cfg.Tx.GetFromName())
+// SetupOracleClient initializes the oracle client and assigns it to the context.
+func (c *Context) SetupOracleClient(cfg *config.Config) error {
+	var (
+		client oracle.Client
+		name   = cfg.Oracle.GetName()
+	)
 
-	addr, err := c.Client().KeyAddr(cfg.Tx.GetFromName())
-	if err != nil {
-		return fmt.Errorf("getting addr for key %q: %w", cfg.Tx.GetFromName(), err)
+	if name == "" {
+		return nil
 	}
 
-	log.Info("Querying account information", "addr", addr)
+	log.Info("Initializing oracle client", "name", name)
 
-	acc, err := c.Client().Account(ctx, addr)
-	if err != nil {
-		return fmt.Errorf("querying account %q: %w", addr, err)
+	switch name {
+	case "coingecko":
+		client = oracle.NewCoinGecko(cfg.Oracle.CoinGecko.GetAPIKey())
+	case "osmosis":
+		client = oracle.NewOsmosis(cfg.Oracle.Osmosis.GetAPIAddr(), c.Client())
+	default:
+		return fmt.Errorf("unsupported name %q", name)
 	}
 
-	if acc == nil {
-		return fmt.Errorf("account %s does not exist", addr)
-	}
-
-	// Assign the account address to the context.
-	c.WithAccAddr(addr)
+	// Assign the oracle client to the context.
+	c.WithOracleClient(client)
 
 	return nil
 }
@@ -96,43 +126,43 @@ func (c *Context) SetupAccAddr(ctx context.Context, cfg *config.Config) error {
 // SetupService determines the service type and configures it accordingly.
 func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 	var (
-		s  types.ServerService         // Interface for the node service
-		st = cfg.Node.GetServiceType() // Get the service type from config
+		service     types.ServerService         // Interface for the node service
+		serviceType = cfg.Node.GetServiceType() // Get the service type from config
 	)
 
-	log.Info("Initializing service", "type", st)
+	log.Info("Initializing service", "type", serviceType)
 
 	// Initialize the appropriate server service based on the configured type
-	switch st {
+	switch serviceType {
 	case types.ServiceTypeV2Ray:
-		s = v2ray.NewServer("v2ray", c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
+		service = v2ray.NewServer("v2ray", c.HomeDir(), cfg.Services[types.ServiceTypeV2Ray].(*v2ray.ServerConfig))
 	case types.ServiceTypeWireGuard:
-		s = wireguard.NewServer("wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
+		service = wireguard.NewServer("wireguard", c.HomeDir(), cfg.Services[types.ServiceTypeWireGuard].(*wireguard.ServerConfig))
 	case types.ServiceTypeOpenVPN:
-		s = openvpn.NewServer("openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
+		service = openvpn.NewServer("openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 	case types.ServiceTypeUnspecified:
-		return fmt.Errorf("unsupported service type %q", st)
+		return errors.New("service type is unspecified")
 	default:
-		return fmt.Errorf("unsupported service type %q", st)
+		return fmt.Errorf("unsupported service type %q", serviceType)
 	}
 
 	log.Info("Checking service status")
 
-	ok, err := s.IsRunning()
+	ok, err := service.IsRunning()
 	if err != nil {
-		return fmt.Errorf("checking service %q status: %w", st, err)
+		return fmt.Errorf("checking service %q status: %w", serviceType, err)
 	}
 
 	if ok {
-		return fmt.Errorf("service %q is already running", st)
+		return fmt.Errorf("service %q is already running", serviceType)
 	}
 
-	if err := s.Setup(ctx); err != nil {
+	if err := service.Setup(ctx); err != nil {
 		return err //nolint:wrapcheck
 	}
 
 	// Assign the service to the context
-	c.WithService(s)
+	c.WithService(service)
 
 	return nil
 }
@@ -165,6 +195,12 @@ func (c *Context) Setup(ctx context.Context, cfg *config.Config) error {
 
 	if err := c.SetupGeoIPClient(cfg); err != nil {
 		return fmt.Errorf("setting up GeoIP client: %w", err)
+	}
+
+	log.Info("Setting up oracle client")
+
+	if err := c.SetupOracleClient(cfg); err != nil {
+		return fmt.Errorf("setting up oracle client: %w", err)
 	}
 
 	log.Info("Setting up service")

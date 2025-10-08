@@ -10,6 +10,7 @@ import (
 	cosmossdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/core"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/oracle"
 	sentinelsdk "github.com/sentinel-official/sentinel-go-sdk/types"
 	sentinelhub "github.com/sentinel-official/sentinelhub/v12/types"
 	"github.com/sentinel-official/sentinelhub/v12/types/v1"
@@ -32,6 +33,7 @@ type Context struct {
 	location       *geoip.Location
 	maxPeers       uint
 	moniker        string
+	oracleClient   oracle.Client
 	remoteAddrs    []string
 	rpcAddrs       []string
 	service        sentinelsdk.ServerService
@@ -179,6 +181,14 @@ func (c *Context) NodeAddr() sentinelhub.NodeAddress {
 	return c.accAddr.Bytes()
 }
 
+// OracleClient returns the oracle client set in the context.
+func (c *Context) OracleClient() oracle.Client {
+	c.fm.RLock()
+	defer c.fm.RUnlock()
+
+	return c.oracleClient
+}
+
 // RemoteAddrs returns the remote addresses set in the context.
 func (c *Context) RemoteAddrs() []string {
 	c.fm.RLock()
@@ -289,7 +299,7 @@ func (c *Context) WithAPIListenAddr(addr string) *Context {
 	return c
 }
 
-// WithClient sets the base client in the context and returns the updated context.
+// WithClient sets the core client in the context and returns the updated context.
 func (c *Context) WithClient(client *core.Client) *Context {
 	c.checkSealed()
 	c.client = client
@@ -357,6 +367,14 @@ func (c *Context) WithMaxPeers(maxPeers uint) *Context {
 func (c *Context) WithMoniker(moniker string) *Context {
 	c.checkSealed()
 	c.moniker = moniker
+
+	return c
+}
+
+// WithOracleClient sets the oracle client in the context and returns the updated context.
+func (c *Context) WithOracleClient(client oracle.Client) *Context {
+	c.checkSealed()
+	c.oracleClient = client
 
 	return c
 }
