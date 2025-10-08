@@ -12,6 +12,11 @@ type CoinGeckoConfig struct {
 	APIKey string `mapstructure:"api_key"` // APIKey specifies the API key for CoinGecko.
 }
 
+// GetAPIKey returns the APIKey field.
+func (c *CoinGeckoConfig) GetAPIKey() string {
+	return c.APIKey
+}
+
 // Validate checks the validity of the CoinGeckoConfig configuration.
 func (c *CoinGeckoConfig) Validate() error {
 	if c.APIKey == "" {
@@ -31,6 +36,11 @@ func DefaultCoinGeckoConfig() *CoinGeckoConfig {
 // OsmosisConfig holds settings for the Osmosis oracle.
 type OsmosisConfig struct {
 	APIAddr string `mapstructure:"api_addr"` // APIAddr specifies the Osmosis API endpoint.
+}
+
+// GetAPIAddr returns the APIAddr field.
+func (c *OsmosisConfig) GetAPIAddr() string {
+	return c.APIAddr
 }
 
 // Validate checks the validity of the OsmosisConfig configuration.

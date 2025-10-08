@@ -24,6 +24,7 @@ type NodeConfig struct {
 	HourlyPrices                           string   `mapstructure:"hourly_prices"`                               // HourlyPrices is the pricing information for hourly usage.
 	IntervalBestRPCAddr                    string   `mapstructure:"interval_best_rpc_addr"`                      // IntervalBestRPCAddr is the duration between checking the best RPC address.
 	IntervalGeoIPLocation                  string   `mapstructure:"interval_geoip_location"`                     // IntervalGeoIPLocation is the duration between checking the GeoIP location.
+	IntervalPricesUpdate                   string   `mapstructure:"interval_prices_update"`                      // IntervalPricesUpdate is the duration between updating the prices of the node.
 	IntervalSessionUsageSyncWithBlockchain string   `mapstructure:"interval_session_usage_sync_with_blockchain"` // IntervalSessionUsageSyncWithBlockchain is the duration between syncing session usage with the blockchain.
 	IntervalSessionUsageSyncWithDatabase   string   `mapstructure:"interval_session_usage_sync_with_database"`   // IntervalSessionUsageSyncWithDatabase is the duration between syncing session usage with the database.
 	IntervalSessionUsageValidate           string   `mapstructure:"interval_session_usage_validate"`             // IntervalSessionUsageValidate is the duration between validating session usage.
@@ -100,6 +101,16 @@ func (c *NodeConfig) GetIntervalBestRPCAddr() time.Duration {
 // GetIntervalGeoIPLocation returns the IntervalGeoIPLocation field.
 func (c *NodeConfig) GetIntervalGeoIPLocation() time.Duration {
 	v, err := time.ParseDuration(c.IntervalGeoIPLocation)
+	if err != nil {
+		panic(err)
+	}
+
+	return v
+}
+
+// GetIntervalPricesUpdate returns the IntervalPricesUpdate field.
+func (c *NodeConfig) GetIntervalPricesUpdate() time.Duration {
+	v, err := time.ParseDuration(c.IntervalPricesUpdate)
 	if err != nil {
 		panic(err)
 	}
@@ -212,6 +223,10 @@ func (c *NodeConfig) Validate() error {
 		return fmt.Errorf("parsing interval_geoip_location %q: %w", c.IntervalGeoIPLocation, err)
 	}
 
+	if _, err := time.ParseDuration(c.IntervalPricesUpdate); err != nil {
+		return fmt.Errorf("parsing interval_prices_update %q: %w", c.IntervalPricesUpdate, err)
+	}
+
 	if _, err := time.ParseDuration(c.IntervalSessionUsageSyncWithBlockchain); err != nil {
 		return fmt.Errorf("parsing interval_session_usage_sync_with_blockchain %q: %w",
 			c.IntervalSessionUsageSyncWithBlockchain, err)
@@ -275,6 +290,7 @@ func (c *NodeConfig) SetForFlags(f *pflag.FlagSet) {
 	f.StringVar(&c.HourlyPrices, "node.hourly-prices", c.HourlyPrices, "pricing information for hourly usage")
 	f.StringVar(&c.IntervalBestRPCAddr, "node.interval-best-rpc-addr", c.IntervalBestRPCAddr, "interval for checking the best RPC address")
 	f.StringVar(&c.IntervalGeoIPLocation, "node.interval-geoip-location", c.IntervalGeoIPLocation, "interval for checking GeoIP location")
+	f.StringVar(&c.IntervalPricesUpdate, "node.interval-prices-update", c.IntervalPricesUpdate, "interval for updating node prices")
 	f.StringVar(&c.IntervalSessionUsageSyncWithBlockchain, "node.interval-session-usage-sync-with-blockchain", c.IntervalSessionUsageSyncWithBlockchain, "interval for syncing session usage with blockchain")
 	f.StringVar(&c.IntervalSessionUsageSyncWithDatabase, "node.interval-session-usage-sync-with-database", c.IntervalSessionUsageSyncWithDatabase, "interval for syncing session usage with database")
 	f.StringVar(&c.IntervalSessionUsageValidate, "node.interval-session-usage-validate", c.IntervalSessionUsageValidate, "interval for validating session usage")
@@ -294,6 +310,7 @@ func DefaultNodeConfig() *NodeConfig {
 		HourlyPrices:                           "udvpn:0.00,27000000",
 		IntervalBestRPCAddr:                    (5 * time.Minute).String(),
 		IntervalGeoIPLocation:                  (6 * time.Hour).String(),
+		IntervalPricesUpdate:                   (6 * time.Hour).String(),
 		IntervalSessionUsageSyncWithBlockchain: (2*time.Hour - 5*time.Minute).String(),
 		IntervalSessionUsageSyncWithDatabase:   (2 * time.Second).String(),
 		IntervalSessionUsageValidate:           (5 * time.Second).String(),
