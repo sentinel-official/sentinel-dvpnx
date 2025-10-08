@@ -25,6 +25,7 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 	items := []cron.Worker{
 		workers.NewBestRPCAddrWorker(n.Context(), cfg.Node.GetIntervalBestRPCAddr()),
 		workers.NewGeoIPLocationWorker(n.Context(), cfg.Node.GetIntervalGeoIPLocation()),
+		workers.NewNodePricesUpdateWorker(n.Context(), cfg.Node.GetIntervalPricesUpdate()),
 		workers.NewNodeStatusUpdateWorker(n.Context(), cfg.Node.GetIntervalStatusUpdate()),
 		workers.NewSessionUsageSyncWithBlockchainWorker(n.Context(), cfg.Node.GetIntervalSessionUsageSyncWithBlockchain()),
 		workers.NewSessionUsageSyncWithDatabaseWorker(n.Context(), cfg.Node.GetIntervalSessionUsageSyncWithDatabase()),
@@ -42,7 +43,7 @@ func (n *Node) SetupScheduler(ctx context.Context, cfg *config.Config) error {
 
 	for _, item := range items {
 		log.Info("Registering scheduler worker",
-			"name", item.Name(), "interval", item.Interval(),
+			"name", item.Name(), "interval", item.Interval().String(),
 		)
 
 		if err := s.Register(item); err != nil {
