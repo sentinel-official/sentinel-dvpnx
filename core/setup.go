@@ -110,9 +110,9 @@ func (c *Context) SetupOracleClient(cfg *config.Config) error {
 
 	switch name {
 	case "coingecko":
-		client = oracle.NewCoinGecko(cfg.Oracle.CoinGecko.GetAPIKey())
+		client = oracle.NewCoinGeckoClient(cfg.Oracle.CoinGecko.GetAPIKey())
 	case "osmosis":
-		client = oracle.NewOsmosis(cfg.Oracle.Osmosis.GetAPIAddr(), c.Client())
+		client = oracle.NewOsmosisClient(cfg.Oracle.Osmosis.GetAPIAddr())
 	default:
 		return fmt.Errorf("unsupported name %q", name)
 	}
