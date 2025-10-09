@@ -19,10 +19,6 @@ func (c *CoinGeckoConfig) GetAPIKey() string {
 
 // Validate checks the validity of the CoinGeckoConfig configuration.
 func (c *CoinGeckoConfig) Validate() error {
-	if c.APIKey == "" {
-		return errors.New("api_key cannot be empty")
-	}
-
 	return nil
 }
 
@@ -130,7 +126,7 @@ func (c *OracleConfig) SetForFlags(f *pflag.FlagSet) {
 // DefaultOracleConfig returns an OracleConfig instance with default values.
 func DefaultOracleConfig() *OracleConfig {
 	return &OracleConfig{
-		Name:      "osmosis",
+		Name:      "coingecko",
 		CoinGecko: DefaultCoinGeckoConfig(),
 		Osmosis:   DefaultOsmosisConfig(),
 	}
