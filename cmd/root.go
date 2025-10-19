@@ -57,6 +57,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 
 			// Bind flags to Viper with normalized keys
 			r := strings.NewReplacer("-", "_")
+
 			cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 				_ = v.BindPFlag(r.Replace(f.Name), f)
 			})
@@ -76,6 +77,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 			// If the config file exists, proceed to read its contents
 			if exists {
 				v.SetConfigFile(cfgFile)
+
 				if err := v.ReadInConfig(); err != nil {
 					return fmt.Errorf("reading config file %q: %w", cfgFile, err)
 				}
@@ -91,6 +93,7 @@ tools for key management and node initialization, ensuring privacy, performance,
 			cfg.Keyring.Input = cmd.InOrStdin()
 
 			log.Info("Validating configuration")
+
 			if err := cfg.Validate(); err != nil {
 				return fmt.Errorf("validating config: %w", err)
 			}

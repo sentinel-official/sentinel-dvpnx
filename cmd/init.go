@@ -59,6 +59,7 @@ is set to overwrite the existing configuration.`,
 			// Write default config only if file doesn't exist or force flag is set
 			if !exists || force {
 				log.Info("Writing app config", "file", cfgFile)
+
 				if err := cfg.WriteAppConfig(cfgFile); err != nil {
 					return fmt.Errorf("writing config file %q: %w", cfgFile, err)
 				}
@@ -78,6 +79,7 @@ is set to overwrite the existing configuration.`,
 				}
 
 				log.Info("Issuing certificate and key", "name", "tls")
+
 				if _, _, err := pki.Issue("tls", opts...); err != nil {
 					return fmt.Errorf("issuing TLS certificate and key: %w", err)
 				}
