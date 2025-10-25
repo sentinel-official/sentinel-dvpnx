@@ -3,53 +3,60 @@
 GIT_COMMIT := $(shell git log -1 --format='%H' 2>/dev/null || echo "unknown")
 GIT_TAG    := $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//')
 
-TAGS      := $(strip netgo)
-LD_FLAGS  := -s -w \
+comma      := ,
+whitespace := $(empty) $(empty)
+
+build_tags := netgo
+ld_flags   := -s -w \
 	-X github.com/sentinel-official/sentinel-go-sdk/version.Commit=$(GIT_COMMIT) \
 	-X github.com/sentinel-official/sentinel-go-sdk/version.Tag=$(GIT_TAG)
 
-build_flags = -ldflags="$(LD_FLAGS)" -mod=readonly -tags="$(TAGS)" -trimpath
+ifeq ($(STATIC),true)
+	build_tags += muslc
+	ld_flags += -linkmode=external -extldflags '-Wl,-z,muldefs -static'
+endif
+
+BUILD_TAGS := $(subst $(whitespace),$(comma),$(build_tags))
+LD_FLAGS   := $(ld_flags)
+
+build_flags = -ldflags="$(LD_FLAGS)" -mod=readonly -tags="$(BUILD_TAGS)" -trimpath
 
 GOBIN ?= $(shell go env GOBIN)
 ifeq ($(GOBIN),)
   GOBIN := $(shell go env GOPATH)/bin
 endif
 
+IMAGE ?= sentinel-dvpnx:latest
+
 .PHONY: help
-help:
-	@echo "Available targets:"
-	@echo "  build        Build the binary (./bin/sentinel-dvpnx)"
-	@echo "  install      Install the binary to \$$GOBIN"
-	@echo "  clean        Remove build artifacts"
-	@echo "  test         Run tests with coverage"
-	@echo "  benchmark    Run benchmarks"
-	@echo "  go-lint      Run golangci-lint with auto-fix"
-	@echo "  build-image  Build Docker image"
+help: ## Show available targets
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "%-20s %s\n", $$1, $$2}'
 
 .PHONY: build
-build:
+build: ## Build the binary (./bin/sentinel-dvpnx)
 	go build $(build_flags) -o ./bin/sentinel-dvpnx main.go
 
 .PHONY: install
-install:
+install: ## Install the binary into $GOBIN
 	go build $(build_flags) -o "$(GOBIN)/sentinel-dvpnx" main.go
 
 .PHONY: clean
-clean:
+clean: ## Remove build artifacts
 	$(RM) -r ./bin ./vendor
 
 .PHONY: test
-test:
+test: ## Run tests
 	go test -cover -mod=readonly -v ./...
 
 .PHONY: benchmark
-benchmark:
+benchmark: ## Run benchmarks
 	go test -bench -mod=readonly -v ./...
 
 .PHONY: go-lint
-go-lint:
+go-lint: ## Run golangci-lint with auto-fix
 	golangci-lint run --fix
 
 .PHONY: build-image
-build-image:
-	docker build --compress --file Dockerfile --force-rm --tag sentinel-dvpnx .
+build-image: ## Build Docker image
+	docker build --compress --file Dockerfile --force-rm --tag $(IMAGE) .
