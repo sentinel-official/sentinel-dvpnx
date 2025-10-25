@@ -8,4 +8,4 @@
 [![LinesOfCode](https://tokei.rs/b1/github/sentinel-official/sentinel-dvpnx?category=code)]()
 [![Tag](https://img.shields.io/github/tag/sentinel-official/sentinel-dvpnx.svg)](https://github.com/sentinel-official/sentinel-dvpnx/releases/latest)
 
-For documentation click [here](https://docs.sentinel.co/node-setup)
+For documentation click [here](https://docs.sentinel.co/dvpn-nodes)
