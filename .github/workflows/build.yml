@@ -1,0 +1,26 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - development
+      - master
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+
+      - name: Go Build
+        run: go build ./...

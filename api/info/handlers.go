@@ -1,0 +1,43 @@
+package info
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/geoip"
+	"github.com/sentinel-official/sentinel-go-sdk/node"
+	"github.com/sentinel-official/sentinel-go-sdk/types"
+	"github.com/sentinel-official/sentinel-go-sdk/version"
+
+	"github.com/sentinel-official/sentinel-dvpnx/core"
+)
+
+// handlerGetInfo returns a handler function to retrieve node information.
+func handlerGetInfo(c *core.Context) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		dlSpeed, ulSpeed := c.SpeedtestResults()
+		loc := c.Location()
+
+		// Construct the result structure with node information.
+		res := &node.GetInfoResult{
+			Addr:         c.NodeAddr().String(),
+			Downlink:     ulSpeed.String(),
+			HandshakeDNS: false,
+			Location: &geoip.Location{
+				City:        loc.City,
+				Country:     loc.Country,
+				CountryCode: loc.CountryCode,
+				Latitude:    loc.Latitude,
+				Longitude:   loc.Longitude,
+			},
+			Moniker:     c.Moniker(),
+			Peers:       c.Service().PeersLen(),
+			ServiceType: c.Service().Type().String(),
+			Uplink:      dlSpeed.String(),
+			Version:     version.Get(),
+		}
+
+		// Send the result as a JSON response with HTTP status 200.
+		ctx.JSON(http.StatusOK, types.NewResponseResult(res))
+	}
+}

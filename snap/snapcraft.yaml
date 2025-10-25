@@ -1,0 +1,39 @@
+name: sentinel-dvpnx
+base: core24
+adopt-info: metadata
+summary: Run and manage the Sentinel dVPN node
+description: |
+  The Sentinel dVPN node software lets users join the decentralized VPN network on the Sentinel Hub
+  blockchain, providing secure, private, and censorship-resistant internet access while earning
+  cryptocurrency rewards. It integrates with Cosmos-SDK, supports robust configuration, and offers
+  tools for key management and node initialization, ensuring privacy, performance, and ease of use.
+
+grade: devel
+confinement: classic
+
+parts:
+  metadata:
+    plugin: nil
+    source: .
+    build-packages:
+      - git
+    override-build: |
+      craftctl set version=$(git describe --tags --always | sed 's/^v//')
+
+  sentinel-dvpnx:
+    after: [ metadata ]
+    plugin: make
+    make-parameters:
+      - install
+    source: .
+    build-packages:
+      - git
+      - golang
+    override-build: |
+      craftctl default
+      mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin
+      cp /bin/sentinel-dvpnx ${SNAPCRAFT_PART_INSTALL}/bin/sentinel-dvpnx
+
+apps:
+  sentinel-dvpnx:
+    command: bin/sentinel-dvpnx

@@ -4,7 +4,7 @@ set -Eeou pipefail
 
 CONTAINER_NAME=sentinelnode
 NODE_DIR="${HOME}/.sentinelnode"
-NODE_IMAGE=ghcr.io/sentinel-official/dvpn-node:latest
+NODE_IMAGE=ghcr.io/sentinel-official/sentinel-dvpnx:latest
 
 function stop {
   id=$(docker ps --filter name="${CONTAINER_NAME}" --quiet)

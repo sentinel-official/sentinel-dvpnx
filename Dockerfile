@@ -1,20 +1,58 @@
-FROM golang:1.21-alpine3.19 AS build
+# Build stage
+FROM golang:1.25-alpine3.22 AS build
 
-COPY . /root/dvpn-node/
+# Set working directory
+WORKDIR /root
 
-RUN --mount=target=/go/pkg/mod,type=cache \
-    --mount=target=/root/.cache/go-build,type=cache \
-    apk add autoconf automake bash file g++ gcc git libtool linux-headers make musl-dev unbound-dev && \
-    cd /root/dvpn-node/ && make --jobs=$(nproc) install && \
-    git clone --branch=master --depth=1 https://github.com/handshake-org/hnsd.git /root/hnsd && \
-    cd /root/hnsd/ && bash autogen.sh && sh configure && make --jobs=$(nproc)
+# Install build dependencies
+RUN apk add --no-cache \
+    autoconf \
+    automake \
+    bash \
+    file \
+    g++ \
+    gcc \
+    git \
+    libtool \
+    linux-headers \
+    make \
+    musl-dev \
+    unbound-dev
 
-FROM alpine:3.19
+# Cache Go modules
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-COPY --from=build /go/bin/sentinelnode /usr/local/bin/process
-COPY --from=build /root/hnsd/hnsd /usr/local/bin/hnsd
+# Copy source into the working directory
+COPY . .
 
-RUN apk add --no-cache iptables unbound-libs v2ray wireguard-tools && \
+# Build sentinel-dvpnx
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    make --jobs=$(nproc) install
+
+# Build hnsd
+RUN git clone --branch=master --depth=1 https://github.com/handshake-org/hnsd.git && \
+    cd ./hnsd && \
+    ./autogen.sh && \
+    ./configure && \
+    make --jobs=$(nproc)
+
+# Runtime stage
+FROM alpine:3.22
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    iptables \
+    openvpn \
+    unbound-libs \
+    v2ray \
+    wireguard-tools && \
     rm -rf /etc/v2ray/ /usr/share/v2ray/
 
-CMD ["process"]
+# Copy the built binaries from build stage
+COPY --from=build /go/bin/sentinel-dvpnx /usr/local/bin/dvpnx
+COPY --from=build /root/hnsd/hnsd /usr/local/bin/hnsd
+
+ENTRYPOINT ["dvpnx"]

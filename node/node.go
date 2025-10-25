@@ -1,66 +1,265 @@
 package node
 
 import (
-	"path"
+	"context"
+	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/spf13/viper"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/cmux"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/cron"
+	"github.com/sentinel-official/sentinel-go-sdk/libs/log"
+	"github.com/sentinel-official/sentinel-go-sdk/process"
+	"github.com/sentinel-official/sentinelhub/v12/x/node/types/v3"
+	"golang.org/x/sync/errgroup"
 
-	"github.com/sentinel-official/dvpn-node/context"
-	"github.com/sentinel-official/dvpn-node/utils"
+	"github.com/sentinel-official/sentinel-dvpnx/core"
 )
 
+// Node represents the application node, holding its context, scheduler, and server.
 type Node struct {
-	*context.Context
+	*process.Manager // Embedded process manager for handling lifecycle.
+
+	ctx       *core.Context   // Application code context.
+	scheduler *cron.Scheduler // Scheduler for managing periodic tasks.
+	server    *cmux.Server    // HTTP server for handling API requests.
 }
 
-func NewNode(ctx *context.Context) *Node {
-	return &Node{ctx}
+// New creates a new Node with the provided context.
+func New(name string) *Node {
+	return &Node{
+		Manager: process.NewManager(name),
+	}
 }
 
-func (n *Node) Initialize() error {
-	n.Log().Info("Initializing...")
+// WithContext sets the core context for the Node and returns the updated Node.
+func (n *Node) WithContext(ctx *core.Context) *Node {
+	n.ctx = ctx
 
-	result, err := n.Client().QueryNode(n.Address())
+	return n
+}
+
+// WithScheduler sets the scheduler for the Node and returns the updated Node.
+func (n *Node) WithScheduler(v *cron.Scheduler) *Node {
+	n.scheduler = v
+
+	return n
+}
+
+// WithServer sets the server for the Node and returns the updated Node.
+func (n *Node) WithServer(v *cmux.Server) *Node {
+	n.server = v
+
+	return n
+}
+
+// Context returns the core context configured for the Node.
+func (n *Node) Context() *core.Context {
+	return n.ctx
+}
+
+// Scheduler returns the scheduler configured for the Node.
+func (n *Node) Scheduler() *cron.Scheduler {
+	return n.scheduler
+}
+
+// Server returns the server configured for the Node.
+func (n *Node) Server() *cmux.Server {
+	return n.server
+}
+
+// Register registers the node on the network if not already registered.
+func (n *Node) Register(ctx context.Context) error {
+	// Query the network to check if the node is already registered.
+	node, err := n.Context().Client().Node(ctx, n.Context().NodeAddr())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to query node: %w", err)
 	}
 
-	if result == nil {
-		return n.RegisterNode()
+	if node != nil {
+		log.Info("Node already registered", "addr", n.Context().NodeAddr())
+
+		return nil
 	}
 
-	return n.UpdateNodeInfo()
+	log.Info("Registering node",
+		"gigabyte_price", n.Context().GigabytePrices(),
+		"hourly_price", n.Context().HourlyPrices(),
+		"remote_addrs", n.Context().APIAddrs(),
+	)
+
+	// Prepare a message to register the node.
+	msg := v3.NewMsgRegisterNodeRequest(
+		n.Context().AccAddr(),
+		n.Context().GigabytePrices(),
+		n.Context().HourlyPrices(),
+		n.Context().APIAddrs(),
+	)
+
+	// Broadcast the registration transaction.
+	if err := n.Context().BroadcastTx(ctx, msg); err != nil {
+		return fmt.Errorf("broadcasting tx with register_node msg: %w", err)
+	}
+
+	log.Info("Node registered successfully", "addr", n.Context().NodeAddr())
+
+	return nil
 }
 
-func (n *Node) Start() error {
-	go func() {
-		if err := n.jobSetSessions(); err != nil {
-			panic(err)
-		}
-	}()
-
-	go func() {
-		if err := n.jobUpdateSessions(); err != nil {
-			panic(err)
-		}
-	}()
-
-	go func() {
-		if err := n.jobUpdateStatus(); err != nil {
-			panic(err)
-		}
-	}()
-
-	var (
-		certFile = path.Join(viper.GetString(flags.FlagHome), "tls.crt")
-		keyFile  = path.Join(viper.GetString(flags.FlagHome), "tls.key")
+// UpdateDetails updates the node's pricing and address details on the network.
+func (n *Node) UpdateDetails(ctx context.Context) error {
+	log.Info("Updating node details",
+		"gigabyte_prices", n.Context().GigabytePrices(),
+		"hourly_prices", n.Context().HourlyPrices(),
+		"remote_addrs", n.Context().APIAddrs(),
 	)
 
-	return utils.ListenAndServeTLS(
-		n.ListenOn(),
-		certFile,
-		keyFile,
-		n.Handler(),
+	// Prepare a message to update the node's details.
+	msg := v3.NewMsgUpdateNodeDetailsRequest(
+		n.Context().NodeAddr(),
+		n.Context().GigabytePrices(),
+		n.Context().HourlyPrices(),
+		n.Context().APIAddrs(),
 	)
+
+	// Broadcast the update transaction.
+	if err := n.Context().BroadcastTx(ctx, msg); err != nil {
+		return fmt.Errorf("broadcasting tx with update_node_details msg: %w", err)
+	}
+
+	log.Info("Node details updated successfully", "addr", n.Context().NodeAddr())
+
+	return nil
+}
+
+// Start initializes the Node's services, scheduler, and API server.
+func (n *Node) Start(ctx context.Context) (context.Context, error) {
+	return n.Manager.Start(ctx, func(ctx context.Context) error { //nolint:contextcheck,wrapcheck
+		if err := n.Register(ctx); err != nil {
+			return fmt.Errorf("registering node: %w", err)
+		}
+
+		if err := n.UpdateDetails(ctx); err != nil {
+			return fmt.Errorf("updating details: %w", err)
+		}
+
+		var (
+			schedulerCtx context.Context
+			serverCtx    context.Context
+			serviceCtx   context.Context
+		)
+
+		sg := &errgroup.Group{}
+
+		sg.Go(func() (err error) {
+			log.Info("Starting scheduler")
+
+			if schedulerCtx, err = n.Scheduler().Start(ctx); err != nil {
+				return fmt.Errorf("starting scheduler: %w", err)
+			}
+
+			return nil
+		})
+
+		sg.Go(func() (err error) {
+			log.Info("Starting API server")
+
+			if serverCtx, err = n.Server().Start(ctx); err != nil {
+				return fmt.Errorf("starting API server: %w", err)
+			}
+
+			return nil
+		})
+
+		sg.Go(func() (err error) {
+			log.Info("Starting service")
+
+			if serviceCtx, err = n.Context().Service().Start(ctx); err != nil {
+				return fmt.Errorf("starting service: %w", err)
+			}
+
+			return nil
+		})
+
+		if err := sg.Wait(); err != nil {
+			return fmt.Errorf("starting group: %w", err)
+		}
+
+		n.Go(ctx, func() error {
+			if err := n.Scheduler().Wait(schedulerCtx); err != nil {
+				return fmt.Errorf("waiting scheduler: %w", err)
+			}
+
+			return nil
+		})
+
+		n.Go(ctx, func() error {
+			if err := n.Server().Wait(serverCtx); err != nil {
+				return fmt.Errorf("waiting API server: %w", err)
+			}
+
+			return nil
+		})
+
+		n.Go(ctx, func() error {
+			if err := n.Context().Service().Wait(serviceCtx); err != nil {
+				return fmt.Errorf("waiting service: %w", err)
+			}
+
+			return nil
+		})
+
+		return nil
+	})
+}
+
+// Wait blocks until all background goroutines launched exit.
+func (n *Node) Wait(ctx context.Context) error {
+	return n.Manager.Wait(ctx, nil) //nolint:wrapcheck
+}
+
+// Stop gracefully stops the Node's operations.
+func (n *Node) Stop() error {
+	return n.Manager.Stop(func() error { //nolint:wrapcheck
+		sg := &errgroup.Group{}
+
+		sg.Go(func() error {
+			log.Info("Stopping scheduler")
+
+			if err := n.Scheduler().Stop(); err != nil {
+				return fmt.Errorf("stopping scheduler: %w", err)
+			}
+
+			return nil
+		})
+
+		sg.Go(func() error {
+			log.Info("Stopping API server")
+
+			if err := n.Server().Stop(); err != nil {
+				return fmt.Errorf("stopping API server: %w", err)
+			}
+
+			return nil
+		})
+
+		sg.Go(func() error {
+			log.Info("Stopping service")
+
+			if err := n.Context().Service().Stop(); err != nil {
+				return fmt.Errorf("stopping service: %w", err)
+			}
+
+			return nil
+		})
+
+		if err := sg.Wait(); err != nil {
+			return fmt.Errorf("stopping group: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// Cleanup cleans up resources used by the node.
+func (n *Node) Cleanup() error {
+	return n.Manager.Cleanup(nil) //nolint:wrapcheck
 }

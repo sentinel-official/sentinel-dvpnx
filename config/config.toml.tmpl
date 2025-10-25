@@ -1,0 +1,271 @@
+# Keyring Configuration
+[keyring]
+
+# Storage backend for managing cryptographic keys and sensitive data.
+# Different backends offer varying levels of security and OS integration.
+# Allowed: file, kwallet, memory, os, pass, test
+# Example: "file"
+backend = "{{ .Keyring.Backend }}"
+
+# Unique identifier name for the keyring instance to distinguish it from other keyrings.
+# Used internally to organize and retrieve stored cryptographic keys and credentials.
+# Allowed: Any string
+# Example: "my-node-keyring"
+name = "{{ .Keyring.Name }}"
+
+# Query Configuration
+[query]
+
+# Whether to get cryptographic proofs for query results and verify the proof for data authenticity.
+# Proofs increase security but add network overhead and processing time.
+# Allowed: true, false
+# Example: true
+prove = {{ .Query.Prove }}
+
+# Maximum number of retry attempts for failed query operations before giving up.
+# More retries improve reliability but may increase response times.
+# Allowed: Any positive integer
+# Example: 3
+retry_attempts = {{ .Query.RetryAttempts }}
+
+# Waiting period between consecutive retry attempts for failed queries.
+# Longer delays reduce network load but increase total response time.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "2s"
+retry_delay = "{{ .Query.RetryDelay }}"
+
+# RPC Configuration
+[rpc]
+
+# List of RPC server endpoints for blockchain communication.
+# Multiple endpoints provide redundancy and load distribution for improved reliability.
+# Allowed: Array of valid URLs
+# Example: ["https://rpc.example.com:443", "https://backup-rpc.example.com:443"]
+addrs = [{{ range $i, $addr := .RPC.Addrs }}{{ if $i }}, {{ end }}"{{ $addr }}"{{ end }}]
+
+# Unique identifier of the blockchain network to connect to.
+# Ensures communication with the correct network and prevents accidental connections.
+# Allowed: Valid chain identifier string
+# Example: "testnet-1"
+chain_id = "{{ .RPC.ChainID }}"
+
+# Maximum time to wait for RPC requests before considering them failed.
+# Balance between responsiveness and reliability based on network conditions.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "10s"
+timeout = "{{ .RPC.Timeout }}"
+
+# Transactions Configuration
+[tx]
+
+# Blockchain address that has granted authorization to submit transactions on behalf of this node.
+# Enables delegated transaction signing for automated operations.
+# Allowed: Valid address string
+# Example: "sent1yftwk6a4h5fk4xzp3znk6puqj92uxw7jhxwd76"
+authz_granter_addr = "{{ .Tx.AuthzGranterAddr }}"
+
+# Number of retry attempts for broadcasting transactions if initial submission fails.
+# Helps overcome temporary network issues but should be limited.
+# Allowed: Any positive integer
+# Example: 3
+broadcast_retry_attempts = {{ .Tx.BroadcastRetryAttempts }}
+
+# Waiting period between transaction broadcast retry attempts.
+# Allows temporary network issues to resolve and prevents overwhelming the blockchain.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "10s"
+broadcast_retry_delay = "{{ .Tx.BroadcastRetryDelay }}"
+
+# Address of an account that automatically pays transaction fees on behalf of this node.
+# Enables gasless transactions while the fee granter covers costs.
+# Allowed: Valid address string
+# Example: "sent1yftwk6a4h5fk4xzp3znk6puqj92uxw7jhxwd76"
+fee_granter_addr = "{{ .Tx.FeeGranterAddr }}"
+
+# Local account name used to sign and send transactions.
+# Must exist in keyring with sufficient balance to cover transaction fees and deposits.
+# Allowed: Any string
+# Example: "node-operator"
+from_name = "{{ .Tx.FromName }}"
+
+# Maximum computational resources (gas) that can be consumed by a single transaction.
+# Higher limits allow complex operations but cost more in fees.
+# Allowed: Any positive integer
+# Example: 300000
+gas = {{ .Tx.Gas }}
+
+# Multiplier applied to estimated gas usage to ensure sufficient allocation.
+# Values above 1.0 add safety margin but increase transaction costs.
+# Allowed: Any positive decimal number
+# Example: 1.25
+gas_adjustment = {{ .Tx.GasAdjustment }}
+
+# Price per unit of gas for transaction processing.
+# Higher prices increase likelihood of fast inclusion but cost more in fees.
+# Allowed: Valid price string with denomination
+# Example: "0.2udvpn"
+gas_prices = "{{ .Tx.GasPrices }}"
+
+# Maximum attempts to query blockchain for transaction status after submission.
+# More attempts improve detection chances but may delay error reporting.
+# Allowed: Any positive integer
+# Example: 50
+query_retry_attempts = {{ .Tx.QueryRetryAttempts }}
+
+# Time interval between consecutive transaction status queries.
+# Balance between fast confirmation and blockchain load.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "2s"
+query_retry_delay = "{{ .Tx.QueryRetryDelay }}"
+
+# Whether transactions are simulated before execution to estimate gas usage and detect failures.
+# Improves success rates and cost accuracy but adds overhead.
+# Allowed: true, false
+# Example: false
+simulate_and_execute = {{ .Tx.SimulateAndExecute }}
+
+# Handshake DNS Configuration
+[handshake_dns]
+
+# Enables Handshake DNS daemon for decentralized domain name resolution.
+# When enabled, both the node and its clients can resolve Handshake domain names through the decentralized network.
+# Allowed: true, false
+# Example: true
+enable = {{ .HandshakeDNS.Enable }}
+
+# Number of peer connections to maintain within the Handshake DNS network.
+# More peers provide better reliability but consume more network resources.
+# Allowed: Any positive integer
+# Example: 12
+peers = {{ .HandshakeDNS.Peers }}
+
+# Node Configuration
+[node]
+
+# TCP port for client communication as a single port number or <in_port:out_port> mapping format.
+# The mapping format allows the node API to run internally on in_port while being available to clients on out_port.
+# Enables clients to connect to the node's API for management and service access.
+# Allowed: Single port or port mapping format
+# Example: "8080" or "8080:8081"
+api_port = "{{ .Node.APIPort }}"
+
+# Pricing per gigabyte in format <denomination:base_value,quote_value> where base_value is USD price and quote_value is
+# equivalent token amount. Blockchain prioritizes base_value and converts to quote_value.
+# Multiple denominations separated by semicolons.
+# Allowed: Valid prices format string
+# Example: "udvpn:0.05,2500000;atom:0.05,10000"
+gigabyte_prices = "{{ .Node.GigabytePrices }}"
+
+# Pricing per hour in format <denomination:base_value,quote_value> where base_value is USD price and quote_value is
+# equivalent token amount. Blockchain prioritizes base_value and converts to quote_value.
+# Multiple denominations separated by semicolons.
+# Allowed: Valid prices format string
+# Example: "udvpn:0.10,5000000;atom:0.10,20000"
+hourly_prices = "{{ .Node.HourlyPrices }}"
+
+# Frequency for evaluating and switching to the best performing RPC endpoint.
+# Regular switching ensures optimal blockchain connectivity and service quality.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "10m0s"
+interval_best_rpc_addr = "{{ .Node.IntervalBestRPCAddr }}"
+
+# How often the node queries external services to determine its geographic location for service discovery and helping
+# clients find nearby nodes.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "12h0m0s"
+interval_geoip_location = "{{ .Node.IntervalGeoIPLocation }}"
+
+# Frequency for fetching updated pricing data from the specified oracle and publishing it to the blockchain.
+# Ensures that on-chain pricing information remains accurate and reflects current market conditions.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "1h0m0s"
+interval_prices_update = "{{ .Node.IntervalPricesUpdate }}"
+
+# Frequency for synchronizing session usage data to the blockchain ledger.
+# Records payment obligations and service consumption on-chain for transparency.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "2h0m0s"
+interval_session_usage_sync_with_blockchain = "{{ .Node.IntervalSessionUsageSyncWithBlockchain }}"
+
+# How often session usage statistics are updated in the local database for real-time billing and monitoring purposes.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "5s"
+interval_session_usage_sync_with_database = "{{ .Node.IntervalSessionUsageSyncWithDatabase }}"
+
+# Frequency of validation checks to ensure recorded session usage data is accurate and consistent.
+# Helps detect and prevent billing discrepancies.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "10s"
+interval_session_usage_validate = "{{ .Node.IntervalSessionUsageValidate }}"
+
+# How often the node verifies that active client sessions are still valid.
+# Cleanup process helps free resources from abandoned sessions.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "2m0s"
+interval_session_validate = "{{ .Node.IntervalSessionValidate }}"
+
+# Frequency for running automated network performance tests to measure bandwidth, latency, and connectivity quality for
+# service optimization.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "24h0m0s"
+interval_speedtest = "{{ .Node.IntervalSpeedtest }}"
+
+# How often the node broadcasts its status and service information to the network.
+# Regular updates ensure discoverability and accurate client information.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "30m0s"
+interval_status_update = "{{ .Node.IntervalStatusUpdate }}"
+
+# Human-readable display name for this node in network listings and client applications.
+# Choose a unique, descriptive name to distinguish your node.
+# Allowed: Any string
+# Example: "my-node-moniker"
+moniker = "{{ .Node.Moniker }}"
+
+# Addresses that clients use to reach this node for service connections.
+# Can include IP addresses with ports or domain names with ports for flexible client connectivity.
+# Allowed: Comma-separated address list
+# Example: ["192.168.1.100:8080", "node.example.com:9090"]
+remote_addrs = [{{ range $i, $addr := .Node.RemoteAddrs }}{{ if $i }}, {{ end }}"{{ $addr }}"{{ end }}]
+
+# Type of VPN or proxy service protocol this node provides.
+# Each type has different capabilities, security features, and client compatibility.
+# Allowed: openvpn, v2ray, wireguard
+# Example: "wireguard"
+service_type = "{{ .Node.ServiceType }}"
+
+# Oracle Configuration
+[oracle]
+
+# Oracle provider used to fetch quote prices for base prices and update them on-chain.
+# Leave empty to disable oracle functionality entirely.
+# Allowed: "coingecko", "osmosis", or empty
+# Example: "osmosis"
+name = "{{ .Oracle.Name }}"
+
+# CoinGecko Oracle Configuration
+[oracle.coingecko]
+
+# API key for authenticating requests to the CoinGecko API.
+# Some endpoints may require an API key for higher rate limits or premium features.
+# Allowed: Any valid API key string
+# Example: "your-coingecko-api-key"
+api_key = "{{ .Oracle.CoinGecko.APIKey }}"
+
+# Osmosis Oracle Configuration
+[oracle.osmosis]
+
+# REST API endpoint for accessing Osmosis market data.
+# The oracle queries this endpoint to fetch token prices and liquidity pool information.
+# Allowed: Valid URL string
+# Example: "https://api.example.com:443"
+api_addr = "{{ .Oracle.Osmosis.APIAddr }}"
+
+# QoS Configuration
+[qos]
+
+# Maximum number of simultaneous peer connections the node will accept.
+# Helps prevent resource exhaustion and ensures stable performance under high load.
+# Allowed: Any positive integer
+# Example: 50
+max_peers = {{ .QoS.MaxPeers }}
