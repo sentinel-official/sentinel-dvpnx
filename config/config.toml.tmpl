@@ -175,6 +175,12 @@ interval_best_rpc_addr = "{{ .Node.IntervalBestRPCAddr }}"
 # Example: "12h0m0s"
 interval_geoip_location = "{{ .Node.IntervalGeoIPLocation }}"
 
+# Frequency for fetching updated pricing data from the specified oracle and publishing it to the blockchain.
+# Ensures that on-chain pricing information remains accurate and reflects current market conditions.
+# Allowed: Duration string (e.g., 1s, 5m, 1h)
+# Example: "1h0m0s"
+interval_prices_update = "{{ .Node.IntervalPricesUpdate }}"
+
 # Frequency for synchronizing session usage data to the blockchain ledger.
 # Records payment obligations and service consumption on-chain for transparency.
 # Allowed: Duration string (e.g., 1s, 5m, 1h)

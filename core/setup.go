@@ -141,7 +141,7 @@ func (c *Context) SetupService(ctx context.Context, cfg *config.Config) error {
 	case types.ServiceTypeOpenVPN:
 		service = openvpn.NewServer("openvpn", c.HomeDir(), cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 	case types.ServiceTypeUnspecified:
-		return errors.New("service type is unspecified")
+		return errors.New("unspecified service type")
 	default:
 		return fmt.Errorf("unsupported service type %q", serviceType)
 	}

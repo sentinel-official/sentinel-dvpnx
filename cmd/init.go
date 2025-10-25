@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -103,7 +104,7 @@ is set to overwrite the existing configuration.`,
 				case types.ServiceTypeOpenVPN:
 					service = openvpn.NewServer("openvpn", homeDir, cfg.Services[types.ServiceTypeOpenVPN].(*openvpn.ServerConfig))
 				case types.ServiceTypeUnspecified:
-					return fmt.Errorf("unsupported service type %q", serviceType)
+					return errors.New("unspecified service type")
 				default:
 					return fmt.Errorf("unsupported service type %q", serviceType)
 				}

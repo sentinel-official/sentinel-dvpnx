@@ -131,8 +131,8 @@ func (n *Node) UpdateDetails(ctx context.Context) error {
 }
 
 // Start initializes the Node's services, scheduler, and API server.
-func (n *Node) Start(parent context.Context) (context.Context, error) {
-	return n.Manager.Start(parent, func(ctx context.Context) error { //nolint:contextcheck,wrapcheck
+func (n *Node) Start(ctx context.Context) (context.Context, error) {
+	return n.Manager.Start(ctx, func(ctx context.Context) error { //nolint:contextcheck,wrapcheck
 		if err := n.Register(ctx); err != nil {
 			return fmt.Errorf("registering node: %w", err)
 		}
