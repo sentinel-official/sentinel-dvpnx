@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/sentinel-official/sentinel-go-sdk/libs/netip"
 	"github.com/sentinel-official/sentinel-go-sdk/types"
 	"github.com/sentinel-official/sentinel-go-sdk/utils"
@@ -372,5 +373,10 @@ func validateRemoteAddr(addr string) error {
 		return errors.New("addr is neither IPv4 nor IPv6")
 	}
 
-	return nil
+	// Validate the DNS name format.
+	if govalidator.IsDNSName(addr) {
+		return nil
+	}
+
+	return fmt.Errorf("unsupported addr %q", addr)
 }
