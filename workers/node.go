@@ -54,7 +54,7 @@ func NewNodePricesUpdateWorker(c *core.Context, interval time.Duration) cron.Wor
 
 		var gigabytePrices v1.Prices
 
-		for _, price := range c.GigabytePrices() {
+		for _, price := range c.SanitizedGigabytePrices(ctx) {
 			price, err := price.UpdateQuoteValue(ctx, client.GetQuotePrice)
 			if err != nil {
 				return fmt.Errorf("updating quote price for denom %q: %w", price.Denom, err)
@@ -65,7 +65,7 @@ func NewNodePricesUpdateWorker(c *core.Context, interval time.Duration) cron.Wor
 
 		var hourlyPrices v1.Prices
 
-		for _, price := range c.HourlyPrices() {
+		for _, price := range c.SanitizedHourlyPrices(ctx) {
 			price, err := price.UpdateQuoteValue(ctx, client.GetQuotePrice)
 			if err != nil {
 				return fmt.Errorf("updating quote price for denom %q: %w", price.Denom, err)

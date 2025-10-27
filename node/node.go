@@ -80,17 +80,20 @@ func (n *Node) Register(ctx context.Context) error {
 		return nil
 	}
 
+	gigabytePrices := n.Context().SanitizedGigabytePrices(ctx)
+	hourlyPrices := n.Context().SanitizedHourlyPrices(ctx)
+
 	log.Info("Registering node",
-		"gigabyte_price", n.Context().GigabytePrices(),
-		"hourly_price", n.Context().HourlyPrices(),
+		"gigabyte_prices", gigabytePrices,
+		"hourly_price", hourlyPrices,
 		"remote_addrs", n.Context().APIAddrs(),
 	)
 
 	// Prepare a message to register the node.
 	msg := v3.NewMsgRegisterNodeRequest(
 		n.Context().AccAddr(),
-		n.Context().GigabytePrices(),
-		n.Context().HourlyPrices(),
+		gigabytePrices,
+		hourlyPrices,
 		n.Context().APIAddrs(),
 	)
 
@@ -106,17 +109,20 @@ func (n *Node) Register(ctx context.Context) error {
 
 // UpdateDetails updates the node's pricing and address details on the network.
 func (n *Node) UpdateDetails(ctx context.Context) error {
+	gigabytePrices := n.Context().SanitizedGigabytePrices(ctx)
+	hourlyPrices := n.Context().SanitizedHourlyPrices(ctx)
+
 	log.Info("Updating node details",
-		"gigabyte_prices", n.Context().GigabytePrices(),
-		"hourly_prices", n.Context().HourlyPrices(),
+		"gigabyte_prices", gigabytePrices,
+		"hourly_prices", hourlyPrices,
 		"remote_addrs", n.Context().APIAddrs(),
 	)
 
 	// Prepare a message to update the node's details.
 	msg := v3.NewMsgUpdateNodeDetailsRequest(
 		n.Context().NodeAddr(),
-		n.Context().GigabytePrices(),
-		n.Context().HourlyPrices(),
+		gigabytePrices,
+		hourlyPrices,
 		n.Context().APIAddrs(),
 	)
 

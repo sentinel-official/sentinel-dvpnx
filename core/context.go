@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"io"
 	"path/filepath"
@@ -250,6 +251,26 @@ func (c *Context) TLSKeyFile() string {
 	return filepath.Join(c.HomeDir(), "tls.key")
 }
 
+// SanitizedGigabytePrices returns gigabyte prices filtered to include only valid denominations.
+func (c *Context) SanitizedGigabytePrices(ctx context.Context) v1.Prices {
+	params, err := c.Client().NodeParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return c.sanitizePrices(c.GigabytePrices(), params.GetMinGigabytePrices())
+}
+
+// SanitizedHourlyPrices returns hourly prices filtered to include only valid denominations.
+func (c *Context) SanitizedHourlyPrices(ctx context.Context) v1.Prices {
+	params, err := c.Client().NodeParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return c.sanitizePrices(c.HourlyPrices(), params.GetMinHourlyPrices())
+}
+
 // SetLocation sets the geolocation data in the context.
 func (c *Context) SetLocation(location *geoip.Location) {
 	c.fm.Lock()
@@ -408,4 +429,16 @@ func (c *Context) checkSealed() {
 	if c.sealed {
 		panic(errors.New("context is sealed"))
 	}
+}
+
+// sanitizePrices filters and validates a set of prices against the minimum required prices.
+func (c *Context) sanitizePrices(prices v1.Prices, minPrices v1.Prices) (newPrices v1.Prices) {
+	m := minPrices.Map()
+	for _, price := range prices {
+		if _, ok := m[price.Denom]; ok {
+			newPrices = newPrices.Add(price)
+		}
+	}
+
+	return
 }
