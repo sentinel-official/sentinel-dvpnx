@@ -46,15 +46,24 @@ func NewNodeStatusUpdateWorker(c *core.Context, interval time.Duration) cron.Wor
 // NewNodePricesUpdateWorker creates a worker that periodically updates the node's prices on the blockchain.
 // The worker computes the current quote prices using the OracleClient and broadcasts a MsgUpdateNodeDetailsRequest.
 func NewNodePricesUpdateWorker(c *core.Context, interval time.Duration) cron.Worker {
-	handlerFunc := func(ctx context.Context) error {
+	handlerFunc := func(ctx context.Context) (err error) {
 		client := c.OracleClient()
 		if client == nil {
 			return nil
 		}
 
-		var gigabytePrices v1.Prices
+		var (
+			prices         v1.Prices
+			gigabytePrices v1.Prices
+			hourlyPrices   v1.Prices
+		)
 
-		for _, price := range c.SanitizedGigabytePrices(ctx) {
+		prices, err = c.SanitizedGigabytePrices(ctx)
+		if err != nil {
+			return fmt.Errorf("sanitizing gigabyte prices: %w", err)
+		}
+
+		for _, price := range prices {
 			price, err := price.UpdateQuoteValue(ctx, client.GetQuotePrice)
 			if err != nil {
 				return fmt.Errorf("updating quote price for denom %q: %w", price.Denom, err)
@@ -63,9 +72,12 @@ func NewNodePricesUpdateWorker(c *core.Context, interval time.Duration) cron.Wor
 			gigabytePrices = gigabytePrices.Add(price)
 		}
 
-		var hourlyPrices v1.Prices
+		prices, err = c.SanitizedHourlyPrices(ctx)
+		if err != nil {
+			return fmt.Errorf("sanitizing hourly prices: %w", err)
+		}
 
-		for _, price := range c.SanitizedHourlyPrices(ctx) {
+		for _, price := range prices {
 			price, err := price.UpdateQuoteValue(ctx, client.GetQuotePrice)
 			if err != nil {
 				return fmt.Errorf("updating quote price for denom %q: %w", price.Denom, err)
