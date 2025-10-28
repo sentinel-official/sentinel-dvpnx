@@ -80,8 +80,15 @@ func (n *Node) Register(ctx context.Context) error {
 		return nil
 	}
 
-	gigabytePrices := n.Context().SanitizedGigabytePrices(ctx)
-	hourlyPrices := n.Context().SanitizedHourlyPrices(ctx)
+	gigabytePrices, err := n.Context().SanitizedGigabytePrices(ctx)
+	if err != nil {
+		return fmt.Errorf("sanitizing gigabyte prices: %w", err)
+	}
+
+	hourlyPrices, err := n.Context().SanitizedHourlyPrices(ctx)
+	if err != nil {
+		return fmt.Errorf("sanitizing hourly prices: %w", err)
+	}
 
 	log.Info("Registering node",
 		"gigabyte_prices", gigabytePrices,
@@ -109,8 +116,15 @@ func (n *Node) Register(ctx context.Context) error {
 
 // UpdateDetails updates the node's pricing and address details on the network.
 func (n *Node) UpdateDetails(ctx context.Context) error {
-	gigabytePrices := n.Context().SanitizedGigabytePrices(ctx)
-	hourlyPrices := n.Context().SanitizedHourlyPrices(ctx)
+	gigabytePrices, err := n.Context().SanitizedGigabytePrices(ctx)
+	if err != nil {
+		return fmt.Errorf("sanitizing gigabyte prices: %w", err)
+	}
+
+	hourlyPrices, err := n.Context().SanitizedHourlyPrices(ctx)
+	if err != nil {
+		return fmt.Errorf("sanitizing hourly prices: %w", err)
+	}
 
 	log.Info("Updating node details",
 		"gigabyte_prices", gigabytePrices,

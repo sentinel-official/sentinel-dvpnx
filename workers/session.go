@@ -48,7 +48,7 @@ func NewSessionUsageSyncWithBlockchainWorker(c *core.Context, interval time.Dura
 		)
 
 		jobGroup, jobCtx := errgroup.WithContext(ctx)
-		jobGroup.SetLimit(8)
+		jobGroup.SetLimit(2)
 
 		// Iterate over sessions and prepare messages for updates.
 		for _, val := range items {
@@ -133,7 +133,7 @@ func NewSessionUsageSyncWithDatabaseWorker(c *core.Context, interval time.Durati
 		}
 
 		jobGroup, jobCtx := errgroup.WithContext(ctx)
-		jobGroup.SetLimit(8)
+		jobGroup.SetLimit(2)
 
 		// Update the database with the fetched statistics.
 		for key, val := range items {
@@ -214,7 +214,7 @@ func NewSessionUsageValidateWorker(c *core.Context, interval time.Duration) cron
 		}
 
 		jobGroup, jobCtx := errgroup.WithContext(ctx)
-		jobGroup.SetLimit(8)
+		jobGroup.SetLimit(2)
 
 		// Validate session limits and remove peers if needed.
 		for _, val := range items {
@@ -295,7 +295,7 @@ func NewSessionValidateWorker(c *core.Context, interval time.Duration) cron.Work
 		}
 
 		jobGroup, jobCtx := errgroup.WithContext(ctx)
-		jobGroup.SetLimit(8)
+		jobGroup.SetLimit(2)
 
 		// Validate session status and consistency.
 		for _, val := range items {

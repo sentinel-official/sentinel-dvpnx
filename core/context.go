@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"path/filepath"
 	"sync"
@@ -252,23 +253,33 @@ func (c *Context) TLSKeyFile() string {
 }
 
 // SanitizedGigabytePrices returns gigabyte prices filtered to include only valid denominations.
-func (c *Context) SanitizedGigabytePrices(ctx context.Context) v1.Prices {
+func (c *Context) SanitizedGigabytePrices(ctx context.Context) (v1.Prices, error) {
 	params, err := c.Client().NodeParams(ctx)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("getting node params: %w", err)
 	}
 
-	return c.sanitizePrices(c.GigabytePrices(), params.GetMinGigabytePrices())
+	prices := c.sanitizePrices(
+		c.GigabytePrices(),
+		params.GetMinGigabytePrices(),
+	)
+
+	return prices, nil
 }
 
 // SanitizedHourlyPrices returns hourly prices filtered to include only valid denominations.
-func (c *Context) SanitizedHourlyPrices(ctx context.Context) v1.Prices {
+func (c *Context) SanitizedHourlyPrices(ctx context.Context) (v1.Prices, error) {
 	params, err := c.Client().NodeParams(ctx)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("getting node params: %w", err)
 	}
 
-	return c.sanitizePrices(c.HourlyPrices(), params.GetMinHourlyPrices())
+	prices := c.sanitizePrices(
+		c.HourlyPrices(),
+		params.GetMinHourlyPrices(),
+	)
+
+	return prices, nil
 }
 
 // SetLocation sets the geolocation data in the context.
