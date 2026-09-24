@@ -1,12 +1,12 @@
 module github.com/sentinel-official/sentinel-dvpnx
 
-go 1.25.5
+go 1.26.0
 
 require (
 	cosmossdk.io/math v1.5.3
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/cosmos/cosmos-sdk v0.47.17
-	github.com/gin-contrib/cors v1.7.8
+	github.com/gin-contrib/cors v1.7.9
 	github.com/gin-gonic/gin v1.12.0
 	github.com/sentinel-official/sentinel-go-sdk/v2 v2.1.1-0.20260711125417-784a083d9d76
 	github.com/sentinel-official/sentinelhub/v12 v12.0.2
@@ -158,7 +158,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.29.0 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
