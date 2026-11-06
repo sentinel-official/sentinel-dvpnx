@@ -11,7 +11,7 @@ require (
 	github.com/sentinel-official/sentinel-go-sdk/v2 v2.1.1-0.20260711125417-784a083d9d76
 	github.com/sentinel-official/sentinelhub/v12 v12.0.2
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	github.com/spf13/viper v1.21.0
 	golang.org/x/sync v0.22.0
 	gorm.io/driver/sqlite v1.6.0
